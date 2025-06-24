@@ -1,0 +1,43 @@
+# 测试环境配置
+spring:
+  datasource:
+    # 使用H2内存数据库进行测试
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+    
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+        
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      
+server:
+  port: 8081
+  
+logging:
+  level:
+    com.fastlcp: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    
+# FastLCP配置
+fastlcp:
+  database:
+    type: H2
+    charset: UTF8
+    collation: 
+    metadata-storage-enabled: true
+  xml:
+    parsing-enabled: true
+  sql:
+    generation-enabled: true

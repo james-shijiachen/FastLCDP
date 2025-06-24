@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<database name="test_db" charset="utf8mb4" collation="utf8mb4_unicode_ci">
+    <tables>
+        <table name="users" comment="用户表">
+            <fields>
+                <field name="id" type="LONG" nullable="false" autoIncrement="true" primaryKey="true" comment="主键ID"/>
+        <field name="username" type="STRING" length="50" nullable="false" unique="true" comment="用户名"/>
+        <field name="email" type="STRING" length="100" nullable="false" unique="true" comment="邮箱地址"/>
+        <field name="password" type="STRING" length="255" nullable="false" comment="密码"/>
+        <field name="status" type="INTEGER" nullable="false" defaultValue="1" comment="状态：1-正常，0-禁用"/>
+        <field name="created_at" type="DATETIME" nullable="false" defaultValue="CURRENT_TIMESTAMP" comment="创建时间"/>
+        <field name="updated_at" type="DATETIME" nullable="false" defaultValue="CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" comment="更新时间"/>
+            </fields>
+        
+            <indexes>
+                <index name="idx_username" type="NORMAL">
+            <column name="username"/>
+        </index>
+        <index name="idx_email" type="NORMAL">
+            <column name="email"/>
+        </index>
+        <index name="idx_status" type="NORMAL">
+            <column name="status"/>
+        </index>
+            </indexes>
+        </table>
+    
+        <table name="user_profiles" comment="用户资料表">
+            <fields>
+                <field name="id" type="LONG" nullable="false" autoIncrement="true" primaryKey="true" comment="主键ID"/>
+        <field name="user_id" type="LONG" nullable="false" comment="用户ID"/>
+        <field name="nickname" type="STRING" length="100" comment="昵称"/>
+        <field name="avatar" type="STRING" length="255" comment="头像URL"/>
+        <field name="gender" type="INTEGER" comment="性别：1-男，2-女，0-未知"/>
+        <field name="birthday" type="DATETIME" comment="生日"/>
+        <field name="phone" type="STRING" length="20" comment="手机号"/>
+        <field name="address" type="TEXT" comment="地址"/>
+        <field name="created_at" type="DATETIME" nullable="false" defaultValue="CURRENT_TIMESTAMP" comment="创建时间"/>
+        <field name="updated_at" type="DATETIME" nullable="false" defaultValue="CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" comment="更新时间"/>
+            </fields>
+        
+            <indexes>
+                <index name="idx_user_id" type="UNIQUE">
+            <column name="user_id"/>
+        </index>
+        <index name="idx_phone" type="NORMAL">
+            <column name="phone"/>
+        </index>
+            </indexes>
+        
+            <relations>
+                <relation name="fk_user_profiles_user_id" column="user_id" reference_table="users" reference_column="id" on_delete="CASCADE" on_update="CASCADE"/>
+            </relations>
+        </table>
+    
+        <table name="posts" comment="文章表">
+            <fields>
+                <field name="id" type="LONG" nullable="false" autoIncrement="true" primaryKey="true" comment="主键ID"/>
+        <field name="user_id" type="LONG" nullable="false" comment="作者ID"/>
+        <field name="title" type="STRING" length="200" nullable="false" comment="标题"/>
+        <field name="content" type="TEXT" comment="内容"/>
+        <field name="status" type="INTEGER" nullable="false" defaultValue="1" comment="状态：1-发布，0-草稿"/>
+        <field name="view_count" type="INTEGER" nullable="false" defaultValue="0" comment="浏览次数"/>
+        <field name="like_count" type="INTEGER" nullable="false" defaultValue="0" comment="点赞次数"/>
+        <field name="created_at" type="DATETIME" nullable="false" defaultValue="CURRENT_TIMESTAMP" comment="创建时间"/>
+        <field name="updated_at" type="DATETIME" nullable="false" defaultValue="CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" comment="更新时间"/>
+            </fields>
+        
+            <indexes>
+                <index name="idx_user_id" type="NORMAL">
+            <column name="user_id"/>
+        </index>
+        <index name="idx_status" type="NORMAL">
+            <column name="status"/>
+        </index>
+        <index name="idx_created_at" type="NORMAL">
+            <column name="created_at"/>
+        </index>
+        <index name="idx_title" type="FULLTEXT">
+            <column name="title"/>
+        </index>
+            </indexes>
+        
+            <relations>
+                <relation name="fk_posts_user_id" column="user_id" reference_table="users" reference_column="id" on_delete="CASCADE" on_update="CASCADE"/>
+            </relations>
+        </table>
+    </tables>
+</database>

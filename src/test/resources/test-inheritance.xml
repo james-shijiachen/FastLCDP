@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<database name="test_inheritance_db" version="1.0" charset="utf8mb4" collation="utf8mb4_general_ci" engine="MyISAM" comment="测试继承功能的数据库">
+    <tables>
+        <!-- 表1：没有定义engine和charset，应该继承数据库的默认值 -->
+        <table name="inherit_table" comment="继承数据库配置的表">
+            <fields>
+                <field name="id" type="LONG" primaryKey="true" autoIncrement="true" comment="主键ID"/>
+                <field name="name" type="STRING" length="50" nullable="false" comment="名称"/>
+            </fields>
+        </table>
+        
+        <!-- 表2：定义了自己的engine和charset，应该使用表级别的配置 -->
+        <table name="custom_table" comment="自定义配置的表" engine="InnoDB" charset="latin1">
+            <fields>
+                <field name="id" type="LONG" primaryKey="true" autoIncrement="true" comment="主键ID"/>
+                <field name="description" type="TEXT" comment="描述"/>
+            </fields>
+        </table>
+        
+        <!-- 表3：只定义了engine，charset应该继承数据库的默认值 -->
+        <table name="partial_table" comment="部分自定义配置的表" engine="InnoDB">
+            <fields>
+                <field name="id" type="LONG" primaryKey="true" autoIncrement="true" comment="主键ID"/>
+                <field name="content" type="STRING" length="255" comment="内容"/>
+            </fields>
+        </table>
+    </tables>
+</database>

@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="qualified">
+
+    <!-- 根元素：database -->
+    <xs:element name="database" type="DatabaseType"/>
+
+    <!-- 数据库类型定义 -->
+    <xs:complexType name="DatabaseType">
+        <xs:sequence>
+            <xs:element name="tables" type="TablesType" minOccurs="0"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="xs:string" use="required"/>
+        <xs:attribute name="version" type="xs:string" use="optional"/>
+        <xs:attribute name="charset" type="CharsetType" use="optional"/>
+        <xs:attribute name="collation" type="CollationType" use="optional"/>
+        <xs:attribute name="engine" type="EngineType" use="optional"/>
+        <xs:attribute name="comment" type="xs:string" use="optional"/>
+    </xs:complexType>
+
+    <!-- 表集合类型定义 -->
+    <xs:complexType name="TablesType">
+        <xs:sequence>
+            <xs:element name="table" type="TableType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- 表类型定义 -->
+    <xs:complexType name="TableType">
+        <xs:sequence>
+            <xs:element name="fields" type="FieldsType" minOccurs="0"/>
+            <xs:element name="indexes" type="IndexesType" minOccurs="0"/>
+            <xs:element name="relations" type="RelationsType" minOccurs="0"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="xs:string" use="required"/>
+        <xs:attribute name="comment" type="xs:string" use="optional"/>
+        <xs:attribute name="extends" type="xs:string" use="optional"/>
+        <xs:attribute name="engine" type="EngineType" use="optional"/>
+        <xs:attribute name="charset" type="CharsetType" use="optional"/>
+        <xs:attribute name="collation" type="CollationType" use="optional"/>
+    </xs:complexType>
+
+    <!-- 字段集合类型定义 -->
+    <xs:complexType name="FieldsType">
+        <xs:sequence>
+            <xs:element name="field" type="FieldType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- 字段类型定义 -->
+    <xs:complexType name="FieldType">
+        <xs:attribute name="name" type="xs:string" use="required"/>
+        <xs:attribute name="type" type="DataType" use="required"/>
+        <xs:attribute name="length" type="xs:positiveInteger" use="optional"/>
+        <xs:attribute name="precision" type="xs:positiveInteger" use="optional"/>
+        <xs:attribute name="scale" type="xs:nonNegativeInteger" use="optional"/>
+        <xs:attribute name="nullable" type="xs:boolean" use="optional" default="true"/>
+        <xs:attribute name="primaryKey" type="xs:boolean" use="optional" default="false"/>
+        <xs:attribute name="autoIncrement" type="xs:boolean" use="optional" default="false"/>
+        <xs:attribute name="unique" type="xs:boolean" use="optional" default="false"/>
+        <xs:attribute name="defaultValue" type="xs:string" use="optional"/>
+        <xs:attribute name="comment" type="xs:string" use="optional"/>
+    </xs:complexType>
+
+    <!-- 数据类型枚举 -->
+    <xs:simpleType name="DataType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="INTEGER"/>
+            <xs:enumeration value="LONG"/>
+            <xs:enumeration value="DECIMAL"/>
+            <xs:enumeration value="BOOLEAN"/>
+            <xs:enumeration value="CHAR"/>
+            <xs:enumeration value="STRING"/>
+            <xs:enumeration value="TEXT"/>
+            <xs:enumeration value="BLOB"/>
+            <xs:enumeration value="DATETIME"/>
+            <xs:enumeration value="JSON"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- 字符集类型枚举 -->
+    <xs:simpleType name="CharsetType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="utf8"/>
+            <xs:enumeration value="utf8mb4"/>
+            <xs:enumeration value="latin1"/>
+            <xs:enumeration value="gbk"/>
+            <xs:enumeration value="binary"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- 排序规则类型枚举 -->
+    <xs:simpleType name="CollationType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="utf8_general_ci"/>
+            <xs:enumeration value="utf8mb4_general_ci"/>
+            <xs:enumeration value="latin1_swedish_ci"/>
+            <xs:enumeration value="gbk_chinese_ci"/>
+            <xs:enumeration value="binary"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- 存储引擎类型枚举 -->
+    <xs:simpleType name="EngineType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="InnoDB"/>
+            <xs:enumeration value="MyISAM"/>
+            <xs:enumeration value="Memory"/>
+            <xs:enumeration value="Archive"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- 索引集合类型定义 -->
+    <xs:complexType name="IndexesType">
+        <xs:sequence>
+            <xs:element name="index" type="IndexType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- 索引类型定义 -->
+    <xs:complexType name="IndexType">
+        <xs:sequence>
+            <xs:element name="columns" type="IndexColumnsType"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="xs:string" use="required"/>
+        <xs:attribute name="type" type="IndexTypeEnum" use="optional" default="NORMAL"/>
+        <xs:attribute name="comment" type="xs:string" use="optional"/>
+    </xs:complexType>
+
+    <!-- 索引类型枚举 -->
+    <xs:simpleType name="IndexTypeEnum">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="PRIMARY"/>
+            <xs:enumeration value="UNIQUE"/>
+            <xs:enumeration value="NORMAL"/>
+            <xs:enumeration value="FULLTEXT"/>
+            <xs:enumeration value="SPATIAL"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- 索引列集合类型定义 -->
+    <xs:complexType name="IndexColumnsType">
+        <xs:sequence>
+            <xs:element name="column" type="IndexColumnType" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- 索引列类型定义 -->
+    <xs:complexType name="IndexColumnType">
+        <xs:attribute name="name" type="xs:string" use="required"/>
+        <xs:attribute name="order" type="SortOrder" use="optional" default="ASC"/>
+        <xs:attribute name="length" type="xs:positiveInteger" use="optional"/>
+    </xs:complexType>
+
+    <!-- 排序顺序枚举 -->
+    <xs:simpleType name="SortOrder">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="ASC"/>
+            <xs:enumeration value="DESC"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- 关系集合类型定义 -->
+    <xs:complexType name="RelationsType">
+        <xs:sequence>
+            <xs:element name="relation" type="RelationType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- 关系类型定义 -->
+    <xs:complexType name="RelationType">
+        <xs:attribute name="name" type="xs:string" use="required"/>
+        <xs:attribute name="column" type="xs:string" use="required"/>
+        <xs:attribute name="referenceTable" type="xs:string" use="required"/>
+        <xs:attribute name="referenceColumn" type="xs:string" use="required"/>
+        <xs:attribute name="onDelete" type="ReferentialAction" use="optional" default="RESTRICT"/>
+        <xs:attribute name="onUpdate" type="ReferentialAction" use="optional" default="RESTRICT"/>
+        <xs:attribute name="comment" type="xs:string" use="optional"/>
+    </xs:complexType>
+
+    <!-- 引用动作枚举 -->
+    <xs:simpleType name="ReferentialAction">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="RESTRICT"/>
+            <xs:enumeration value="CASCADE"/>
+            <xs:enumeration value="SET NULL"/>
+            <xs:enumeration value="NO ACTION"/>
+            <xs:enumeration value="SET DEFAULT"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+</xs:schema>

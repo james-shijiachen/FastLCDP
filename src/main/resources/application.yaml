@@ -1,0 +1,89 @@
+# Spring Boot 应用配置
+spring:
+  application:
+    name: xml-table-generator
+  
+  # 数据源配置
+  datasource:
+    # 默认使用H2内存数据库进行测试
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+    
+    # MySQL数据库配置示例（取消注释并修改连接信息）
+    # url: jdbc:mysql://localhost:3306/your_database?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+    # driver-class-name: com.mysql.cj.jdbc.Driver
+    # username: your_username
+    # password: your_password
+    
+    # PostgreSQL数据库配置示例（取消注释并修改连接信息）
+    # url: jdbc:postgresql://localhost:5432/your_database
+    # driver-class-name: org.postgresql.Driver
+    # username: your_username
+    # password: your_password
+  
+  # JPA配置
+  jpa:
+    hibernate:
+      ddl-auto: none  # 不自动创建表，由我们的框架控制
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        # MySQL方言（使用MySQL时取消注释）
+        # dialect: org.hibernate.dialect.MySQL8Dialect
+        # PostgreSQL方言（使用PostgreSQL时取消注释）
+        # dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  
+  # 文件上传配置
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+  
+  # H2控制台配置（仅用于开发测试）
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        web-allow-others: true
+
+# 服务器配置
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+# 日志配置
+logging:
+  level:
+    com.fastlcp: DEBUG
+    org.springframework.jdbc: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/xml-table-generator.log
+
+# 管理端点配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+# 应用信息
+info:
+  app:
+    name: XML Table Generator
+    description: 基于XML解析生成数据表的Spring Boot框架
+    version: 1.0.0
+    author: FastLCP Team
