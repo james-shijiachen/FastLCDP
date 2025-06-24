@@ -1,4 +1,4 @@
-# FastLCP - XML Table Generator
+# FastLCDP - XML Table Generator
 
 一个基于Spring Boot的XML表定义解析和数据库表生成框架，支持多种数据库类型、表继承、XSD Schema验证和元数据管理。
 
@@ -34,7 +34,7 @@
 1. **克隆项目**
 ```bash
 git clone <repository-url>
-cd FastLCP
+cd FastLCDP
 ```
 
 2. **配置数据库**
@@ -347,8 +347,8 @@ GET /api/table-generator/status
 ```
 src/
 ├── main/
-│   ├── java/com/fastlcp/
-│   │   ├── FastLcpApplication.java             # 主应用类
+│   ├── java/com/fastlcdp/
+│   │   ├── FastLcdpApplication.java             # 主应用类
 │   │   ├── config/
 │   │   │   └── DatabaseConfig.java            # 数据库配置
 │   │   ├── controller/
@@ -388,7 +388,7 @@ src/
 │           ├── sample-database.xml            # 完整示例
 │           └── simple-example.xml             # 简单示例
 └── test/
-    ├── java/com/fastlcp/
+    ├── java/com/fastlcdp/
     │   ├── IntegrationTest.java               # 集成测试
     │   ├── SimpleSqlTest.java                 # 简单SQL测试
     │   ├── TestXmlParser.java                 # XML解析测试
@@ -502,4 +502,4 @@ A: 可以使用项目提供的验证工具：
 
 ---
 
-**FastLCP Team** - 让数据库表创建更简单！
+**FastLCDP Team** - 让数据库表创建更简单！

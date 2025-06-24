@@ -60,7 +60,7 @@ server:
 # 日志配置
 logging:
   level:
-    com.fastlcp: DEBUG
+    com.fastlcdp: DEBUG
     org.springframework.jdbc: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
@@ -86,4 +86,4 @@ info:
     name: XML Table Generator
     description: 基于XML解析生成数据表的Spring Boot框架
     version: 1.0.0
-    author: FastLCP Team
+    author: FastLCDP Team
