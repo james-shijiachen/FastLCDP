@@ -1,4 +1,6 @@
-# FastLCDP
+# FastLCDP - Fast Low-Code Database Platform
+
+[中文](README.zh.md) | **English**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/james-shijiachen/fastLCDP/blob/main/LICENSE)
 [![Java](https://img.shields.io/badge/Java-21+-blue.svg)](https://www.oracle.com/java/)
@@ -6,46 +8,48 @@
 [![GitHub Issues](https://img.shields.io/github/issues/james-shijiachen/fastLCDP)](https://github.com/james-shijiachen/fastLCDP/issues)
 [![GitHub Stars](https://img.shields.io/github/stars/james-shijiachen/fastLCDP)](https://github.com/james-shijiachen/fastLCDP/stargazers)
 
-一个基于Spring Boot的XML表定义解析和数据库表生成框架，支持多种数据库类型、表继承、XSD Schema验证和元数据管理。
+## Project Overview
 
-## 🚀 功能特性
+FastLCDP is a low-code database platform that allows developers to quickly generate database tables and SQL statements through XML configuration files. The platform supports multiple database types and provides rich features including table inheritance, field validation, index management, and foreign key relationships.
 
-### 核心功能
-- ✅ 解析XML格式的数据库表定义
-- ✅ 生成标准的DDL语句
-- ✅ 支持多种数据库类型（H2、MySQL、PostgreSQL、Oracle、SQL Server）
-- ✅ 提供REST API接口
-- ✅ 支持表结构验证
-- ✅ 元数据存储和管理
-- ✅ 数据库方言支持
-- ✅ **XSD Schema验证**: 提供完整的XML Schema定义和验证
-- ✅ **表继承功能**: 支持表结构继承，减少重复定义
-- ✅ **配置验证工具**: 提供XML配置验证和Schema生成工具
+## 🚀 Key Features
 
-### 高级功能
-- 🆕 **多数据库方言**: 根据配置生成不同数据库的SQL语句
-- 🆕 **元数据管理**: 将XML元数据保存到数据库中进行版本管理
-- 🆕 **表继承机制**: 支持多层次表继承，自动合并父表字段、索引和关系
-- 🆕 **XSD Schema**: 提供完整的XML Schema定义文件，支持IDE智能提示
-- 🆕 **验证工具集**: 包含XML配置验证、Schema生成等实用工具
+### Core Functionality
+- ✅ **XML-driven Configuration**: Parse XML format database table definitions
+- ✅ **Standard DDL Generation**: Generate standard DDL statements
+- ✅ **Multi-database Support**: Support multiple database types (H2, MySQL, PostgreSQL, Oracle, SQL Server)
+- ✅ **REST API Interface**: Provide REST API interfaces
+- ✅ **Table Structure Validation**: Support table structure validation
+- ✅ **Metadata Storage and Management**: Metadata storage and management
+- ✅ **Database Dialect Support**: Database dialect support
+- ✅ **XSD Schema Validation**: Provide complete XML Schema definition and validation
+- ✅ **Table Inheritance**: Support table structure inheritance, reduce duplicate definitions
+- ✅ **Configuration Validation Tools**: Provide XML configuration validation and Schema generation tools
 
-## 📋 环境要求
+### Advanced Features
+- 🆕 **Multi-database Dialects**: Generate SQL statements for different databases based on configuration
+- 🆕 **Metadata Management**: Save XML metadata to database for version management
+- 🆕 **Table Inheritance Mechanism**: Support multi-level table inheritance, automatically merge parent table fields, indexes and relationships
+- 🆕 **XSD Schema**: Provide complete XML Schema definition files, support IDE intelligent prompts
+- 🆕 **Validation Tool Set**: Include XML configuration validation, Schema generation and other practical tools
+
+## 📋 Environment Requirements
 
 - Java 21+
 - Maven 3.6+
 - Spring Boot 3.3+
 
-### 安装和运行
+### Installation and Setup
 
-1. **克隆项目**
+1. **Clone the Repository**
 ```bash
 git clone https://github.com/james-shijiachen/fastLCDP.git
 cd FastLCDP
 ```
 
-2. **配置数据库**
+2. **Configure Database**
 
-编辑 `src/main/resources/application.yml` 文件，配置数据库连接信息：
+Edit `src/main/resources/application.yml` file to configure database connection:
 
 ```yaml
 spring:
@@ -56,237 +60,237 @@ spring:
     password: your_password
 ```
 
-3. **编译和运行**
+3. **Build and Run**
 ```bash
 mvn clean install
 mvn spring-boot:run
 ```
 
-4. **访问应用**
-- 应用地址: http://localhost:8080
-- H2控制台 (开发环境): http://localhost:8080/h2-console
-- 健康检查: http://localhost:8080/api/table-generator/status
+4. **Access Application**
+- Application URL: http://localhost:8080
+- H2 Console (Development): http://localhost:8080/h2-console
+- Health Check: http://localhost:8080/api/table-generator/status
 
-## XML格式说明
+## XML Format Description
 
-### 基本结构
+### Basic Structure
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<database name="数据库名" version="版本" charset="字符集" comment="数据库注释">
+<database name="Database Name" version="Version" charset="Character Set" comment="Database Comment">
     <tables>
-        <table name="表名" comment="表注释" engine="存储引擎">
+        <table name="Table Name" comment="Table Comment" engine="Storage Engine">
             <fields>
-                <!-- 字段定义 -->
+                <!-- Field definitions -->
             </fields>
             <indexes>
-                <!-- 索引定义 -->
+                <!-- Index definitions -->
             </indexes>
             <relations>
-                <!-- 外键关联定义 -->
+                <!-- Foreign key relationship definitions -->
             </relations>
         </table>
     </tables>
 </database>
 ```
 
-### 字段定义
+### Field Definition
 
 ```xml
-<field name="字段名" 
-       type="字段类型" 
-       length="长度" 
-       scale="小数位数" 
-       nullable="是否允许为空" 
-       primaryKey="是否为主键" 
-       autoIncrement="是否自增" 
-       defaultValue="默认值" 
-       unique="是否唯一" 
-       comment="字段注释"/>
+<field name="Field Name" 
+       type="Field Type" 
+       length="Length" 
+       scale="Decimal Places" 
+       nullable="Allow Null" 
+       primaryKey="Is Primary Key" 
+       autoIncrement="Auto Increment" 
+       defaultValue="Default Value" 
+       unique="Is Unique" 
+       comment="Field Comment"/>
 ```
 
-**支持的字段类型:**
-- 整数类型: `INTEGER`, `LONG`
-- 浮点类型: `DECIMAL`
-- 字符串类型: `CHAR`, `STRING`, `TEXT`
-- 日期时间类型: `DATETIME`
-- 二进制类型: `BLOB`
-- 布尔类型: `BOOLEAN`
-- JSON类型: `JSON`
+**Supported Field Types:**
+- Integer Types: `INTEGER`, `LONG`
+- Floating Point Types: `DECIMAL`
+- String Types: `CHAR`, `STRING`, `TEXT`
+- Date/Time Types: `DATETIME`
+- Binary Types: `BLOB`
+- Boolean Types: `BOOLEAN`
+- JSON Types: `JSON`
 
-> 注意：字段类型必须严格按照XSD Schema定义使用，详见 `src/main/resources/database-schema.xsd`
+> Note: Field types must strictly follow XSD Schema definitions, see `src/main/resources/database-schema.xsd`
 
-### 索引定义
+### Index Definition
 
 ```xml
-<index name="索引名" type="索引类型" method="索引方法" comment="索引注释">
+<index name="Index Name" type="Index Type" method="Index Method" comment="Index Comment">
     <columns>
-        <column name="字段名" order="排序方向" length="索引长度"/>
+        <column name="Field Name" order="Sort Direction" length="Index Length"/>
     </columns>
 </index>
 ```
 
-**索引类型:**
-- `PRIMARY`: 主键索引
-- `UNIQUE`: 唯一索引
-- `NORMAL`: 普通索引
-- `FULLTEXT`: 全文索引
-- `SPATIAL`: 空间索引
+**Index Types:**
+- `PRIMARY`: Primary key index
+- `UNIQUE`: Unique index
+- `NORMAL`: Normal index
+- `FULLTEXT`: Full-text index
+- `SPATIAL`: Spatial index
 
-### 外键关联
+### Foreign Key Relationships
 
 ```xml
-<relation name="外键名" 
-          column="本表字段" 
-          referenceTable="引用表" 
-          referenceColumn="引用字段" 
-          onDelete="删除动作" 
-          onUpdate="更新动作" 
-          comment="关联注释"/>
+<relation name="Foreign Key Name" 
+          column="Local Table Field" 
+          referenceTable="Referenced Table" 
+          referenceColumn="Referenced Field" 
+          onDelete="Delete Action" 
+          onUpdate="Update Action" 
+          comment="Relationship Comment"/>
 ```
 
-**级联动作:**
-- `CASCADE`: 级联操作
-- `SET NULL`: 设置为NULL
-- `RESTRICT`: 限制操作
-- `NO ACTION`: 无动作
-- `SET DEFAULT`: 设置为默认值
+**Cascade Actions:**
+- `CASCADE`: Cascade operation
+- `SET NULL`: Set to NULL
+- `RESTRICT`: Restrict operation
+- `NO ACTION`: No action
+- `SET DEFAULT`: Set to default value
 
-### 表继承
+### Table Inheritance
 
 ```xml
-<table name="子表" extends="父表名" comment="继承示例">
-    <!-- 子表会自动继承父表的字段、索引和关联关系 -->
+<table name="Child Table" extends="Parent Table Name" comment="Inheritance Example">
+    <!-- Child table automatically inherits parent table fields, indexes and relationships -->
     <fields>
-        <!-- 可以添加子表特有的字段 -->
-        <field name="extra_field" type="STRING" length="100" comment="子表特有字段"/>
+        <!-- Can add child table specific fields -->
+        <field name="extra_field" type="STRING" length="100" comment="Child table specific field"/>
     </fields>
 </table>
 ```
 
-### XSD Schema验证
+### XSD Schema Validation
 
-项目提供了完整的XSD Schema定义文件 `src/main/resources/database-schema.xsd`，支持：
+The project provides complete XSD Schema definition file `src/main/resources/database-schema.xsd`, supporting:
 
-- **IDE智能提示**: 在支持XSD的IDE中编写XML时获得自动补全
-- **语法验证**: 实时检查XML配置的语法正确性
-- **类型约束**: 确保字段类型、索引类型等符合规范
+- **IDE Smart Prompts**: Get auto-completion when writing XML in XSD-supported IDEs
+- **Syntax Validation**: Real-time checking of XML configuration syntax correctness
+- **Type Constraints**: Ensure field types, index types etc. comply with specifications
 
-在XML文件中引用XSD Schema：
+Reference XSD Schema in XML files:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <database name="sample_db" version="1.0"
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:noNamespaceSchemaLocation="../database-schema.xsd">
-    <!-- 数据库定义 -->
+    <!-- Database definition -->
 </database>
 ```
 
-## API接口
+## API Interfaces
 
-### 1. 生成数据库表
+### 1. Generate Database Tables
 
 ```http
 POST /api/table-generator/generate
 Content-Type: multipart/form-data
 
-file: XML文件
+file: XML file
 ```
 
-**响应示例:**
+**Response Example:**
 ```json
 {
     "success": true,
-    "message": "成功生成 5 个表",
+    "message": "Successfully generated 5 tables",
     "databaseName": "sample_db",
     "tableCount": 5
 }
 ```
 
-### 2. 预览SQL语句
+### 2. Preview SQL Statements
 
 ```http
 POST /api/table-generator/preview
 Content-Type: multipart/form-data
 
-file: XML文件
+file: XML file
 ```
 
-**响应示例:**
+**Response Example:**
 ```json
 {
     "success": true,
-    "message": "SQL预览生成成功",
+    "message": "SQL preview generated successfully",
     "sql": "CREATE DATABASE IF NOT EXISTS `sample_db`...\nCREATE TABLE IF NOT EXISTS `user`...",
     "databaseName": "sample_db",
     "tableCount": 5
 }
 ```
 
-### 3. 验证XML格式
+### 3. Validate XML Format
 
 ```http
 POST /api/table-generator/validate
 Content-Type: multipart/form-data
 
-file: XML文件
+file: XML file
 ```
 
-**响应示例:**
+**Response Example:**
 ```json
 {
     "valid": true,
-    "message": "XML文件验证通过，包含 5 个表定义",
+    "message": "XML file validation passed, contains 5 table definitions",
     "databaseName": "sample_db",
     "tableCount": 5
 }
 ```
 
-### 4. 系统状态
+### 4. System Status
 
 ```http
 GET /api/table-generator/status
 ```
 
-**响应示例:**
+**Response Example:**
 ```json
 {
     "status": "running",
-    "message": "XML表生成器服务正常运行",
+    "message": "XML table generator service is running normally",
     "timestamp": 1703123456789
 }
 ```
 
-## 示例文件
+## Example Files
 
-项目提供了两个示例XML文件：
+The project provides two example XML files:
 
-1. **简单示例** (`examples/simple-example.xml`)
-   - 包含用户表和订单表
-   - 展示基本的字段定义和外键关联
+1. **Simple Example** (`examples/simple-example.xml`)
+   - Contains user and order tables
+   - Demonstrates basic field definitions and foreign key associations
 
-2. **完整示例** (`examples/sample-database.xml`)
-   - 包含用户权限管理系统的完整表结构
-   - 展示表继承、复杂索引、多种字段类型等高级功能
+2. **Complete Example** (`examples/sample-database.xml`)
+   - Contains complete table structure for user permission management system
+   - Demonstrates table inheritance, complex indexes, various field types and other advanced features
 
-## 使用示例
+## Usage Examples
 
-### 1. 定义一个简单的用户表
+### 1. Define a Simple User Table
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<database name="my_app" comment="我的应用数据库"
+<database name="my_app" comment="My Application Database"
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:noNamespaceSchemaLocation="../database-schema.xsd">
     <tables>
-        <table name="user" comment="用户表">
+        <table name="user" comment="User Table">
             <fields>
-                <field name="id" type="LONG" primaryKey="true" autoIncrement="true" comment="用户ID"/>
-                <field name="username" type="STRING" length="50" nullable="false" unique="true" comment="用户名"/>
-                <field name="email" type="STRING" length="100" nullable="false" comment="邮箱"/>
-                <field name="password" type="STRING" length="255" nullable="false" comment="密码"/>
-                <field name="created_at" type="DATETIME" defaultValue="CURRENT_TIMESTAMP" comment="创建时间"/>
+                <field name="id" type="LONG" primaryKey="true" autoIncrement="true" comment="User ID"/>
+                <field name="username" type="STRING" length="50" nullable="false" unique="true" comment="Username"/>
+                <field name="email" type="STRING" length="100" nullable="false" comment="Email"/>
+                <field name="password" type="STRING" length="255" nullable="false" comment="Password"/>
+                <field name="created_at" type="DATETIME" defaultValue="CURRENT_TIMESTAMP" comment="Creation Time"/>
             </fields>
             <indexes>
                 <index name="uk_username" type="UNIQUE">
@@ -305,7 +309,7 @@ GET /api/table-generator/status
 </database>
 ```
 
-### 2. 使用表继承
+### 2. Using Table Inheritance
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -313,30 +317,30 @@ GET /api/table-generator/status
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:noNamespaceSchemaLocation="../database-schema.xsd">
     <tables>
-        <!-- 基础实体表 -->
-        <table name="base_entity" comment="基础实体表">
+        <!-- Base Entity Table -->
+        <table name="base_entity" comment="Base Entity Table">
             <fields>
-                <field name="id" type="LONG" primaryKey="true" autoIncrement="true" comment="主键ID"/>
-                <field name="created_time" type="DATETIME" defaultValue="CURRENT_TIMESTAMP" comment="创建时间"/>
-                <field name="updated_time" type="DATETIME" defaultValue="CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" comment="更新时间"/>
-                <field name="is_deleted" type="BOOLEAN" defaultValue="0" comment="是否删除"/>
+                <field name="id" type="LONG" primaryKey="true" autoIncrement="true" comment="Primary Key ID"/>
+                <field name="created_time" type="DATETIME" defaultValue="CURRENT_TIMESTAMP" comment="Creation Time"/>
+                <field name="updated_time" type="DATETIME" defaultValue="CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" comment="Update Time"/>
+                <field name="is_deleted" type="BOOLEAN" defaultValue="0" comment="Is Deleted"/>
             </fields>
         </table>
         
-        <!-- 用户表继承基础实体表 -->
-        <table name="user" extends="base_entity" comment="用户表">
+        <!-- User Table Inherits Base Entity Table -->
+        <table name="user" extends="base_entity" comment="User Table">
             <fields>
-                <field name="username" type="STRING" length="50" nullable="false" comment="用户名"/>
-                <field name="email" type="STRING" length="100" nullable="false" comment="邮箱"/>
+                <field name="username" type="STRING" length="50" nullable="false" comment="Username"/>
+                <field name="email" type="STRING" length="100" nullable="false" comment="Email"/>
             </fields>
         </table>
         
-        <!-- 文章表也继承基础实体表 -->
-        <table name="article" extends="base_entity" comment="文章表">
+        <!-- Article Table Also Inherits Base Entity Table -->
+        <table name="article" extends="base_entity" comment="Article Table">
             <fields>
-                <field name="title" type="STRING" length="200" nullable="false" comment="标题"/>
-                <field name="content" type="TEXT" comment="内容"/>
-                <field name="author_id" type="LONG" nullable="false" comment="作者ID"/>
+                <field name="title" type="STRING" length="200" nullable="false" comment="Title"/>
+                <field name="content" type="TEXT" comment="Content"/>
+                <field name="author_id" type="LONG" nullable="false" comment="Author ID"/>
             </fields>
             <relations>
                 <relation name="fk_article_author" column="author_id" referenceTable="user" referenceColumn="id" onDelete="CASCADE" onUpdate="CASCADE"/>
@@ -346,166 +350,168 @@ GET /api/table-generator/status
 </database>
 ```
 
-## 开发指南
+## Development Guide
 
-### 项目结构
+### Project Structure
 
 ```
-examples/                                      # 示例文件
-├── sample-database.xml                        # 完整示例
-└── simple-example.xml                         # 简单示例
+examples/                                      # Example files
+├── sample-database.xml                        # Complete example
+└── simple-example.xml                         # Simple example
 src/
 ├── main/
-│   ├── java/com/fastlcdp/
-│   │   ├── FastLcdpApplication.java             # 主应用类
+│   ├── java/cn/com/traninfo/fastlcdp/
+│   │   ├── FastLcdpApplication.java             # Main application class
 │   │   ├── config/
-│   │   │   └── DatabaseConfig.java            # 数据库配置
+│   │   │   └── DatabaseConfig.java            # Database configuration
 │   │   ├── controller/
-│   │   │   └── TableGeneratorController.java  # REST控制器
-│   │   ├── dialect/                           # 数据库方言支持
-│   │   │   ├── AbstractDatabaseDialect.java   # 抽象方言基类
-│   │   │   ├── DatabaseDialect.java           # 方言接口
-│   │   │   ├── DatabaseDialectFactory.java    # 方言工厂
-│   │   │   ├── H2Dialect.java                 # H2数据库方言
-│   │   │   ├── MySQLDialect.java              # MySQL数据库方言
-│   │   │   ├── OracleDialect.java             # Oracle数据库方言
-│   │   │   ├── PostgreSQLDialect.java         # PostgreSQL数据库方言
-│   │   │   └── SqlServerDialect.java          # SQL Server数据库方言
+│   │   │   └── TableGeneratorController.java  # REST controller
+│   │   ├── dialect/                           # Database dialect support
+│   │   │   ├── AbstractDatabaseDialect.java   # Abstract dialect base class
+│   │   │   ├── DatabaseDialect.java           # Dialect interface
+│   │   │   ├── DatabaseDialectFactory.java    # Dialect factory
+│   │   │   ├── H2Dialect.java                 # H2 database dialect
+│   │   │   ├── MySQLDialect.java              # MySQL database dialect
+│   │   │   ├── OracleDialect.java             # Oracle database dialect
+│   │   │   ├── PostgreSQLDialect.java         # PostgreSQL database dialect
+│   │   │   └── SqlServerDialect.java          # SQL Server database dialect
 │   │   ├── model/
-│   │   │   ├── DatabaseSchema.java            # 数据库模式模型
-│   │   │   ├── FieldDefinition.java           # 字段定义模型
-│   │   │   ├── IndexDefinition.java           # 索引定义模型
-│   │   │   ├── MetadataEntity.java            # 元数据实体
-│   │   │   ├── RelationDefinition.java        # 关联定义模型
-│   │   │   └── TableDefinition.java           # 表定义模型
+│   │   │   ├── DatabaseSchema.java            # Database schema model
+│   │   │   ├── FieldDefinition.java           # Field definition model
+│   │   │   ├── IndexDefinition.java           # Index definition model
+│   │   │   ├── MetadataEntity.java            # Metadata entity
+│   │   │   ├── RelationDefinition.java        # Relation definition model
+│   │   │   └── TableDefinition.java           # Table definition model
 │   │   ├── repository/
-│   │   │   └── MetadataRepository.java        # 元数据仓库
+│   │   │   └── MetadataRepository.java        # Metadata repository
 │   │   ├── service/
-│   │   │   ├── DatabaseExecutorService.java   # 数据库执行服务
-│   │   │   ├── MetadataService.java           # 元数据管理服务
-│   │   │   ├── SqlGeneratorService.java       # SQL生成服务
-│   │   │   ├── TableGeneratorService.java     # 核心业务服务
-│   │   │   └── XmlParserService.java          # XML解析服务
+│   │   │   ├── DatabaseExecutorService.java   # Database execution service
+│   │   │   ├── MetadataService.java           # Metadata management service
+│   │   │   ├── SqlGeneratorService.java       # SQL generation service
+│   │   │   ├── TableGeneratorService.java     # Core business service
+│   │   │   └── XmlParserService.java          # XML parsing service
 │   │   └── util/
-│   │       ├── XmlConfigValidator.java        # XML配置验证器
-│   │       ├── XmlSchemaGenerator.java        # XSD Schema生成器
-│   │       └── XmlSchemaValidator.java        # XSD Schema验证器
+│   │       ├── XmlConfigValidator.java        # XML configuration validator
+│   │       ├── XmlSchemaGenerator.java        # XSD Schema generator
+│   │       └── XmlSchemaValidator.java        # XSD Schema validator
 │   └── resources/
-│       ├── application.yaml                   # 应用配置
-│       └── database-schema.xsd                # XSD Schema定义
+│       ├── application.yaml                   # Application configuration
+│       └── database-schema.xsd                # XSD Schema definition
 └── test/
-    ├── java/com/fastlcdp/
-    │   ├── IntegrationTest.java               # 集成测试
-    │   ├── SimpleSqlTest.java                 # 简单SQL测试
-    │   ├── TestXmlParser.java                 # XML解析测试
-    │   ├── example/                           # 示例和演示代码
-    │   │   ├── XmlSchemaValidationDemo.java   # Schema验证演示
-    │   │   └── XmlValidationExample.java      # 验证示例
+    ├── java/cn/com/traninfo/fastlcdp/
+    │   ├── IntegrationTest.java               # Integration tests
+    │   ├── SimpleSqlTest.java                 # Simple SQL tests
+    │   ├── TestXmlParser.java                 # XML parsing tests
+    │   ├── example/                           # Example and demo code
+    │   │   ├── XmlSchemaValidationDemo.java   # Schema validation demo
+    │   │   └── XmlValidationExample.java      # Validation example
     │   ├── service/
-    │   │   ├── InheritanceTest.java           # 表继承测试
-    │   │   ├── SqlGeneratorServiceTest.java   # SQL生成测试
-    │   │   └── XmlParserServiceTest.java      # XML解析测试
+    │   │   ├── InheritanceTest.java           # Table inheritance tests
+    │   │   ├── SqlGeneratorServiceTest.java   # SQL generation tests
+    │   │   └── XmlParserServiceTest.java      # XML parsing tests
     │   └── util/
-    │       └── XmlSchemaValidatorTest.java    # Schema验证器测试
+    │       └── XmlSchemaValidatorTest.java    # Schema validator tests
     └── resources/
-        ├── application-test.yaml              # 测试配置
-        ├── test-inheritance.xml               # 继承测试文件
-        └── test-schema.xml                    # Schema测试文件
+        ├── application-test.yaml              # Test configuration
+        ├── test-inheritance.xml               # Inheritance test file
+        └── test-schema.xml                    # Schema test file
 ```
 
-### 扩展开发
+## Testing
 
-1. **添加新的字段类型支持**
-   - 修改 `src/main/resources/database-schema.xsd` 中的 `DataType` 枚举
-   - 更新各数据库方言类中的类型映射
-   - 添加相应的测试用例
+### Extension Development
 
-2. **支持新的数据库类型**
-   - 继承 `AbstractDatabaseDialect` 创建新的方言类
-   - 在 `DatabaseDialectFactory` 中注册新方言
-   - 实现特定数据库的SQL生成逻辑
+1. **Adding New Field Type Support**
+   - Modify the `DataType` enum in `src/main/resources/database-schema.xsd`
+   - Update type mappings in various database dialect classes
+   - Add corresponding test cases
 
-3. **添加新的索引类型**
-   - 修改 `database-schema.xsd` 中的 `IndexType` 枚举
-   - 更新 `IndexDefinition` 模型
-   - 在各方言类中实现新索引类型的SQL生成
+2. **Supporting New Database Types**
+   - Inherit from `AbstractDatabaseDialect` to create new dialect classes
+   - Register new dialects in `DatabaseDialectFactory`
+   - Implement database-specific SQL generation logic
 
-4. **扩展XSD Schema**
-   - 修改 `database-schema.xsd` 添加新元素或属性
-   - 更新相应的模型类
-   - 运行 `XmlSchemaValidatorTest` 确保兼容性
+3. **Adding New Index Types**
+   - Modify the `IndexType` enum in `database-schema.xsd`
+   - Update the `IndexDefinition` model
+   - Implement SQL generation for new index types in dialect classes
 
-5. **添加验证规则**
-   - 扩展 `XmlConfigValidator` 添加自定义验证逻辑
-   - 在 `XmlSchemaValidator` 中添加业务规则验证
+4. **Extending XSD Schema**
+   - Modify `database-schema.xsd` to add new elements or attributes
+   - Update corresponding model classes
+   - Run `XmlSchemaValidatorTest` to ensure compatibility
 
-## 测试
+5. **Adding Validation Rules**
+   - Extend `XmlConfigValidator` to add custom validation logic
+   - Add business rule validation in `XmlSchemaValidator`
 
-### 运行单元测试
+## Testing
+
+### Run Unit Tests
 
 ```bash
 mvn test
 ```
 
-### 运行集成测试
+### Run Integration Tests
 
 ```bash
 mvn verify
 ```
 
-### 测试覆盖率
+### Test Coverage
 
 ```bash
 mvn jacoco:report
 ```
 
-## 常见问题
+## FAQ
 
-### Q: 如何处理表名或字段名的关键字冲突？
-A: 框架会自动为所有表名和字段名添加反引号(`)，避免与数据库关键字冲突。
+### Q: How to handle keyword conflicts with table or field names?
+A: The framework automatically adds backticks (`) to all table and field names to avoid conflicts with database keywords.
 
-### Q: 支持哪些数据库？
-A: 目前支持H2、MySQL、PostgreSQL、Oracle和SQL Server。通过数据库方言机制，可以轻松扩展支持其他数据库。
+### Q: Which databases are supported?
+A: Currently supports H2, MySQL, PostgreSQL, Oracle, and SQL Server. Through the database dialect mechanism, support for other databases can be easily extended.
 
-### Q: 如何处理大型XML文件？
-A: 框架使用流式解析，可以处理较大的XML文件。建议单个文件不超过10MB。
+### Q: How to handle large XML files?
+A: The framework uses streaming parsing and can handle relatively large XML files. It's recommended that single files don't exceed 10MB.
 
-### Q: 表继承的深度有限制吗？
-A: 理论上没有限制，但建议继承深度不超过3层，以保持结构清晰。支持多层继承和字段、索引、关系的自动合并。
+### Q: Is there a limit to table inheritance depth?
+A: Theoretically no limit, but it's recommended to keep inheritance depth under 3 levels for structural clarity. Supports multi-level inheritance and automatic merging of fields, indexes, and relationships.
 
-### Q: 如何备份现有数据？
-A: 框架只创建表结构，不会删除现有数据。建议在生产环境使用前先备份数据库。
+### Q: How to backup existing data?
+A: The framework only creates table structures and won't delete existing data. It's recommended to backup the database before using in production environments.
 
-### Q: XSD Schema验证失败怎么办？
-A: 检查XML文件中的字段类型、索引类型等是否符合 `database-schema.xsd` 中的定义。常见问题包括使用了不支持的数据类型（如 `VARCHAR` 应改为 `STRING`）或排序规则（如 `utf8mb4_unicode_ci` 应改为 `utf8mb4_general_ci`）。
+### Q: What to do when XSD Schema validation fails?
+A: Check if field types, index types, etc. in the XML file conform to definitions in `database-schema.xsd`. Common issues include using unsupported data types (e.g., `VARCHAR` should be changed to `STRING`) or collations (e.g., `utf8mb4_unicode_ci` should be changed to `utf8mb4_general_ci`).
 
-### Q: 如何在IDE中获得XML智能提示？
-A: 在XML文件中添加XSD引用：`xsi:noNamespaceSchemaLocation="../database-schema.xsd"`，大多数现代IDE都会自动提供智能提示和语法检查。
+### Q: How to get XML intelligent hints in IDE?
+A: Add XSD reference in XML files: `xsi:noNamespaceSchemaLocation="../database-schema.xsd"`. Most modern IDEs will automatically provide intelligent hints and syntax checking.
 
-### Q: 如何验证XML配置的正确性？
-A: 可以使用项目提供的验证工具：
-   - 运行 `XmlSchemaValidationDemo` 进行快速验证
-   - 使用 `XmlSchemaValidator` 类进行编程验证
-   - 通过REST API的 `/validate` 端点进行在线验证
+### Q: How to validate XML configuration correctness?
+A: You can use the validation tools provided by the project:
+   - Run `XmlSchemaValidationDemo` for quick validation
+   - Use `XmlSchemaValidator` class for programmatic validation
+   - Use the `/validate` endpoint of the REST API for online validation
 
-## 贡献指南
+## Contributing
 
-1. Fork 项目
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 打开 Pull Request
+1. Fork the project
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-## 许可证
+## License
 
-本项目采用 MIT 许可证 - 查看 [LICENSE](https://github.com/james-shijiachen/fastLCDP/blob/main/LICENSE) 文件了解详情。
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/james-shijiachen/fastLCDP/blob/main/LICENSE) file for details.
 
-## 联系方式
+## Contact
 
-- 项目主页: [https://github.com/james-shijiachen/fastLCDP](https://github.com/james-shijiachen/fastLCDP)
-- 问题反馈: [https://github.com/james-shijiachen/fastLCDP/issues](https://github.com/james-shijiachen/fastLCDP/issues)
-- 邮箱: [shijiachen@traninfo.com.cn](mailto:shijiachen@traninfo.com.cn)
+- Project Homepage: [https://github.com/james-shijiachen/fastLCDP](https://github.com/james-shijiachen/fastLCDP)
+- Issue Reports: [https://github.com/james-shijiachen/fastLCDP/issues](https://github.com/james-shijiachen/fastLCDP/issues)
+- Email: [shijiachen@traninfo.com.cn](mailto:shijiachen@traninfo.com.cn)
 
 ---
 
-**FastLCDP Team** - 让数据库表创建更简单！
+**FastLCDP Team** - Making database table creation easier! 🚀

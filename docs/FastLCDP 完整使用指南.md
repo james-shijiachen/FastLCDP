@@ -132,15 +132,17 @@ FastLCDP 是一个基于XML配置的数据库表结构生成工具，支持通�
 | charset | CharsetType | 否 | 表字符集，未设置时继承数据库默认值 | `utf8mb4` |
 | collation | CollationType | 否 | 表排序规则，未设置时继承数据库默认值 | `utf8mb4_general_ci` |
 
-### 配置继承机制
-
-#### Engine和Charset继承
-
-`engine`和`charset`属性支持从数据库级别继承到表级别：
-
-1. **表级别优先**：如果表定义中明确设置了`engine`或`charset`属性，则使用表级别的配置
-2. **数据库级别继承**：如果表定义中没有设置`engine`或`charset`属性，则自动继承数据库级别的默认配置
-3. **系统默认值**：如果数据库和表都没有设置，则使用系统默认值（`engine=InnoDB`, `charset=utf8mb4`）
+### 属性继承规则
+采用三级继承体系：
+```mermaid
+flowchart TD
+    A[系统默认值] --> B[数据库级配置]
+    B --> C[表级配置]
+    style C fill:#f9f,stroke:#333
+```
+- 生效顺序：表级 > 数据库级 > 系统级
+- 自动继承未显式声明的属性
+- 支持`engine/charset/collation`三属性继承
 
 #### 继承示例
 
@@ -165,17 +167,42 @@ FastLCDP 是一个基于XML配置的数据库表结构生成工具，支持通�
 </database>
 ```
 
-### 表继承功能
+## 表继承功能详解
 
-表继承是FastLCDP的核心功能之一，允许子表自动继承父表的字段、索引和关系定义。
+### 三级继承体系
+采用「元数据层→业务基类→具体业务表」结构：
+1. **元数据层**：定义审计字段（create/update相关）
+2. **业务基类**：添加状态/排序等通用字段
+3. **业务表**：实现具体业务逻辑字段
 
-#### 继承规则
+### 继承规则
+| 继承要素 | 处理方式 |
+|----------|----------|
+| 字段     | 合并去重，子表优先 |
+| 索引     | 全量继承，自动命名 |
+| 外键     | 级联继承，自动约束 |
 
-1. **字段继承**：子表会继承父表的所有字段，父表字段会插入到子表字段列表的前面
-2. **索引继承**：子表会继承父表的所有索引定义
-3. **关系继承**：子表会继承父表的所有外键关系
-4. **循环检测**：系统会自动检测并防止循环继承
-5. **多层继承**：支持多层继承，建议不超过3层
+### 企业级示例
+```xml
+<!-- 多层继承结构 -->
+<table name="base_audit" comment="审计基表">
+    <fields>
+        <field name="created_by" type="LONG" comment="创建人ID"/>
+        <field name="updated_by" type="LONG" comment="更新人ID"/>
+    </fields>
+</table>
+
+<table name="biz_entity" extends="base_audit" comment="业务基表">
+    <fields>
+        <field name="data_status" type="SMALLINT" comment="数据状态"/>
+    </fields>
+</table>
+
+<table name="account" extends="biz_entity" comment="账户表">
+    <fields>
+        <field name="account_no" type="STRING" length=32 comment="账号"/>
+    </fields>
+</table>
 
 #### 继承示例
 
@@ -1408,7 +1435,7 @@ src/main/java/com/fastlcdp/
 ### XmlSchemaValidator 类
 
 ```java
-package com.fastlcdp.util;
+package cn.com.traninfo.fastlcdp.util;
 
 import org.xml.sax.SAXException;
 
@@ -1570,9 +1597,9 @@ public class XmlSchemaValidator {
 #### 1. 基本校验示例
 
 ```java
-package com.fastlcdp.example;
+package cn.com.traninfo.fastlcdp.example;
 
-import com.fastlcdp.util.XmlSchemaValidator;
+import cn.com.traninfo.fastlcdp.util.XmlSchemaValidator;
 import org.xml.sax.SAXException;
 
 import java.io.File;
@@ -1788,10 +1815,10 @@ cvc-complex-type.2.4.a: Invalid content was found starting with element 'databas
 mvn compile
 
 # 运行校验示例
-mvn exec:java -Dexec.mainClass="com.fastlcdp.example.XmlValidationExample"
+mvn exec:java -Dexec.mainClass="cn.com.traninfo.fastlcdp.example.XmlValidationExample"
 
 # 或者直接运行Java类
-java -cp target/classes com.fastlcdp.example.XmlValidationExample
+java -cp target/classes cn.com.traninfo.fastlcdp.example.XmlValidationExample
 ```
 
 ### 预期输出
@@ -1864,7 +1891,7 @@ XML校验失败，错误信息:
                 <goal>java</goal>
             </goals>
             <configuration>
-                <mainClass>com.fastlcdp.example.XmlValidationExample</mainClass>
+                <mainClass>cn.com.traninfo.fastlcdp.example.XmlValidationExample</mainClass>
             </configuration>
         </execution>
     </executions>

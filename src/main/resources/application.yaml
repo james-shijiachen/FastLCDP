@@ -51,6 +51,18 @@ spring:
       settings:
         web-allow-others: true
 
+# SpringDoc配置
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+    custom-css-url: /css/swagger-custom.css
+    custom-js-url: /js/swagger-custom.js
+  packages-to-scan: cn.com.traninfo.fastlcdp.controller
+
 # 服务器配置
 server:
   port: 8080

@@ -49,7 +49,7 @@
             </indexes>
         
             <relations>
-                <relation name="fk_user_profiles_user_id" column="user_id" reference_table="users" reference_column="id" on_delete="CASCADE" on_update="CASCADE"/>
+                <relation name="fk_user_profiles_user_id" column="user_id" referenceTable="users" referenceColumn="id" onDelete="CASCADE" onUpdate="CASCADE"/>
             </relations>
         </table>
     
@@ -82,7 +82,7 @@
             </indexes>
         
             <relations>
-                <relation name="fk_posts_user_id" column="user_id" reference_table="users" reference_column="id" on_delete="CASCADE" on_update="CASCADE"/>
+                <relation name="fk_posts_user_id" column="user_id" referenceTable="users" referenceColumn="id" onDelete="CASCADE" onUpdate="CASCADE"/>
             </relations>
         </table>
     </tables>

@@ -24,6 +24,10 @@ buildNumber.properties
 logs/
 *.log
 
+# Generated SQL files
+sqls/
+*.sql
+
 # OS
 .DS_Store
 .DS_Store?

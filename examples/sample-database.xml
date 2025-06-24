@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <database name="sample_db" version="1.0" charset="utf8mb4" collation="utf8mb4_general_ci" comment="示例数据库"
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xsi:noNamespaceSchemaLocation="../database-schema.xsd">
+          xsi:noNamespaceSchemaLocation="../src/main/resources/database-schema.xsd">
     <tables>
         <!-- 基础用户表 -->
         <table name="base_user" comment="基础用户表" engine="InnoDB" charset="utf8mb4">

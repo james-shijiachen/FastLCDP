@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <database name="simple_db" version="1.0" comment="简单示例数据库"
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xsi:noNamespaceSchemaLocation="../database-schema.xsd">
+          xsi:noNamespaceSchemaLocation="../src/main/resources/database-schema.xsd">
     <tables>
         <!-- 用户表 -->
         <table name="user" comment="用户表">
