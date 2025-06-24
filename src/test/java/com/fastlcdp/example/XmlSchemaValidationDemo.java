@@ -18,10 +18,10 @@ public class XmlSchemaValidationDemo {
         XmlSchemaValidationDemo demo = new XmlSchemaValidationDemo();
         
         // 验证sample-database.xml
-        demo.validateXmlFile("src/main/resources/examples/sample-database.xml", "示例数据库XML");
+        demo.validateXmlFile("examples/sample-database.xml", "示例数据库XML");
         
         // 验证simple-example.xml
-        demo.validateXmlFile("src/main/resources/examples/simple-example.xml", "简单示例XML");
+        demo.validateXmlFile("examples/simple-example.xml", "简单示例XML");
     }
     
     /**

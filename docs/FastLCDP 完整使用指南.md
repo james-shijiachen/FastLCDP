@@ -1585,7 +1585,7 @@ public class XmlValidationExample {
             XmlSchemaValidator validator = new XmlSchemaValidator();
             
             // 校验XML文件
-            File xmlFile = new File("src/main/resources/examples/sample-database.xml");
+            File xmlFile = new File("examples/sample-database.xml");
             XmlSchemaValidator.ValidationResult result = validator.validate(xmlFile);
             
             // 输出校验结果

@@ -262,11 +262,11 @@ GET /api/table-generator/status
 
 项目提供了两个示例XML文件：
 
-1. **简单示例** (`src/main/resources/examples/simple-example.xml`)
+1. **简单示例** (`examples/simple-example.xml`)
    - 包含用户表和订单表
    - 展示基本的字段定义和外键关联
 
-2. **完整示例** (`src/main/resources/examples/sample-database.xml`)
+2. **完整示例** (`examples/sample-database.xml`)
    - 包含用户权限管理系统的完整表结构
    - 展示表继承、复杂索引、多种字段类型等高级功能
 
@@ -351,6 +351,9 @@ GET /api/table-generator/status
 ### 项目结构
 
 ```
+examples/                                      # 示例文件
+├── sample-database.xml                        # 完整示例
+└── simple-example.xml                         # 简单示例
 src/
 ├── main/
 │   ├── java/com/fastlcdp/
@@ -389,10 +392,7 @@ src/
 │   │       └── XmlSchemaValidator.java        # XSD Schema验证器
 │   └── resources/
 │       ├── application.yaml                   # 应用配置
-│       ├── database-schema.xsd                # XSD Schema定义
-│       └── examples/                          # 示例文件
-│           ├── sample-database.xml            # 完整示例
-│           └── simple-example.xml             # 简单示例
+│       └── database-schema.xsd                # XSD Schema定义
 └── test/
     ├── java/com/fastlcdp/
     │   ├── IntegrationTest.java               # 集成测试
