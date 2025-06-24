@@ -1,4 +1,10 @@
-# FastLCP - XML Table Generator
+# FastLCDP
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/james-shijiachen/fastLCDP/blob/main/LICENSE)
+[![Java](https://img.shields.io/badge/Java-21+-blue.svg)](https://www.oracle.com/java/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3+-green.svg)](https://spring.io/projects/spring-boot)
+[![GitHub Issues](https://img.shields.io/github/issues/james-shijiachen/fastLCDP)](https://github.com/james-shijiachen/fastLCDP/issues)
+[![GitHub Stars](https://img.shields.io/github/stars/james-shijiachen/fastLCDP)](https://github.com/james-shijiachen/fastLCDP/stargazers)
 
 一个基于Spring Boot的XML表定义解析和数据库表生成框架，支持多种数据库类型、表继承、XSD Schema验证和元数据管理。
 
@@ -33,8 +39,8 @@
 
 1. **克隆项目**
 ```bash
-git clone <repository-url>
-cd FastLCP
+git clone https://github.com/james-shijiachen/fastLCDP.git
+cd FastLCDP
 ```
 
 2. **配置数据库**
@@ -347,8 +353,8 @@ GET /api/table-generator/status
 ```
 src/
 ├── main/
-│   ├── java/com/fastlcp/
-│   │   ├── FastLcpApplication.java             # 主应用类
+│   ├── java/com/fastlcdp/
+│   │   ├── FastLcdpApplication.java             # 主应用类
 │   │   ├── config/
 │   │   │   └── DatabaseConfig.java            # 数据库配置
 │   │   ├── controller/
@@ -388,7 +394,7 @@ src/
 │           ├── sample-database.xml            # 完整示例
 │           └── simple-example.xml             # 简单示例
 └── test/
-    ├── java/com/fastlcp/
+    ├── java/com/fastlcdp/
     │   ├── IntegrationTest.java               # 集成测试
     │   ├── SimpleSqlTest.java                 # 简单SQL测试
     │   ├── TestXmlParser.java                 # XML解析测试
@@ -492,14 +498,14 @@ A: 可以使用项目提供的验证工具：
 
 ## 许可证
 
-本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
+本项目采用 MIT 许可证 - 查看 [LICENSE](https://github.com/james-shijiachen/fastLCDP/blob/main/LICENSE) 文件了解详情。
 
 ## 联系方式
 
-- 项目主页: [GitHub Repository]
-- 问题反馈: [GitHub Issues]
-- 邮箱: [your-email@example.com]
+- 项目主页: [https://github.com/james-shijiachen/fastLCDP](https://github.com/james-shijiachen/fastLCDP)
+- 问题反馈: [https://github.com/james-shijiachen/fastLCDP/issues](https://github.com/james-shijiachen/fastLCDP/issues)
+- 邮箱: [shijiachen@traninfo.com.cn](mailto:shijiachen@traninfo.com.cn)
 
 ---
 
-**FastLCP Team** - 让数据库表创建更简单！
+**FastLCDP Team** - 让数据库表创建更简单！
