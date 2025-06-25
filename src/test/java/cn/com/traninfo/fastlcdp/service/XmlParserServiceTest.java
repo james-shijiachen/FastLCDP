@@ -5,6 +5,7 @@ import cn.com.traninfo.fastlcdp.model.TableDefinition;
 import cn.com.traninfo.fastlcdp.service.XmlParserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import jakarta.xml.bind.JAXBException;
@@ -20,11 +21,12 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(classes = cn.com.traninfo.fastlcdp.FastLcdpApplication.class)
 class XmlParserServiceTest {
     
+    @Autowired
     private XmlParserService xmlParserService;
     
     @BeforeEach
-    void setUp() throws JAXBException {
-        xmlParserService = new XmlParserService();
+    void setUp() {
+        // 移除手动创建实例的代码，使用Spring注入的实例
     }
     
     @Test

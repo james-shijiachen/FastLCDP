@@ -1,57 +1,63 @@
-# Spring Boot 应用配置
+# Spring Boot Application Configuration
 spring:
   application:
-    name: xml-table-generator
-  
-  # 数据源配置
+    name: fastlcdp
+
+  # Internationalization Configuration
+  messages:
+    basename: messages
+    encoding: UTF-8
+    cache-duration: 3600
+
+  # Data Source Configuration
   datasource:
-    # 默认使用H2内存数据库进行测试
+    # Default H2 in-memory database for testing
     url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     driver-class-name: org.h2.Driver
     username: sa
-    password: 
-    
-    # MySQL数据库配置示例（取消注释并修改连接信息）
-    # url: jdbc:mysql://localhost:3306/your_database?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+    password:
+
+    # MySQL Database Configuration Example (uncomment and modify connection info)
+    # url: jdbc:mysql://localhost:3306/fastlcdp?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
     # driver-class-name: com.mysql.cj.jdbc.Driver
-    # username: your_username
-    # password: your_password
-    
-    # PostgreSQL数据库配置示例（取消注释并修改连接信息）
-    # url: jdbc:postgresql://localhost:5432/your_database
+    # username: root
+    # password: password
+
+    # PostgreSQL Database Configuration Example (uncomment and modify connection info)
+    # url: jdbc:postgresql://localhost:5432/fastlcdp
     # driver-class-name: org.postgresql.Driver
-    # username: your_username
-    # password: your_password
-  
-  # JPA配置
+    # username: postgres
+    # password: password
+
+  # JPA Configuration
   jpa:
     hibernate:
-      ddl-auto: none  # 不自动创建表，由我们的框架控制
+      ddl-auto: none  # Do not auto-create tables, controlled by our framework
     show-sql: true
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.H2Dialect
-        # MySQL方言（使用MySQL时取消注释）
-        # dialect: org.hibernate.dialect.MySQL8Dialect
-        # PostgreSQL方言（使用PostgreSQL时取消注释）
-        # dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
-  
-  # 文件上传配置
+        # MySQL Dialect (uncomment when using MySQL)
+        # dialect: org.hibernate.dialect.MySQL8Dialect
+        # PostgreSQL Dialect (uncomment when using PostgreSQL)
+        # dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  # File Upload Configuration
   servlet:
     multipart:
       max-file-size: 10MB
       max-request-size: 10MB
-  
-  # H2控制台配置（仅用于开发测试）
+
+  # H2 Console Configuration (for development and testing only)
   h2:
     console:
       enabled: true
       path: /h2-console
       settings:
         web-allow-others: true
+        trace: false
 
-# SpringDoc配置
+# SpringDoc Configuration
 springdoc:
   api-docs:
     path: /api-docs
@@ -59,30 +65,49 @@ springdoc:
     path: /swagger-ui.html
     tags-sorter: alpha
     operations-sorter: alpha
-    custom-css-url: /css/swagger-custom.css
-    custom-js-url: /js/swagger-custom.js
   packages-to-scan: cn.com.traninfo.fastlcdp.controller
+  paths-to-match: /api/**
 
-# 服务器配置
+# Server Configuration
 server:
   port: 8080
   servlet:
     context-path: /
+  # Undertow 优化配置
+  undertow:
+    # IO线程数，通常设置为CPU核心数
+    io-threads: 4
+    # 工作线程数，通常设置为IO线程数的8倍
+    worker-threads: 32
+    # 缓冲区大小
+    buffer-size: 1024
+    # 每个区域的缓冲区数量
+    # 已弃用的配置，建议使用 server.undertow.buffer-pool-size 替代
+    buffer-pool-size: 1024
+    # 直接缓冲区
+    direct-buffers: true
+    # 访问日志
+    accesslog:
+      enabled: false
+      dir: logs
+      pattern: combined
+      prefix: access_log
+      suffix: .log
 
-# 日志配置
+# Logging Configuration
 logging:
   level:
-    com.fastlcdp: DEBUG
-    org.springframework.jdbc: DEBUG
+    cn.com.traninfo.fastlcdp: DEBUG
+    org.springframework.web: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
   file:
-    name: logs/xml-table-generator.log
+    name: logs/fastlcdp.log
 
-# 管理端点配置
+# Management Endpoints Configuration
 management:
   endpoints:
     web:
@@ -90,12 +115,11 @@ management:
         include: health,info,metrics
   endpoint:
     health:
-      show-details: always
+      show-details: when-authorized
 
-# 应用信息
+# Application Information
 info:
   app:
-    name: XML Table Generator
-    description: 基于XML解析生成数据表的Spring Boot框架
+    name: FastLCDP
+    description: Spring Boot framework for generating database tables based on XML parsing
     version: 1.0.0
-    author: FastLCDP Team

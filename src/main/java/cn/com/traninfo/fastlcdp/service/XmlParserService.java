@@ -2,7 +2,9 @@ package cn.com.traninfo.fastlcdp.service;
 
 import cn.com.traninfo.fastlcdp.model.DatabaseSchema;
 import cn.com.traninfo.fastlcdp.model.TableDefinition;
+import cn.com.traninfo.fastlcdp.util.MessageUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import jakarta.xml.bind.JAXBContext;
@@ -25,8 +27,11 @@ import java.util.ArrayList;
 public class XmlParserService {
     
     private final JAXBContext jaxbContext;
+    private final MessageUtils messageUtils;
     
-    public XmlParserService() throws JAXBException {
+    @Autowired
+    public XmlParserService(MessageUtils messageUtils) throws JAXBException {
+        this.messageUtils = messageUtils;
         this.jaxbContext = JAXBContext.newInstance(DatabaseSchema.class, TableDefinition.class);
     }
     
@@ -38,7 +43,7 @@ public class XmlParserService {
      * @throws JAXBException 解析异常
      */
     public DatabaseSchema parseFromFile(File xmlFile) throws JAXBException {
-        log.info("开始解析XML文件: {}", xmlFile.getAbsolutePath());
+        log.info(messageUtils.getMessage("xml.parse.start", xmlFile.getAbsolutePath()));
         
         Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
         DatabaseSchema schema = (DatabaseSchema) unmarshaller.unmarshal(xmlFile);
@@ -46,7 +51,7 @@ public class XmlParserService {
         // 处理表继承关系
         processTableInheritance(schema);
         
-        log.info("XML文件解析完成，共解析到 {} 个表定义", schema.getTables().size());
+        log.info(messageUtils.getMessage("xml.parse.success", schema.getTables().size()));
         return schema;
     }
     
@@ -101,7 +106,7 @@ public class XmlParserService {
      */
     private void processTableInheritance(TableDefinition table, Map<String, TableDefinition> tableMap, List<String> processedTables) {
         if (processedTables.contains(table.getName())) {
-            log.warn("检测到循环继承关系，表: {}", table.getName());
+            log.warn(messageUtils.getMessage("inheritance.circular", table.getName()));
             return;
         }
         
@@ -111,7 +116,7 @@ public class XmlParserService {
         if (parentTableName != null && !parentTableName.isEmpty()) {
             TableDefinition parentTable = tableMap.get(parentTableName);
             if (parentTable == null) {
-                log.warn("找不到父表: {}，子表: {}", parentTableName, table.getName());
+                log.warn(messageUtils.getMessage("inheritance.parent.not.found", parentTableName, table.getName()));
                 return;
             }
             
@@ -165,7 +170,7 @@ public class XmlParserService {
             
             table.setRelations(new ArrayList<>(relationMap.values()));
             
-            log.debug("表 {} 继承了父表 {} 的定义", table.getName(), parentTableName);
+            log.debug(messageUtils.getMessage("inheritance.success", table.getName(), parentTableName));
         }
     }
 }

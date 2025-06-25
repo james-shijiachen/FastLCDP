@@ -12,7 +12,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @EntityScan(basePackages = "cn.com.traninfo.fastlcdp.model")
 @EnableJpaRepositories(basePackages = "cn.com.traninfo.fastlcdp.repository")
 public class FastLcdpApplication {
-    
     public static void main(String[] args) {
         SpringApplication.run(FastLcdpApplication.class, args);
     }

@@ -5,6 +5,7 @@ import cn.com.traninfo.fastlcdp.model.MetadataEntity;
 import cn.com.traninfo.fastlcdp.service.MetadataService;
 import cn.com.traninfo.fastlcdp.service.SqlGeneratorService;
 import cn.com.traninfo.fastlcdp.service.TableGeneratorService;
+import cn.com.traninfo.fastlcdp.util.MessageUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -52,37 +53,11 @@ public class TableGeneratorController {
     @Autowired
     private DatabaseConfig databaseConfig;
     
-    /**
-     * 上传XML文件并生成数据库表
-     * 
-     * @param file XML文件
-     * @return 生成结果
-     */
-    @Operation(
-        summary = "生成数据库表",
-        description = "上传XML文件，解析表定义并在数据库中创建对应的表结构"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(
-            responseCode = "200", 
-            description = "生成成功",
-            content = @Content(
-                mediaType = "application/json",
-                examples = @ExampleObject(
-                    value = "{\"success\": true, \"message\": \"表生成成功\", \"databaseName\": \"test_db\", \"tableCount\": 5}"
-                )
-            )
-        ),
-        @ApiResponse(responseCode = "400", description = "请求参数错误"),
-        @ApiResponse(responseCode = "500", description = "服务器内部错误")
-    })
+    @Autowired
+    private MessageUtils messageUtils;
+    
     @PostMapping("/generate")
     public ResponseEntity<Map<String, Object>> generateTables(
-            @Parameter(
-                description = "XML表定义文件", 
-                required = true,
-                content = @Content(mediaType = "multipart/form-data")
-            )
             @RequestParam("file") MultipartFile file) {
         Map<String, Object> response = new HashMap<>();
         
@@ -90,13 +65,13 @@ public class TableGeneratorController {
             // 验证文件
             if (file.isEmpty()) {
                 response.put("success", false);
-                response.put("message", "请选择XML文件");
+                response.put("message", messageUtils.getMessage("file.empty"));
                 return ResponseEntity.badRequest().body(response);
             }
             
             if (!file.getOriginalFilename().toLowerCase().endsWith(".xml")) {
                 response.put("success", false);
-                response.put("message", "请上传XML格式的文件");
+                response.put("message", messageUtils.getMessage("file.invalid.format"));
                 return ResponseEntity.badRequest().body(response);
             }
             
@@ -125,31 +100,20 @@ public class TableGeneratorController {
             }
             
         } catch (IOException e) {
-            log.error("文件处理失败", e);
+            log.error(messageUtils.getMessage("file.process.failed"), e);
             response.put("success", false);
-            response.put("message", "文件处理失败: " + e.getMessage());
+            response.put("message", messageUtils.getMessage("file.process.failed") + ": " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         } catch (Exception e) {
-            log.error("生成数据库表失败", e);
+            log.error(messageUtils.getMessage("table.generate.failed"), e);
             response.put("success", false);
-            response.put("message", "生成失败: " + e.getMessage());
+            response.put("message", messageUtils.getMessage("api.generate.failed") + ": " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
     
-    /**
-     * 预览SQL语句
-     * 
-     * @param file XML文件
-     * @return SQL预览结果
-     */
-    @Operation(
-        summary = "预览SQL语句",
-        description = "上传XML文件，生成对应的SQL DDL语句但不执行"
-    )
     @PostMapping("/preview")
     public ResponseEntity<Map<String, Object>> previewSql(
-            @Parameter(description = "XML表定义文件", required = true)
             @RequestParam("file") MultipartFile file) {
         Map<String, Object> response = new HashMap<>();
         
@@ -157,13 +121,13 @@ public class TableGeneratorController {
             // 验证文件
             if (file.isEmpty()) {
                 response.put("success", false);
-                response.put("message", "请选择XML文件");
+                response.put("message", messageUtils.getMessage("file.empty"));
                 return ResponseEntity.badRequest().body(response);
             }
             
             if (!file.getOriginalFilename().toLowerCase().endsWith(".xml")) {
                 response.put("success", false);
-                response.put("message", "请上传XML格式的文件");
+                response.put("message", messageUtils.getMessage("file.invalid.format"));
                 return ResponseEntity.badRequest().body(response);
             }
             
@@ -193,97 +157,25 @@ public class TableGeneratorController {
             }
             
         } catch (IOException e) {
-            log.error("文件处理失败", e);
+            log.error(messageUtils.getMessage("file.process.failed"), e);
             response.put("success", false);
-            response.put("message", "文件处理失败: " + e.getMessage());
+            response.put("message", messageUtils.getMessage("file.process.failed") + ": " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         } catch (Exception e) {
-            log.error("SQL预览失败", e);
+            log.error(messageUtils.getMessage("sql.preview.failed"), e);
             response.put("success", false);
-            response.put("message", "预览失败: " + e.getMessage());
+            response.put("message", messageUtils.getMessage("api.preview.failed") + ": " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
     
-    /**
-     * 验证XML文件格式
-     * 
-     * @param file XML文件
-     * @return 验证结果
-     */
-    @PostMapping("/validate")
-    public ResponseEntity<Map<String, Object>> validateXml(
-            @Parameter(description = "XML表定义文件", required = true)
-            @RequestParam("file") MultipartFile file) {
-        Map<String, Object> response = new HashMap<>();
-        
-        try {
-            // 验证文件
-            if (file.isEmpty()) {
-                response.put("valid", false);
-                response.put("message", "请选择XML文件");
-                return ResponseEntity.badRequest().body(response);
-            }
-            
-            if (!file.getOriginalFilename().toLowerCase().endsWith(".xml")) {
-                response.put("valid", false);
-                response.put("message", "请上传XML格式的文件");
-                return ResponseEntity.badRequest().body(response);
-            }
-            
-            // 保存临时文件
-            Path tempDir = Paths.get(System.getProperty("java.io.tmpdir"));
-            Path tempFile = tempDir.resolve("validate_" + System.currentTimeMillis() + ".xml");
-            Files.copy(file.getInputStream(), tempFile);
-            
-            try {
-                // 验证XML
-                TableGeneratorService.ValidationResult result = tableGeneratorService.validateXml(tempFile.toFile());
-                
-                response.put("valid", result.isValid());
-                response.put("message", result.getMessage());
-                
-                if (result.getSchema() != null) {
-                    response.put("databaseName", result.getSchema().getName());
-                    response.put("tableCount", result.getSchema().getTables().size());
-                }
-                
-                return ResponseEntity.ok(response);
-                
-            } finally {
-                // 清理临时文件
-                Files.deleteIfExists(tempFile);
-            }
-            
-        } catch (IOException e) {
-            log.error("文件处理失败", e);
-            response.put("valid", false);
-            response.put("message", "文件处理失败: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        } catch (Exception e) {
-            log.error("XML验证失败", e);
-            response.put("valid", false);
-            response.put("message", "验证失败: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-    
-    /**
-     * 获取系统状态
-     * 
-     * @return 系统状态
-     */
-    @Operation(
-        summary = "获取系统状态",
-        description = "获取FastLCDP服务的运行状态和配置信息"
-    )
     @GetMapping("/status")
     public ResponseEntity<Map<String, Object>> getStatus() {
         Map<String, Object> response = new HashMap<>();
         
         try {
             response.put("status", "running");
-            response.put("message", "XML表生成器服务正常运行");
+            response.put("message", messageUtils.getMessage("system.status.running"));
             response.put("timestamp", System.currentTimeMillis());
             response.put("databaseType", databaseConfig.getType());
             response.put("metadataStorageEnabled", databaseConfig.isMetadataStorageEnabled());
@@ -291,9 +183,9 @@ public class TableGeneratorController {
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("获取系统状态失败", e);
+            log.error(messageUtils.getMessage("system.get.status.failed"), e);
             response.put("status", "error");
-            response.put("message", "系统异常: " + e.getMessage());
+            response.put("message", messageUtils.getMessage("system.status.error") + ": " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
@@ -342,12 +234,12 @@ public class TableGeneratorController {
             }
             
         } catch (IOException e) {
-            log.error("文件处理失败", e);
+            log.error(messageUtils.getMessage("file.process.failed"), e);
             response.put("success", false);
-            response.put("message", "文件处理失败: " + e.getMessage());
+            response.put("message", messageUtils.getMessage("file.process.failed") + ": " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         } catch (Exception e) {
-            log.error("保存元数据失败", e);
+            log.error(messageUtils.getMessage("保存元数据失败"), e);
             response.put("success", false);
             response.put("message", "保存失败: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);

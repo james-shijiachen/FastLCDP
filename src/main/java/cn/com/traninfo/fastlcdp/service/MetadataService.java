@@ -30,6 +30,9 @@ public class MetadataService {
     @Autowired
     private DatabaseConfig databaseConfig;
     
+    @Autowired
+    private XmlParserService xmlParserService;
+    
     /**
      * 保存模式定义到数据库
      */
@@ -481,8 +484,7 @@ public class MetadataService {
         logger.info("从XML文件保存模式定义: {}", xmlFile.getName());
         
         try {
-            // 解析XML文件
-            XmlParserService xmlParserService = new XmlParserService();
+            // 使用注入的XmlParserService，而不是手动创建
             DatabaseSchema schema = xmlParserService.parseFromFile(xmlFile);
             
             // 保存模式定义
