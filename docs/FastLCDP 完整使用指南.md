@@ -203,9 +203,9 @@ flowchart TD
         <field name="account_no" type="STRING" length=32 comment="账号"/>
     </fields>
 </table>
+```
 
 #### 继承示例
-
 ```xml
 <!-- 基础实体表 -->
 <table name="base_entity" comment="基础实体表">
