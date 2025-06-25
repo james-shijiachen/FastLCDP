@@ -1,4 +1,4 @@
-# FastLCDP - Fast Low-Code Database Platform
+# FastLCDP - Fast Low-Code Development Platform
 
 [中文](README.zh.md) | **English**
 
