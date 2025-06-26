@@ -4,7 +4,7 @@ package cn.com.traninfo.fastlcdp.enums;
  * 主键类型枚举
  * 定义字段的主键类型
  */
-public enum PrimaryKeyType {
+public enum PrimaryKeyTypeEnum {
     /**
      * 非主键字段（默认）
      */

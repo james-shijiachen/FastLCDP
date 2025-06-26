@@ -3,8 +3,9 @@ package cn.com.traninfo.fastlcdp.service;
 import cn.com.traninfo.fastlcdp.config.DatabaseConfig;
 import cn.com.traninfo.fastlcdp.dialect.DatabaseDialect;
 import cn.com.traninfo.fastlcdp.dialect.DatabaseDialectFactory;
+import cn.com.traninfo.fastlcdp.entity.MetadataEntity;
+import cn.com.traninfo.fastlcdp.enums.PrimaryKeyTypeEnum;
 import cn.com.traninfo.fastlcdp.model.*;
-import cn.com.traninfo.fastlcdp.enums.PrimaryKeyType;
 import cn.com.traninfo.fastlcdp.repository.MetadataRepository;
 import lombok.Getter;
 import org.slf4j.Logger;
@@ -181,7 +182,7 @@ public class MetadataService {
             field.setLength(metadata.getFieldLength());
             field.setScale(metadata.getFieldScale());
             field.setNullable(metadata.getIsNullable());
-            field.setPrimaryKey(PrimaryKeyType.valueOf(metadata.getPrimaryKeyType()));
+            field.setPrimaryKey(PrimaryKeyTypeEnum.valueOf(metadata.getPrimaryKeyType()));
             field.setDefaultValue(metadata.getDefaultValue());
             field.setComment(metadata.getComment());
             fields.add(field);
@@ -256,7 +257,7 @@ public class MetadataService {
         FieldDefinition idField = new FieldDefinition();
         idField.setName("id");
         idField.setType("LONG");
-        idField.setPrimaryKey(PrimaryKeyType.AUTO_INCREMENT);
+        idField.setPrimaryKey(PrimaryKeyTypeEnum.AUTO_INCREMENT);
         idField.setNullable(false);
         idField.setComment("主键ID");
         fields.add(idField);

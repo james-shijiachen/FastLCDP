@@ -1,11 +1,11 @@
 package cn.com.traninfo.fastlcdp.service;
 
+import cn.com.traninfo.fastlcdp.enums.PrimaryKeyTypeEnum;
 import cn.com.traninfo.fastlcdp.model.DatabaseSchema;
 import cn.com.traninfo.fastlcdp.model.FieldDefinition;
 import cn.com.traninfo.fastlcdp.model.IndexDefinition;
 import cn.com.traninfo.fastlcdp.model.RelationDefinition;
 import cn.com.traninfo.fastlcdp.model.TableDefinition;
-import cn.com.traninfo.fastlcdp.enums.PrimaryKeyType;
 import cn.com.traninfo.fastlcdp.util.XmlSchemaValidator;
 import cn.com.traninfo.fastlcdp.util.XmlValidationResult;
 import org.junit.jupiter.api.Test;
@@ -499,7 +499,7 @@ public class ComplexDatabaseTest {
                 .findFirst()
                 .orElse(null);
         assertNotNull(idField, "base_entity应该有id字段");
-        assertEquals(PrimaryKeyType.AUTO_INCREMENT, idField.getPrimaryKey(), "id字段应该是自动增长主键");
+        assertEquals(PrimaryKeyTypeEnum.AUTO_INCREMENT, idField.getPrimaryKey(), "id字段应该是自动增长主键");
         
         // 测试UUID主键
         TableDefinition documents = tableMap.get("documents");
@@ -508,14 +508,14 @@ public class ComplexDatabaseTest {
                 .findFirst()
                 .orElse(null);
         assertNotNull(docUuidField, "documents应该有doc_uuid字段");
-        assertEquals(PrimaryKeyType.UUID, docUuidField.getPrimaryKey(), "doc_uuid字段应该是UUID主键");
+        assertEquals(PrimaryKeyTypeEnum.UUID, docUuidField.getPrimaryKey(), "doc_uuid字段应该是UUID主键");
         assertEquals("STRING", docUuidField.getType(), "UUID字段类型应该是STRING");
         assertEquals(Integer.valueOf(36), docUuidField.getLength(), "UUID字段长度应该是36");
         
         // 测试复合主键
         TableDefinition userDeptHistory = tableMap.get("user_department_history");
         List<FieldDefinition> compositeKeyFields = userDeptHistory.getFields().stream()
-                .filter(f -> PrimaryKeyType.COMPOSITE.equals(f.getPrimaryKey()))
+                .filter(f -> PrimaryKeyTypeEnum.COMPOSITE.equals(f.getPrimaryKey()))
                 .collect(Collectors.toList());
         assertEquals(3, compositeKeyFields.size(), "user_department_history应该有3个复合主键字段");
         
@@ -533,7 +533,7 @@ public class ComplexDatabaseTest {
                 .findFirst()
                 .orElse(null);
         assertNotNull(seqIdField, "sequence_test应该有seq_id字段");
-        assertEquals(PrimaryKeyType.SEQUENCE, seqIdField.getPrimaryKey(), "seq_id字段应该是序列主键");
+        assertEquals(PrimaryKeyTypeEnum.SEQUENCE, seqIdField.getPrimaryKey(), "seq_id字段应该是序列主键");
         
         System.out.println("✓ 主键类型验证通过");
     }

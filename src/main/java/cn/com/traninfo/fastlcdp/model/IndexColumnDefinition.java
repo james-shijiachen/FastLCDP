@@ -1,5 +1,6 @@
 package cn.com.traninfo.fastlcdp.model;
 
+import cn.com.traninfo.fastlcdp.enums.IndexSortOrderEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -27,12 +28,12 @@ public class IndexColumnDefinition {
      */
     @XmlAttribute(name = "length")
     private Integer length;
-    
+
     /**
-     * 排序方式：ASC, DESC
+     * 排序方向：ASC, DESC
      */
     @XmlAttribute(name = "order")
-    private String order = "ASC";
+    private IndexSortOrderEnum order = IndexSortOrderEnum.ASC;
     
     /**
      * 列注释

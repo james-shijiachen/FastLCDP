@@ -1,5 +1,6 @@
 package cn.com.traninfo.fastlcdp.model;
 
+import cn.com.traninfo.fastlcdp.enums.TableTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -29,7 +30,7 @@ public class TableDefinition {
      * 表类型
      */
     @XmlAttribute(name = "type")
-    private String type;
+    private TableTypeEnum type = TableTypeEnum.ENTITY;
 
     /**
      * 表注释

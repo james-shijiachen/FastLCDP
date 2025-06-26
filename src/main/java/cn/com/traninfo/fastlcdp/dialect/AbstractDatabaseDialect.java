@@ -4,7 +4,7 @@ import cn.com.traninfo.fastlcdp.model.FieldDefinition;
 import cn.com.traninfo.fastlcdp.model.IndexDefinition;
 import cn.com.traninfo.fastlcdp.model.RelationDefinition;
 import cn.com.traninfo.fastlcdp.model.TableDefinition;
-import cn.com.traninfo.fastlcdp.enums.PrimaryKeyType;
+import cn.com.traninfo.fastlcdp.enums.PrimaryKeyTypeEnum;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
@@ -62,12 +62,12 @@ public abstract class AbstractDatabaseDialect implements DatabaseDialect {
         }
         
         // 处理主键类型
-        if (field.getPrimaryKey() == PrimaryKeyType.AUTO_INCREMENT) {
+        if (field.getPrimaryKey() == PrimaryKeyTypeEnum.AUTO_INCREMENT) {
             sql.append(" ").append(getAutoIncrementKeyword());
         }
         
         // 兼容旧的自增字段
-        if (PrimaryKeyType.AUTO_INCREMENT.equals(field.getPrimaryKey())) {
+        if (PrimaryKeyTypeEnum.AUTO_INCREMENT.equals(field.getPrimaryKey())) {
             sql.append(" ").append(getAutoIncrementKeyword());
         }
         
@@ -208,7 +208,7 @@ public abstract class AbstractDatabaseDialect implements DatabaseDialect {
         
         // 主键定义
         List<FieldDefinition> primaryKeyFields = table.getFields().stream()
-                .filter(field -> field.getPrimaryKey() != null && !PrimaryKeyType.NONE.equals(field.getPrimaryKey()))
+                .filter(field -> field.getPrimaryKey() != null && !PrimaryKeyTypeEnum.NONE.equals(field.getPrimaryKey()))
                 .collect(Collectors.toList());
         
         if (!primaryKeyFields.isEmpty()) {

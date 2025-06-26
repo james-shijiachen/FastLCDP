@@ -1,6 +1,6 @@
 package cn.com.traninfo.fastlcdp.repository;
 
-import cn.com.traninfo.fastlcdp.model.MetadataEntity;
+import cn.com.traninfo.fastlcdp.entity.MetadataEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

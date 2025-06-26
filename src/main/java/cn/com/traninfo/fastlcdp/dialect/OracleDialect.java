@@ -4,7 +4,7 @@ import cn.com.traninfo.fastlcdp.model.FieldDefinition;
 import cn.com.traninfo.fastlcdp.model.IndexDefinition;
 import cn.com.traninfo.fastlcdp.model.RelationDefinition;
 import cn.com.traninfo.fastlcdp.model.TableDefinition;
-import cn.com.traninfo.fastlcdp.enums.PrimaryKeyType;
+import cn.com.traninfo.fastlcdp.enums.PrimaryKeyTypeEnum;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
@@ -192,7 +192,7 @@ public class OracleDialect extends AbstractDatabaseDialect {
         
         // 主键定义
         List<FieldDefinition> primaryKeyFields = table.getFields().stream()
-                .filter(field -> field.getPrimaryKey() != null && !PrimaryKeyType.NONE.equals(field.getPrimaryKey()))
+                .filter(field -> field.getPrimaryKey() != null && !PrimaryKeyTypeEnum.NONE.equals(field.getPrimaryKey()))
                 .collect(Collectors.toList());
         
         if (!primaryKeyFields.isEmpty()) {
@@ -311,7 +311,7 @@ public class OracleDialect extends AbstractDatabaseDialect {
         sql.append(" ").append(generateFieldType(field));
         
         // 自增（Oracle使用IDENTITY列）
-        if (PrimaryKeyType.AUTO_INCREMENT.equals(field.getPrimaryKey())) {
+        if (PrimaryKeyTypeEnum.AUTO_INCREMENT.equals(field.getPrimaryKey())) {
             sql.append(" ").append(getAutoIncrementKeyword());
         }
         
@@ -322,7 +322,7 @@ public class OracleDialect extends AbstractDatabaseDialect {
         
         // 默认值
         if (StringUtils.hasText(field.getDefaultValue()) && 
-            (!PrimaryKeyType.AUTO_INCREMENT.equals(field.getPrimaryKey()))) {
+            (!PrimaryKeyTypeEnum.AUTO_INCREMENT.equals(field.getPrimaryKey()))) {
             sql.append(" DEFAULT ");
             if (field.getDefaultValue().equalsIgnoreCase("CURRENT_TIMESTAMP") ||
                 field.getDefaultValue().equalsIgnoreCase("NOW()")) {

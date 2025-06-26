@@ -1,6 +1,6 @@
 package cn.com.traninfo.fastlcdp.service;
 
-import cn.com.traninfo.fastlcdp.enums.PrimaryKeyType;
+import cn.com.traninfo.fastlcdp.enums.PrimaryKeyTypeEnum;
 import cn.com.traninfo.fastlcdp.model.DatabaseSchema;
 import cn.com.traninfo.fastlcdp.model.TableDefinition;
 import cn.com.traninfo.fastlcdp.util.MessageUtils;
@@ -191,8 +191,8 @@ public class XmlParserService {
         for (TableDefinition table : schema.getTables()) {
             for (cn.com.traninfo.fastlcdp.model.FieldDefinition field : table.getFields()) {
                 // 如果primaryKey属性为true且autoIncrement为true，设置为AUTO_INCREMENT
-                if (PrimaryKeyType.AUTO_INCREMENT.equals(field.getPrimaryKey())) {
-                    field.setPrimaryKey(cn.com.traninfo.fastlcdp.enums.PrimaryKeyType.AUTO_INCREMENT);
+                if (PrimaryKeyTypeEnum.AUTO_INCREMENT.equals(field.getPrimaryKey())) {
+                    field.setPrimaryKey(PrimaryKeyTypeEnum.AUTO_INCREMENT);
                 }
                 // 如果只有primaryKey为true但autoIncrement为false或null，保持原有逻辑
                 // 这里可以根据需要扩展其他主键类型的处理逻辑

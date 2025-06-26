@@ -1,6 +1,6 @@
 package cn.com.traninfo.fastlcdp.dialect;
 
-import cn.com.traninfo.fastlcdp.enums.PrimaryKeyType;
+import cn.com.traninfo.fastlcdp.enums.PrimaryKeyTypeEnum;
 import cn.com.traninfo.fastlcdp.model.FieldDefinition;
 import cn.com.traninfo.fastlcdp.model.IndexDefinition;
 import cn.com.traninfo.fastlcdp.model.TableDefinition;
@@ -212,7 +212,7 @@ public class SqlServerDialect extends AbstractDatabaseDialect {
         
         // 主键定义
         List<FieldDefinition> primaryKeyFields = table.getFields().stream()
-                .filter(field -> field.getPrimaryKey() != null && !PrimaryKeyType.NONE.equals(field.getPrimaryKey()))
+                .filter(field -> field.getPrimaryKey() != null && !PrimaryKeyTypeEnum.NONE.equals(field.getPrimaryKey()))
                 .collect(Collectors.toList());
         
         if (!primaryKeyFields.isEmpty()) {
@@ -333,7 +333,7 @@ public class SqlServerDialect extends AbstractDatabaseDialect {
         sql.append(" ").append(generateFieldType(field));
         
         // 自增（SQL Server使用IDENTITY）
-        if (PrimaryKeyType.AUTO_INCREMENT.equals(field.getPrimaryKey())) {
+        if (PrimaryKeyTypeEnum.AUTO_INCREMENT.equals(field.getPrimaryKey())) {
             sql.append(" ").append(getAutoIncrementKeyword());
         }
         
@@ -344,7 +344,7 @@ public class SqlServerDialect extends AbstractDatabaseDialect {
         
         // 默认值
         if (StringUtils.hasText(field.getDefaultValue()) && 
-            (!PrimaryKeyType.AUTO_INCREMENT.equals(field.getPrimaryKey()))) {
+            (!PrimaryKeyTypeEnum.AUTO_INCREMENT.equals(field.getPrimaryKey()))) {
             sql.append(" DEFAULT ");
             if (field.getDefaultValue().equalsIgnoreCase("CURRENT_TIMESTAMP") ||
                 field.getDefaultValue().equalsIgnoreCase("NOW()")) {

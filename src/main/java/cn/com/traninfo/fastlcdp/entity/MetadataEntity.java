@@ -1,4 +1,4 @@
-package cn.com.traninfo.fastlcdp.model;
+package cn.com.traninfo.fastlcdp.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -20,9 +20,6 @@ public class MetadataEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
-    @Column(name = "schema_name", nullable = false, length = 100)
-    private String schemaName;
     
     @Column(name = "table_name", nullable = false, length = 100)
     private String tableName;

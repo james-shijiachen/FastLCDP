@@ -3,9 +3,8 @@ package cn.com.traninfo.fastlcdp.service;
 import cn.com.traninfo.fastlcdp.config.DatabaseConfig;
 import cn.com.traninfo.fastlcdp.dialect.DatabaseDialect;
 import cn.com.traninfo.fastlcdp.dialect.DatabaseDialectFactory;
+import cn.com.traninfo.fastlcdp.enums.PrimaryKeyTypeEnum;
 import cn.com.traninfo.fastlcdp.model.*;
-import cn.com.traninfo.fastlcdp.enums.PrimaryKeyType;
-import cn.com.traninfo.fastlcdp.service.XmlParserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -421,7 +420,7 @@ public class SqlGeneratorService {
         
         return schema.getTables().stream()
                 .flatMap(table -> table.getFields().stream())
-                .filter(field -> field.getPrimaryKey() == PrimaryKeyType.SEQUENCE)
+                .filter(field -> field.getPrimaryKey() == PrimaryKeyTypeEnum.SEQUENCE)
                 .map(field -> {
                     String sequenceName = "seq_" + field.getName();
                     return dialect.generateCreateSequenceSql(sequenceName);
@@ -440,7 +439,7 @@ public class SqlGeneratorService {
         
         return schema.getTables().stream()
                 .flatMap(table -> table.getFields().stream())
-                .filter(field -> field.getPrimaryKey() == PrimaryKeyType.SEQUENCE)
+                .filter(field -> field.getPrimaryKey() == PrimaryKeyTypeEnum.SEQUENCE)
                 .map(field -> {
                     String sequenceName = "seq_" + field.getName();
                     return dialect.generateDropSequenceSql(sequenceName);

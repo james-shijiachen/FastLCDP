@@ -1,5 +1,7 @@
 package cn.com.traninfo.fastlcdp.model;
 
+import cn.com.traninfo.fastlcdp.enums.RelationActionEnum;
+import cn.com.traninfo.fastlcdp.enums.RelationTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -44,19 +46,19 @@ public class RelationDefinition {
      * 删除时的动作：CASCADE, SET_NULL, RESTRICT, NO_ACTION
      */
     @XmlAttribute(name = "onDelete")
-    private String onDelete = "RESTRICT";
+    private RelationActionEnum onDelete = RelationActionEnum.RESTRICT;
     
     /**
      * 更新时的动作：CASCADE, SET_NULL, RESTRICT, NO_ACTION
      */
     @XmlAttribute(name = "onUpdate")
-    private String onUpdate = "RESTRICT";
+    private RelationActionEnum onUpdate = RelationActionEnum.RESTRICT;
     
     /**
      * 关联类型：ONE_TO_ONE, ONE_TO_MANY, MANY_TO_ONE, MANY_TO_MANY
      */
     @XmlAttribute(name = "type")
-    private String type = "MANY_TO_ONE";
+    private RelationTypeEnum type = RelationTypeEnum.MANY_TO_ONE;
     
     /**
      * 关联注释

@@ -1,7 +1,7 @@
 package cn.com.traninfo.fastlcdp;
 
 import cn.com.traninfo.fastlcdp.config.DatabaseConfig;
-import cn.com.traninfo.fastlcdp.model.MetadataEntity;
+import cn.com.traninfo.fastlcdp.entity.MetadataEntity;
 import cn.com.traninfo.fastlcdp.service.MetadataService;
 import cn.com.traninfo.fastlcdp.service.SqlGeneratorService;
 import org.junit.jupiter.api.Test;

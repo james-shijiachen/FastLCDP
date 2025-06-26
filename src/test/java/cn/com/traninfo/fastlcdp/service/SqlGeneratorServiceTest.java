@@ -1,6 +1,9 @@
 package cn.com.traninfo.fastlcdp.service;
 
-import cn.com.traninfo.fastlcdp.enums.PrimaryKeyType;
+import cn.com.traninfo.fastlcdp.enums.IndexSortOrderEnum;
+import cn.com.traninfo.fastlcdp.enums.IndexTypeEnum;
+import cn.com.traninfo.fastlcdp.enums.PrimaryKeyTypeEnum;
+import cn.com.traninfo.fastlcdp.enums.RelationActionEnum;
 import cn.com.traninfo.fastlcdp.model.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -103,9 +106,9 @@ class SqlGeneratorServiceTest {
         // 创建普通索引
         IndexDefinition normalIndex = new IndexDefinition();
         normalIndex.setName("idx_email");
-        normalIndex.setType("NORMAL");
+        normalIndex.setType(IndexTypeEnum.NORMAL);
         
-        IndexDefinition.IndexColumnDefinition column = new IndexDefinition.IndexColumnDefinition();
+        IndexColumnDefinition column = new IndexColumnDefinition();
         column.setName("email");
         normalIndex.setColumns(List.of(column));
         
@@ -121,9 +124,9 @@ class SqlGeneratorServiceTest {
         // 创建唯一索引 - H2不支持在CREATE TABLE中定义索引
         IndexDefinition uniqueIndex = new IndexDefinition();
         uniqueIndex.setName("uk_username");
-        uniqueIndex.setType("UNIQUE");
+        uniqueIndex.setType(IndexTypeEnum.UNIQUE);
         
-        IndexDefinition.IndexColumnDefinition uniqueColumn = new IndexDefinition.IndexColumnDefinition();
+        IndexColumnDefinition uniqueColumn = new IndexColumnDefinition();
         uniqueColumn.setName("username");
         uniqueIndex.setColumns(List.of(uniqueColumn));
         
@@ -140,13 +143,13 @@ class SqlGeneratorServiceTest {
         // 创建复合索引 - H2不支持在CREATE TABLE中定义索引
         IndexDefinition compositeIndex = new IndexDefinition();
         compositeIndex.setName("idx_name_age");
-        compositeIndex.setType("NORMAL");
+        compositeIndex.setType(IndexTypeEnum.NORMAL);
         
-        IndexDefinition.IndexColumnDefinition nameColumn = new IndexDefinition.IndexColumnDefinition();
+        IndexColumnDefinition nameColumn = new IndexColumnDefinition();
         nameColumn.setName("name");
-        IndexDefinition.IndexColumnDefinition ageColumn = new IndexDefinition.IndexColumnDefinition();
+        IndexColumnDefinition ageColumn = new IndexColumnDefinition();
         ageColumn.setName("age");
-        ageColumn.setOrder("DESC");
+        ageColumn.setOrder(IndexSortOrderEnum.DESC);
         compositeIndex.setColumns(List.of(nameColumn, ageColumn));
         
         FieldDefinition nameField = new FieldDefinition();
@@ -171,8 +174,8 @@ class SqlGeneratorServiceTest {
         relation.setColumn("user_id");
         relation.setReferenceTable("user");
         relation.setReferenceColumn("id");
-        relation.setOnDelete("CASCADE");
-        relation.setOnUpdate("CASCADE");
+        relation.setOnDelete(RelationActionEnum.CASCADE);
+        relation.setOnUpdate(RelationActionEnum.CASCADE);
         
         FieldDefinition userIdField = new FieldDefinition();
         userIdField.setName("user_id");
@@ -196,8 +199,8 @@ class SqlGeneratorServiceTest {
         cascadeRelation.setColumn("role_id");
         cascadeRelation.setReferenceTable("role");
         cascadeRelation.setReferenceColumn("id");
-        cascadeRelation.setOnDelete("CASCADE");
-        cascadeRelation.setOnUpdate("CASCADE");
+        cascadeRelation.setOnDelete(RelationActionEnum.CASCADE);
+        cascadeRelation.setOnUpdate(RelationActionEnum.CASCADE);
         
         FieldDefinition roleIdField = new FieldDefinition();
         roleIdField.setName("role_id");
@@ -251,9 +254,9 @@ class SqlGeneratorServiceTest {
         // 索引
         IndexDefinition uniqueIndex = new IndexDefinition();
         uniqueIndex.setName("uk_username");
-        uniqueIndex.setType("UNIQUE");
+        uniqueIndex.setType(IndexTypeEnum.UNIQUE);
         
-        IndexDefinition.IndexColumnDefinition column = new IndexDefinition.IndexColumnDefinition();
+        IndexColumnDefinition column = new IndexColumnDefinition();
         column.setName("username");
         uniqueIndex.setColumns(List.of(column));
         
@@ -282,21 +285,21 @@ class SqlGeneratorServiceTest {
         // 索引
         IndexDefinition titleIndex = new IndexDefinition();
         titleIndex.setName("idx_title");
-        titleIndex.setType("FULLTEXT");
+        titleIndex.setType(IndexTypeEnum.FULLTEXT);
         
-        IndexDefinition.IndexColumnDefinition titleColumn = new IndexDefinition.IndexColumnDefinition();
+        IndexColumnDefinition titleColumn = new IndexColumnDefinition();
         titleColumn.setName("title");
         titleIndex.setColumns(List.of(titleColumn));
         
         IndexDefinition compositeIndex = new IndexDefinition();
         compositeIndex.setName("idx_author_status");
-        compositeIndex.setType("NORMAL");
+        compositeIndex.setType(IndexTypeEnum.NORMAL);
         
-        IndexDefinition.IndexColumnDefinition authorColumn = new IndexDefinition.IndexColumnDefinition();
+        IndexColumnDefinition authorColumn = new IndexColumnDefinition();
         authorColumn.setName("author_id");
-        IndexDefinition.IndexColumnDefinition statusColumn = new IndexDefinition.IndexColumnDefinition();
+        IndexColumnDefinition statusColumn = new IndexColumnDefinition();
         statusColumn.setName("status");
-        statusColumn.setOrder("DESC");
+        statusColumn.setOrder(IndexSortOrderEnum.DESC);
         compositeIndex.setColumns(List.of(authorColumn, statusColumn));
         
         table.setIndexes(List.of(titleIndex, compositeIndex));
@@ -307,8 +310,8 @@ class SqlGeneratorServiceTest {
         relation.setColumn("author_id");
         relation.setReferenceTable("user");
         relation.setReferenceColumn("id");
-        relation.setOnDelete("RESTRICT");
-        relation.setOnUpdate("CASCADE");
+        relation.setOnDelete(RelationActionEnum.RESTRICT);
+        relation.setOnUpdate(RelationActionEnum.CASCADE);
         
         table.setRelations(List.of(relation));
         
@@ -326,7 +329,7 @@ class SqlGeneratorServiceTest {
         FieldDefinition field = new FieldDefinition();
         field.setName("id");
         field.setType("LONG");
-        field.setPrimaryKey(PrimaryKeyType.AUTO_INCREMENT);
+        field.setPrimaryKey(PrimaryKeyTypeEnum.AUTO_INCREMENT);
         field.setNullable(false);
         return field;
     }

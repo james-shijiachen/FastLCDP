@@ -405,11 +405,12 @@ flowchart TD
 
 ### 索引属性说明
 
-| 属性 | 类型 | 必填 | 说明 | 可选值 |
-|------|------|------|------|--------|
-| name | String | 是 | 索引名称 | `idx_username` |
-| type | IndexTypeEnum | 否 | 索引类型，默认NORMAL | 参见索引类型说明 |
-| comment | String | 否 | 索引注释 | `用户名索引` |
+| 属性      | 类型            | 必填 | 说明            | 可选值            |
+|---------|---------------|------|---------------|----------------|
+| name    | String        | 是 | 索引名称          | `idx_username` |
+| type    | IndexTypeEnum | 否 | 索引类型，默认NORMAL | 参见索引类型说明       |
+| method  | IndexMethod   | 否 | 索引方法          | `BTREE、HASH`   |
+| comment | String        | 否 | 索引注释          | `用户名索引`        |
 
 ### 索引列属性说明
 
@@ -418,6 +419,7 @@ flowchart TD
 | name | String | 是 | 字段名 | `username` |
 | order | SortOrder | 否 | 排序方式，默认ASC | `ASC`, `DESC` |
 | length | Integer | 否 | 索引长度（正整数，前缀索引） | `10` |
+
 
 ### 索引类型说明（IndexTypeEnum）
 
@@ -500,7 +502,6 @@ flowchart TD
 | `CASCADE` | 级联操作，当父表记录被删除或更新时，自动删除或更新子表中的相关记录 |
 | `SET NULL` | 设置为空，当父表记录被删除或更新时，将子表中相关的外键字段设置为NULL |
 | `NO ACTION` | 无动作，与RESTRICT类似，但检查时机可能不同（取决于数据库实现） |
-| `SET DEFAULT` | 设置为默认值，当父表记录被删除或更新时，将子表中相关的外键字段设置为其默认值 |
 
 ### 关系示例
 

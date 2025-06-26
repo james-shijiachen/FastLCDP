@@ -1,7 +1,9 @@
 package cn.com.traninfo.fastlcdp;
 
+import cn.com.traninfo.fastlcdp.enums.IndexTypeEnum;
+import cn.com.traninfo.fastlcdp.enums.RelationActionEnum;
 import cn.com.traninfo.fastlcdp.model.*;
-import cn.com.traninfo.fastlcdp.enums.PrimaryKeyType;
+import cn.com.traninfo.fastlcdp.enums.PrimaryKeyTypeEnum;
 import cn.com.traninfo.fastlcdp.service.SqlGeneratorService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -94,7 +96,7 @@ public class SimpleSqlTest {
         FieldDefinition idField = new FieldDefinition();
         idField.setName("id");
         idField.setType("LONG");
-        idField.setPrimaryKey(PrimaryKeyType.AUTO_INCREMENT);
+        idField.setPrimaryKey(PrimaryKeyTypeEnum.AUTO_INCREMENT);
         idField.setComment("用户ID");
         fields.add(idField);
         
@@ -131,11 +133,11 @@ public class SimpleSqlTest {
         
         IndexDefinition usernameIndex = new IndexDefinition();
         usernameIndex.setName("uk_username");
-        usernameIndex.setType("UNIQUE");
+        usernameIndex.setType(IndexTypeEnum.UNIQUE);
         usernameIndex.setComment("用户名唯一索引");
         
-        List<IndexDefinition.IndexColumnDefinition> indexColumns = new ArrayList<>();
-        IndexDefinition.IndexColumnDefinition usernameColumn = new IndexDefinition.IndexColumnDefinition();
+        List<IndexColumnDefinition> indexColumns = new ArrayList<>();
+        IndexColumnDefinition usernameColumn = new IndexColumnDefinition();
         usernameColumn.setName("username");
         indexColumns.add(usernameColumn);
         usernameIndex.setColumns(indexColumns);
@@ -159,7 +161,7 @@ public class SimpleSqlTest {
         FieldDefinition idField = new FieldDefinition();
         idField.setName("id");
         idField.setType("LONG");
-        idField.setPrimaryKey(PrimaryKeyType.AUTO_INCREMENT);
+        idField.setPrimaryKey(PrimaryKeyTypeEnum.AUTO_INCREMENT);
         idField.setComment("订单ID");
         fields.add(idField);
         
@@ -199,7 +201,7 @@ public class SimpleSqlTest {
         userRelation.setColumn("user_id");
         userRelation.setReferenceTable("user");
         userRelation.setReferenceColumn("id");
-        userRelation.setOnDelete("CASCADE");
+        userRelation.setOnDelete(RelationActionEnum.CASCADE);
         userRelation.setComment("订单用户关联");
         
         relations.add(userRelation);

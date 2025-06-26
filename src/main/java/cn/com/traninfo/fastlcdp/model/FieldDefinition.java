@@ -1,9 +1,9 @@
 package cn.com.traninfo.fastlcdp.model;
 
+import cn.com.traninfo.fastlcdp.enums.PrimaryKeyTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
-import cn.com.traninfo.fastlcdp.enums.PrimaryKeyType;
 
 import jakarta.xml.bind.annotation.*;
 
@@ -57,8 +57,7 @@ public class FieldDefinition {
      * 主键类型
      */
     @XmlAttribute(name = "primaryKey")
-    private PrimaryKeyType primaryKey = PrimaryKeyType.NONE;
-    
+    private PrimaryKeyTypeEnum primaryKey = PrimaryKeyTypeEnum.NONE;
 
     /**
      * 默认值

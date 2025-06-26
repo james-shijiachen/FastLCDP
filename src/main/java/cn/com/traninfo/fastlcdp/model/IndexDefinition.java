@@ -1,5 +1,7 @@
 package cn.com.traninfo.fastlcdp.model;
 
+import cn.com.traninfo.fastlcdp.enums.IndexMethodEnum;
+import cn.com.traninfo.fastlcdp.enums.IndexTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -28,75 +30,24 @@ public class IndexDefinition {
      * 索引类型：NORMAL, UNIQUE, FULLTEXT, SPATIAL
      */
     @XmlAttribute(name = "type")
-    private String type = "NORMAL";
+    private IndexTypeEnum type = IndexTypeEnum.NORMAL;
     
     /**
      * 索引方法：BTREE, HASH
      */
     @XmlAttribute(name = "method")
-    private String method = "BTREE";
+    private IndexMethodEnum method = IndexMethodEnum.BTREE;
     
     /**
      * 注释
      */
     @XmlAttribute(name = "comment")
     private String comment;
-    
-    /**
-     * 获取索引字段列表（合并两种格式）
-     */
-    public List<IndexColumnDefinition> getColumns() {
-        if (!columns.isEmpty()) {
-            return columns;
-        }
-        return nestedColumns;
-    }
-    
-    /**
-     * 设置索引字段列表
-     */
-    public void setColumns(List<IndexColumnDefinition> columns) {
-        this.columns = columns;
-    }
-    
+
     /**
      * 索引字段列表
      */
     @XmlElement(name = "column")
     private List<IndexColumnDefinition> columns = new ArrayList<>();
-    
-    /**
-     * 索引字段列表（嵌套格式）
-     */
-    @XmlElementWrapper(name = "columns")
-    @XmlElement(name = "column")
-    private List<IndexColumnDefinition> nestedColumns = new ArrayList<>();
-    
-    /**
-     * 索引字段定义
-     */
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @XmlAccessorType(XmlAccessType.FIELD)
-    public static class IndexColumnDefinition {
-        
-        /**
-         * 字段名
-         */
-        @XmlAttribute(name = "name")
-        private String name;
-        
-        /**
-         * 排序方向：ASC, DESC
-         */
-        @XmlAttribute(name = "order")
-        private String order = "ASC";
-        
-        /**
-         * 索引长度（用于字符串字段的前缀索引）
-         */
-        @XmlAttribute(name = "length")
-        private Integer length;
-    }
+
 }

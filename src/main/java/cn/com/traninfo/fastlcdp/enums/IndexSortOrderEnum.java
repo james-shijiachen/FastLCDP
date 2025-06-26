@@ -1,0 +1,14 @@
+package cn.com.traninfo.fastlcdp.enums;
+
+public enum IndexSortOrderEnum {
+
+    /**
+     * 升序（默认）
+     */
+    ASC,
+
+    /**
+     * 倒序
+     */
+    DESC;
+}

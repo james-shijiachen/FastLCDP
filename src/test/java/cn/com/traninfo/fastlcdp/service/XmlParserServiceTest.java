@@ -1,6 +1,6 @@
 package cn.com.traninfo.fastlcdp.service;
 
-import cn.com.traninfo.fastlcdp.enums.PrimaryKeyType;
+import cn.com.traninfo.fastlcdp.enums.PrimaryKeyTypeEnum;
 import cn.com.traninfo.fastlcdp.model.DatabaseSchema;
 import cn.com.traninfo.fastlcdp.model.TableDefinition;
 import org.junit.jupiter.api.BeforeEach;
@@ -72,7 +72,7 @@ class XmlParserServiceTest {
         assertEquals(3, table.getFields().size());
         assertEquals("id", table.getFields().getFirst().getName());
         assertEquals("LONG", table.getFields().getFirst().getType());
-        assertEquals(PrimaryKeyType.AUTO_INCREMENT, table.getFields().getFirst().getPrimaryKey());
+        assertEquals(PrimaryKeyTypeEnum.AUTO_INCREMENT, table.getFields().getFirst().getPrimaryKey());
         
         assertEquals("username", table.getFields().get(1).getName());
         assertEquals("STRING", table.getFields().get(1).getType());
