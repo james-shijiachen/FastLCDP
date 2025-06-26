@@ -1,0 +1,81 @@
+spring:
+  application:
+    name: FastLCDP
+  
+  # 数据源配置 - 使用H2内存数据库
+  datasource:
+    url: jdbc:h2:file:./data/fastlcdp;DB_CLOSE_ON_EXIT=FALSE;AUTO_RECONNECT=TRUE
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  
+  # JPA配置
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+        use_sql_comments: false
+  
+  # H2控制台配置
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        web-allow-others: true
+
+# 服务器配置
+server:
+  port: 8080
+  servlet:
+    context-path: /
+  tomcat:
+    max-threads: 200
+    accept-count: 100
+
+# 管理端点配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  health:
+    db:
+      enabled: true
+
+# 日志配置
+logging:
+  level:
+    cn.com.traninfo.fastlcdp: INFO
+    org.springframework: WARN
+    org.hibernate: WARN
+  file:
+    name: /app/logs/fastlcdp.log
+  pattern:
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+# FastLCDP配置
+fastlcdp:
+  database:
+    type: MYSQL
+    charset: UTF8MB4
+    collation: utf8mb4_unicode_ci
+    metadata-storage-enabled: true
+  xml:
+    parsing-enabled: true
+  sql:
+    generation-enabled: true
