@@ -56,17 +56,12 @@ management:
     db:
       enabled: true
 
-# 日志配置
+# 日志配置 (使用log4j2)
 logging:
   level:
     cn.com.traninfo.fastlcdp: INFO
     org.springframework: WARN
     org.hibernate: WARN
-  file:
-    name: /app/logs/fastlcdp.log
-  pattern:
-    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
 
 # FastLCDP配置
 fastlcdp:

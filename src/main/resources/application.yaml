@@ -94,18 +94,13 @@ server:
       prefix: access_log
       suffix: .log
 
-# Logging Configuration
+# Logging Configuration (使用log4j2)
 logging:
   level:
     cn.com.traninfo.fastlcdp: DEBUG
     org.springframework.web: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-  file:
-    name: logs/fastlcdp.log
 
 # Management Endpoints Configuration
 management:
