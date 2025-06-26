@@ -1,15 +1,15 @@
 package cn.com.traninfo.fastlcdp.service;
 
-import cn.com.traninfo.fastlcdp.model.*;
 import cn.com.traninfo.fastlcdp.enums.PrimaryKeyType;
+import cn.com.traninfo.fastlcdp.model.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * SQL生成服务测试类
@@ -64,7 +64,7 @@ class SqlGeneratorServiceTest {
         
         TableDefinition table = new TableDefinition();
         table.setName("test");
-        table.setFields(Arrays.asList(stringField));
+        table.setFields(List.of(stringField));
         
         String sql = sqlGeneratorService.generateCreateTableSql(table);
         assertTrue(sql.contains("name") && sql.contains("VARCHAR"));
@@ -77,7 +77,7 @@ class SqlGeneratorServiceTest {
         decimalField.setScale(2);
         decimalField.setDefaultValue("0.00");
         
-        table.setFields(Arrays.asList(decimalField));
+        table.setFields(List.of(decimalField));
         sql = sqlGeneratorService.generateCreateTableSql(table);
         assertTrue(sql.contains("price") && sql.contains("DECIMAL"));
         
@@ -87,7 +87,7 @@ class SqlGeneratorServiceTest {
         datetimeField.setType("DATETIME");
         datetimeField.setDefaultValue("CURRENT_TIMESTAMP");
         
-        table.setFields(Arrays.asList(datetimeField));
+        table.setFields(List.of(datetimeField));
         sql = sqlGeneratorService.generateCreateTableSql(table);
         assertTrue(sql.contains("created_at") && sql.contains("TIMESTAMP"));
     }
@@ -107,12 +107,12 @@ class SqlGeneratorServiceTest {
         
         IndexDefinition.IndexColumnDefinition column = new IndexDefinition.IndexColumnDefinition();
         column.setName("email");
-        normalIndex.setColumns(Arrays.asList(column));
+        normalIndex.setColumns(List.of(column));
         
         TableDefinition table = new TableDefinition();
         table.setName("test");
-        table.setFields(Arrays.asList(emailField));
-        table.setIndexes(Arrays.asList(normalIndex));
+        table.setFields(List.of(emailField));
+        table.setIndexes(List.of(normalIndex));
         
         String sql = sqlGeneratorService.generateCreateTableSql(table);
         // H2数据库不在CREATE TABLE中生成索引，只检查表结构
@@ -125,15 +125,15 @@ class SqlGeneratorServiceTest {
         
         IndexDefinition.IndexColumnDefinition uniqueColumn = new IndexDefinition.IndexColumnDefinition();
         uniqueColumn.setName("username");
-        uniqueIndex.setColumns(Arrays.asList(uniqueColumn));
+        uniqueIndex.setColumns(List.of(uniqueColumn));
         
         FieldDefinition usernameField = new FieldDefinition();
         usernameField.setName("username");
         usernameField.setType("STRING");
         usernameField.setLength(50);
         
-        table.setFields(Arrays.asList(emailField, usernameField));
-        table.setIndexes(Arrays.asList(uniqueIndex));
+        table.setFields(List.of(emailField, usernameField));
+        table.setIndexes(List.of(uniqueIndex));
         sql = sqlGeneratorService.generateCreateTableSql(table);
         assertTrue(sql.contains("username") && sql.contains("VARCHAR"));
         
@@ -147,7 +147,7 @@ class SqlGeneratorServiceTest {
         IndexDefinition.IndexColumnDefinition ageColumn = new IndexDefinition.IndexColumnDefinition();
         ageColumn.setName("age");
         ageColumn.setOrder("DESC");
-        compositeIndex.setColumns(Arrays.asList(nameColumn, ageColumn));
+        compositeIndex.setColumns(List.of(nameColumn, ageColumn));
         
         FieldDefinition nameField = new FieldDefinition();
         nameField.setName("name");
@@ -158,8 +158,8 @@ class SqlGeneratorServiceTest {
         ageField.setName("age");
         ageField.setType("INT");
         
-        table.setFields(Arrays.asList(nameField, ageField));
-        table.setIndexes(Arrays.asList(compositeIndex));
+        table.setFields(List.of(nameField, ageField));
+        table.setIndexes(List.of(compositeIndex));
         sql = sqlGeneratorService.generateCreateTableSql(table);
         assertTrue(sql.contains("name") && sql.contains("age") && sql.contains("VARCHAR") && sql.contains("INT"));
     }
@@ -180,11 +180,11 @@ class SqlGeneratorServiceTest {
         
         TableDefinition table = new TableDefinition();
         table.setName("order");
-        table.setFields(Arrays.asList(
-            createSimpleField("id", "LONG"),
+        table.setFields(List.of(
+            createSimpleField(),
             userIdField
         ));
-        table.setRelations(Arrays.asList(relation));
+        table.setRelations(List.of(relation));
         
         String sql = sqlGeneratorService.generateCreateTableSql(table);
         // H2数据库不在CREATE TABLE中生成外键约束，只检查字段存在
@@ -203,8 +203,8 @@ class SqlGeneratorServiceTest {
         roleIdField.setName("role_id");
         roleIdField.setType("INT");
         
-        table.setFields(Arrays.asList(userIdField, roleIdField));
-        table.setRelations(Arrays.asList(cascadeRelation));
+        table.setFields(List.of(userIdField, roleIdField));
+        table.setRelations(List.of(cascadeRelation));
         sql = sqlGeneratorService.generateCreateTableSql(table);
         assertTrue(sql.contains("role_id") && sql.contains("INT"));
     }
@@ -239,12 +239,12 @@ class SqlGeneratorServiceTest {
         table.setEngine("InnoDB");
         
         // 字段
-        List<FieldDefinition> fields = Arrays.asList(
-            createPrimaryKeyField("id", "LONG"),
+        List<FieldDefinition> fields = List.of(
+            createPrimaryKeyField(),
             createField("username", "STRING", 50, false, null),
             createField("email", "STRING", 100, true, null),
             createField("age", "INT", null, true, null),
-            createDecimalField("balance", 10, 2, "0.00")
+            createDecimalField()
         );
         table.setFields(fields);
         
@@ -255,9 +255,9 @@ class SqlGeneratorServiceTest {
         
         IndexDefinition.IndexColumnDefinition column = new IndexDefinition.IndexColumnDefinition();
         column.setName("username");
-        uniqueIndex.setColumns(Arrays.asList(column));
+        uniqueIndex.setColumns(List.of(column));
         
-        table.setIndexes(Arrays.asList(uniqueIndex));
+        table.setIndexes(List.of(uniqueIndex));
         
         return table;
     }
@@ -269,8 +269,8 @@ class SqlGeneratorServiceTest {
         table.setEngine("InnoDB");
         
         // 字段
-        List<FieldDefinition> fields = Arrays.asList(
-            createPrimaryKeyField("id", "LONG"),
+        List<FieldDefinition> fields = List.of(
+            createPrimaryKeyField(),
             createField("title", "STRING", 200, false, null),
             createField("content", "LONGTEXT", null, true, null),
             createField("author_id", "LONG", null, false, null),
@@ -286,7 +286,7 @@ class SqlGeneratorServiceTest {
         
         IndexDefinition.IndexColumnDefinition titleColumn = new IndexDefinition.IndexColumnDefinition();
         titleColumn.setName("title");
-        titleIndex.setColumns(Arrays.asList(titleColumn));
+        titleIndex.setColumns(List.of(titleColumn));
         
         IndexDefinition compositeIndex = new IndexDefinition();
         compositeIndex.setName("idx_author_status");
@@ -297,9 +297,9 @@ class SqlGeneratorServiceTest {
         IndexDefinition.IndexColumnDefinition statusColumn = new IndexDefinition.IndexColumnDefinition();
         statusColumn.setName("status");
         statusColumn.setOrder("DESC");
-        compositeIndex.setColumns(Arrays.asList(authorColumn, statusColumn));
+        compositeIndex.setColumns(List.of(authorColumn, statusColumn));
         
-        table.setIndexes(Arrays.asList(titleIndex, compositeIndex));
+        table.setIndexes(List.of(titleIndex, compositeIndex));
         
         // 外键
         RelationDefinition relation = new RelationDefinition();
@@ -310,24 +310,23 @@ class SqlGeneratorServiceTest {
         relation.setOnDelete("RESTRICT");
         relation.setOnUpdate("CASCADE");
         
-        table.setRelations(Arrays.asList(relation));
+        table.setRelations(List.of(relation));
         
         return table;
     }
     
-    private FieldDefinition createSimpleField(String name, String type) {
+    private FieldDefinition createSimpleField() {
         FieldDefinition field = new FieldDefinition();
-        field.setName(name);
-        field.setType(type);
+        field.setName("id");
+        field.setType("LONG");
         return field;
     }
     
-    private FieldDefinition createPrimaryKeyField(String name, String type) {
+    private FieldDefinition createPrimaryKeyField() {
         FieldDefinition field = new FieldDefinition();
-        field.setName(name);
-        field.setType(type);
+        field.setName("id");
+        field.setType("LONG");
         field.setPrimaryKey(PrimaryKeyType.AUTO_INCREMENT);
-        field.setAutoIncrement(true);
         field.setNullable(false);
         return field;
     }
@@ -342,13 +341,13 @@ class SqlGeneratorServiceTest {
         return field;
     }
     
-    private FieldDefinition createDecimalField(String name, int precision, int scale, String defaultValue) {
+    private FieldDefinition createDecimalField() {
         FieldDefinition field = new FieldDefinition();
-        field.setName(name);
+        field.setName("balance");
         field.setType("DECIMAL");
-        field.setLength(precision);
-        field.setScale(scale);
-        field.setDefaultValue(defaultValue);
+        field.setLength(10);
+        field.setScale(2);
+        field.setDefaultValue("0.00");
         return field;
     }
 }

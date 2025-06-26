@@ -6,6 +6,7 @@ import cn.com.traninfo.fastlcdp.dialect.DatabaseDialectFactory;
 import cn.com.traninfo.fastlcdp.model.*;
 import cn.com.traninfo.fastlcdp.enums.PrimaryKeyType;
 import cn.com.traninfo.fastlcdp.repository.MetadataRepository;
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,7 +35,9 @@ public class MetadataService {
     
     @Autowired
     private XmlParserService xmlParserService;
-    
+    @Getter
+    private List<MetadataEntity> metadataList;
+
     /**
      * 保存模式定义到数据库
      */
@@ -130,6 +134,7 @@ public class MetadataService {
      * 将元数据实体列表转换为模式定义
      */
     private DatabaseSchema convertMetadataToSchema(String schemaName, List<MetadataEntity> metadataList) {
+        this.metadataList = metadataList;
         DatabaseSchema schema = new DatabaseSchema();
         schema.setName(schemaName);
         
@@ -438,14 +443,14 @@ public class MetadataService {
         
         return table;
     }
-    
+
     /**
      * 检查模式是否存在
      */
     public boolean schemaExists(String schemaName) {
         return metadataRepository.existsBySchemaName(schemaName);
     }
-    
+
     /**
      * 删除模式定义
      */
@@ -478,7 +483,7 @@ public class MetadataService {
     /**
      * 从XML文件保存模式定义
      */
-    public void saveSchemaFromXml(java.io.File xmlFile) {
+    public void saveSchemaFromXml(File xmlFile) {
         logger.info("从XML文件保存模式定义: {}", xmlFile.getName());
         
         try {
@@ -494,4 +499,5 @@ public class MetadataService {
             throw new RuntimeException("保存XML文件模式定义失败", e);
         }
     }
+
 }

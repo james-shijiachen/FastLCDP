@@ -24,7 +24,13 @@ public class TableDefinition {
      */
     @XmlAttribute(name = "name")
     private String name;
-    
+
+    /**
+     * 表类型
+     */
+    @XmlAttribute(name = "type")
+    private String type;
+
     /**
      * 表注释
      */

@@ -143,7 +143,7 @@ class XmlSchemaValidatorTest {
             writer.write("    <tables>\n");
             writer.write("        <table name=\"users\" comment=\"用户表\" engine=\"InnoDB\" charset=\"utf8mb4\">\n");
             writer.write("            <fields>\n");
-            writer.write("                <field name=\"id\" type=\"LONG\" primaryKey=\"true\" autoIncrement=\"true\" comment=\"主键ID\"/>\n");
+            writer.write("                <field name=\"id\" type=\"LONG\" primaryKey=\"AUTO_INCREMENT\" comment=\"主键ID\"/>\n");
             writer.write("                <field name=\"username\" type=\"STRING\" length=\"50\" nullable=\"false\" unique=\"true\" comment=\"用户名\"/>\n");
             writer.write("                <field name=\"email\" type=\"STRING\" length=\"100\" nullable=\"false\" comment=\"邮箱\"/>\n");
             writer.write("                <field name=\"created_time\" type=\"DATETIME\" nullable=\"false\" defaultValue=\"CURRENT_TIMESTAMP\" comment=\"创建时间\"/>\n");
@@ -163,7 +163,7 @@ class XmlSchemaValidatorTest {
             writer.write("        </table>\n");
             writer.write("        <table name=\"orders\" comment=\"订单表\">\n");
             writer.write("            <fields>\n");
-            writer.write("                <field name=\"id\" type=\"LONG\" primaryKey=\"true\" autoIncrement=\"true\" comment=\"主键ID\"/>\n");
+            writer.write("                <field name=\"id\" type=\"LONG\" primaryKey=\"AUTO_INCREMENT\" comment=\"主键ID\"/>\n");
             writer.write("                <field name=\"user_id\" type=\"LONG\" nullable=\"false\" comment=\"用户ID\"/>\n");
             writer.write("                <field name=\"amount\" type=\"DECIMAL\" precision=\"10\" scale=\"2\" nullable=\"false\" comment=\"金额\"/>\n");
             writer.write("            </fields>\n");

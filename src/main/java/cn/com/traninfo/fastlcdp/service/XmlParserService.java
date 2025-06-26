@@ -1,5 +1,6 @@
 package cn.com.traninfo.fastlcdp.service;
 
+import cn.com.traninfo.fastlcdp.enums.PrimaryKeyType;
 import cn.com.traninfo.fastlcdp.model.DatabaseSchema;
 import cn.com.traninfo.fastlcdp.model.TableDefinition;
 import cn.com.traninfo.fastlcdp.util.MessageUtils;
@@ -51,6 +52,9 @@ public class XmlParserService {
         // 处理表继承关系
         processTableInheritance(schema);
         
+        // 处理主键类型
+        processPrimaryKeyTypes(schema);
+        
         log.info(messageUtils.getMessage("xml.parse.success", schema.getTables().size()));
         return schema;
     }
@@ -70,6 +74,9 @@ public class XmlParserService {
         
         // 处理表继承关系
         processTableInheritance(schema);
+        
+        // 处理主键类型
+        processPrimaryKeyTypes(schema);
         
         log.info("XML解析完成，共解析到 {} 个表定义", schema.getTables().size());
         return schema;
@@ -171,6 +178,25 @@ public class XmlParserService {
             table.setRelations(new ArrayList<>(relationMap.values()));
             
             log.debug(messageUtils.getMessage("inheritance.success", table.getName(), parentTableName));
+        }
+    }
+    
+    /**
+     * 处理主键类型
+     * 根据primaryKey和autoIncrement属性的组合设置正确的PrimaryKeyType
+     * 
+     * @param schema 数据库模式
+     */
+    private void processPrimaryKeyTypes(DatabaseSchema schema) {
+        for (TableDefinition table : schema.getTables()) {
+            for (cn.com.traninfo.fastlcdp.model.FieldDefinition field : table.getFields()) {
+                // 如果primaryKey属性为true且autoIncrement为true，设置为AUTO_INCREMENT
+                if (PrimaryKeyType.AUTO_INCREMENT.equals(field.getPrimaryKey())) {
+                    field.setPrimaryKey(cn.com.traninfo.fastlcdp.enums.PrimaryKeyType.AUTO_INCREMENT);
+                }
+                // 如果只有primaryKey为true但autoIncrement为false或null，保持原有逻辑
+                // 这里可以根据需要扩展其他主键类型的处理逻辑
+            }
         }
     }
 }

@@ -1,8 +1,8 @@
 package cn.com.traninfo.fastlcdp.service;
 
+import cn.com.traninfo.fastlcdp.enums.PrimaryKeyType;
 import cn.com.traninfo.fastlcdp.model.DatabaseSchema;
 import cn.com.traninfo.fastlcdp.model.TableDefinition;
-import cn.com.traninfo.fastlcdp.service.XmlParserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +37,7 @@ class XmlParserServiceTest {
                 <tables>
                     <table name="user" comment="用户表">
                         <fields>
-                            <field name="id" type="LONG" primaryKey="true" autoIncrement="true" comment="用户ID"/>
+                            <field name="id" type="LONG" primaryKey="AUTO_INCREMENT" comment="用户ID"/>
                             <field name="username" type="STRING" length="50" nullable="false" comment="用户名"/>
                             <field name="email" type="STRING" length="100" comment="邮箱"/>
                         </fields>
@@ -64,16 +64,15 @@ class XmlParserServiceTest {
         
         // 验证表信息
         assertEquals(1, schema.getTables().size());
-        TableDefinition table = schema.getTables().get(0);
+        TableDefinition table = schema.getTables().getFirst();
         assertEquals("user", table.getName());
         assertEquals("用户表", table.getComment());
         
         // 验证字段信息
         assertEquals(3, table.getFields().size());
-        assertEquals("id", table.getFields().get(0).getName());
-        assertEquals("LONG", table.getFields().get(0).getType());
-        assertTrue(table.getFields().get(0).getPrimaryKey());
-        assertTrue(table.getFields().get(0).getAutoIncrement());
+        assertEquals("id", table.getFields().getFirst().getName());
+        assertEquals("LONG", table.getFields().getFirst().getType());
+        assertEquals(PrimaryKeyType.AUTO_INCREMENT, table.getFields().getFirst().getPrimaryKey());
         
         assertEquals("username", table.getFields().get(1).getName());
         assertEquals("STRING", table.getFields().get(1).getType());
@@ -82,10 +81,10 @@ class XmlParserServiceTest {
         
         // 验证索引信息
         assertEquals(1, table.getIndexes().size());
-        assertEquals("uk_username", table.getIndexes().get(0).getName());
-        assertEquals("UNIQUE", table.getIndexes().get(0).getType());
-        assertEquals(1, table.getIndexes().get(0).getColumns().size());
-        assertEquals("username", table.getIndexes().get(0).getColumns().get(0).getName());
+        assertEquals("uk_username", table.getIndexes().getFirst().getName());
+        assertEquals("UNIQUE", table.getIndexes().getFirst().getType());
+        assertEquals(1, table.getIndexes().getFirst().getColumns().size());
+        assertEquals("username", table.getIndexes().getFirst().getColumns().getFirst().getName());
     }
     
     @Test
@@ -96,7 +95,7 @@ class XmlParserServiceTest {
                 <tables>
                     <table name="base_entity" comment="基础实体表">
                         <fields>
-                            <field name="id" type="LONG" primaryKey="true" autoIncrement="true" comment="主键ID"/>
+                            <field name="id" type="LONG" primaryKey="AUTO_INCREMENT" comment="主键ID"/>
                             <field name="created_time" type="DATETIME" defaultValue="CURRENT_TIMESTAMP" comment="创建时间"/>
                             <field name="updated_time" type="DATETIME" defaultValue="CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" comment="更新时间"/>
                         </fields>
@@ -134,7 +133,7 @@ class XmlParserServiceTest {
         assertEquals(5, userTable.getFields().size());
         
         // 验证父表字段在前
-        assertEquals("id", userTable.getFields().get(0).getName());
+        assertEquals("id", userTable.getFields().getFirst().getName());
         assertEquals("created_time", userTable.getFields().get(1).getName());
         assertEquals("updated_time", userTable.getFields().get(2).getName());
         
@@ -151,13 +150,13 @@ class XmlParserServiceTest {
                 <tables>
                     <table name="user" comment="用户表">
                         <fields>
-                            <field name="id" type="LONG" primaryKey="true" autoIncrement="true"/>
+                            <field name="id" type="LONG" primaryKey="AUTO_INCREMENT"/>
                             <field name="username" type="STRING" length="50" nullable="false"/>
                         </fields>
                     </table>
                     <table name="order" comment="订单表">
                         <fields>
-                            <field name="id" type="LONG" primaryKey="true" autoIncrement="true"/>
+                            <field name="id" type="LONG" primaryKey="AUTO_INCREMENT"/>
                             <field name="user_id" type="LONG" nullable="false"/>
                             <field name="total_amount" type="DECIMAL" length="10" scale="2"/>
                         </fields>
@@ -181,7 +180,7 @@ class XmlParserServiceTest {
         assertNotNull(orderTable);
         assertEquals(1, orderTable.getRelations().size());
         
-        var relation = orderTable.getRelations().get(0);
+        var relation = orderTable.getRelations().getFirst();
         assertEquals("fk_order_user", relation.getName());
         assertEquals("user_id", relation.getColumn());
         assertEquals("user", relation.getReferenceTable());
@@ -196,8 +195,6 @@ class XmlParserServiceTest {
         
         InputStream inputStream = new ByteArrayInputStream(invalidXmlContent.getBytes(StandardCharsets.UTF_8));
         
-        assertThrows(JAXBException.class, () -> {
-            xmlParserService.parseFromStream(inputStream);
-        });
+        assertThrows(JAXBException.class, () -> xmlParserService.parseFromStream(inputStream));
     }
 }

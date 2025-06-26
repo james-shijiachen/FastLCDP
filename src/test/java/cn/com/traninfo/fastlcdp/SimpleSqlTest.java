@@ -3,6 +3,7 @@ package cn.com.traninfo.fastlcdp;
 import cn.com.traninfo.fastlcdp.model.*;
 import cn.com.traninfo.fastlcdp.enums.PrimaryKeyType;
 import cn.com.traninfo.fastlcdp.service.SqlGeneratorService;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,9 +11,10 @@ import java.util.List;
 /**
  * 简单的SQL生成测试，不依赖XML解析
  */
+@Slf4j
 public class SimpleSqlTest {
     
-    public static void main(String[] args) {
+    public static void main() {
         try {
             System.out.println("=== XML表生成器框架测试 ===");
             System.out.println();
@@ -54,7 +56,7 @@ public class SimpleSqlTest {
             
         } catch (Exception e) {
             System.err.println("测试失败: " + e.getMessage());
-            e.printStackTrace();
+            log.error(e.getMessage(), e);
         }
     }
     
@@ -93,7 +95,6 @@ public class SimpleSqlTest {
         idField.setName("id");
         idField.setType("LONG");
         idField.setPrimaryKey(PrimaryKeyType.AUTO_INCREMENT);
-        idField.setAutoIncrement(true);
         idField.setComment("用户ID");
         fields.add(idField);
         
@@ -159,7 +160,6 @@ public class SimpleSqlTest {
         idField.setName("id");
         idField.setType("LONG");
         idField.setPrimaryKey(PrimaryKeyType.AUTO_INCREMENT);
-        idField.setAutoIncrement(true);
         idField.setComment("订单ID");
         fields.add(idField);
         
