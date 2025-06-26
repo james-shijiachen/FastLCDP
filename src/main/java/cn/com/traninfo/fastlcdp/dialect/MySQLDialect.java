@@ -1,5 +1,6 @@
 package cn.com.traninfo.fastlcdp.dialect;
 
+import cn.com.traninfo.fastlcdp.enums.PrimaryKeyType;
 import cn.com.traninfo.fastlcdp.model.FieldDefinition;
 import cn.com.traninfo.fastlcdp.model.IndexDefinition;
 import cn.com.traninfo.fastlcdp.model.RelationDefinition;
@@ -233,7 +234,7 @@ public class MySQLDialect extends AbstractDatabaseDialect {
         
         // 主键定义
         List<FieldDefinition> primaryKeyFields = table.getFields().stream()
-                .filter(field -> field.getPrimaryKey() != null && field.getPrimaryKey())
+                .filter(field -> field.getPrimaryKey() != null && !PrimaryKeyType.NONE.equals(field.getPrimaryKey()))
                 .collect(Collectors.toList());
         
         if (!primaryKeyFields.isEmpty()) {

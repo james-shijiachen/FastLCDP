@@ -3,6 +3,7 @@ package cn.com.traninfo.fastlcdp.model;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import cn.com.traninfo.fastlcdp.enums.PrimaryKeyType;
 
 import jakarta.xml.bind.annotation.*;
 
@@ -53,17 +54,12 @@ public class FieldDefinition {
     private Boolean nullable = true;
     
     /**
-     * 是否为主键
+     * 主键类型
      */
     @XmlAttribute(name = "primaryKey")
-    private Boolean primaryKey = false;
+    private PrimaryKeyType primaryKey = PrimaryKeyType.NONE;
     
-    /**
-     * 是否自增
-     */
-    @XmlAttribute(name = "autoIncrement")
-    private Boolean autoIncrement = false;
-    
+
     /**
      * 默认值
      */

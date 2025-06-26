@@ -4,6 +4,7 @@ import cn.com.traninfo.fastlcdp.model.FieldDefinition;
 import cn.com.traninfo.fastlcdp.model.IndexDefinition;
 import cn.com.traninfo.fastlcdp.model.RelationDefinition;
 import cn.com.traninfo.fastlcdp.model.TableDefinition;
+import cn.com.traninfo.fastlcdp.enums.PrimaryKeyType;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
@@ -60,8 +61,13 @@ public abstract class AbstractDatabaseDialect implements DatabaseDialect {
             }
         }
         
-        // 自增
-        if (field.getAutoIncrement() != null && field.getAutoIncrement()) {
+        // 处理主键类型
+        if (field.getPrimaryKey() == PrimaryKeyType.AUTO_INCREMENT) {
+            sql.append(" ").append(getAutoIncrementKeyword());
+        }
+        
+        // 兼容旧的自增字段
+        if (PrimaryKeyType.AUTO_INCREMENT.equals(field.getPrimaryKey())) {
             sql.append(" ").append(getAutoIncrementKeyword());
         }
         
@@ -84,6 +90,18 @@ public abstract class AbstractDatabaseDialect implements DatabaseDialect {
                 .collect(Collectors.joining(", "));
         
         return "PRIMARY KEY (" + columns + ")";
+    }
+    
+    @Override
+    public String generateCreateSequenceSql(String sequenceName) {
+        // 默认实现，大多数数据库不支持序列
+        throw new UnsupportedOperationException("Sequences are not supported by " + getDatabaseTypeName());
+    }
+    
+    @Override
+    public String generateDropSequenceSql(String sequenceName) {
+        // 默认实现，大多数数据库不支持序列
+        throw new UnsupportedOperationException("Sequences are not supported by " + getDatabaseTypeName());
     }
     
     @Override
@@ -190,7 +208,7 @@ public abstract class AbstractDatabaseDialect implements DatabaseDialect {
         
         // 主键定义
         List<FieldDefinition> primaryKeyFields = table.getFields().stream()
-                .filter(field -> field.getPrimaryKey() != null && field.getPrimaryKey())
+                .filter(field -> field.getPrimaryKey() != null && !PrimaryKeyType.NONE.equals(field.getPrimaryKey()))
                 .collect(Collectors.toList());
         
         if (!primaryKeyFields.isEmpty()) {

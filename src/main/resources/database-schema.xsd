@@ -33,6 +33,7 @@
             <xs:element name="relations" type="RelationsType" minOccurs="0"/>
         </xs:sequence>
         <xs:attribute name="name" type="xs:string" use="required"/>
+        <xs:attribute name="type" type="TableTypeEnum" use="optional" default="ENTITY"/>
         <xs:attribute name="comment" type="xs:string" use="optional"/>
         <xs:attribute name="extends" type="xs:string" use="optional"/>
         <xs:attribute name="engine" type="EngineType" use="optional"/>
@@ -55,7 +56,7 @@
         <xs:attribute name="precision" type="xs:positiveInteger" use="optional"/>
         <xs:attribute name="scale" type="xs:nonNegativeInteger" use="optional"/>
         <xs:attribute name="nullable" type="xs:boolean" use="optional" default="true"/>
-        <xs:attribute name="primaryKey" type="xs:boolean" use="optional" default="false"/>
+        <xs:attribute name="primaryKey" type="PrimaryKeyType" use="optional" default="NONE"/>
         <xs:attribute name="autoIncrement" type="xs:boolean" use="optional" default="false"/>
         <xs:attribute name="unique" type="xs:boolean" use="optional" default="false"/>
         <xs:attribute name="defaultValue" type="xs:string" use="optional"/>
@@ -107,6 +108,26 @@
             <xs:enumeration value="MyISAM"/>
             <xs:enumeration value="Memory"/>
             <xs:enumeration value="Archive"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- 表类型枚举 -->
+    <xs:simpleType name="TableTypeEnum">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="ABSTRACT"/>
+            <xs:enumeration value="ENTITY"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- 主键类型枚举 -->
+    <xs:simpleType name="PrimaryKeyType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="NONE"/>
+            <xs:enumeration value="SINGLE"/>
+            <xs:enumeration value="COMPOSITE"/>
+            <xs:enumeration value="AUTO_INCREMENT"/>
+            <xs:enumeration value="UUID"/>
+            <xs:enumeration value="SEQUENCE"/>
         </xs:restriction>
     </xs:simpleType>
 

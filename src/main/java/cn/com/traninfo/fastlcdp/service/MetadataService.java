@@ -4,6 +4,7 @@ import cn.com.traninfo.fastlcdp.config.DatabaseConfig;
 import cn.com.traninfo.fastlcdp.dialect.DatabaseDialect;
 import cn.com.traninfo.fastlcdp.dialect.DatabaseDialectFactory;
 import cn.com.traninfo.fastlcdp.model.*;
+import cn.com.traninfo.fastlcdp.enums.PrimaryKeyType;
 import cn.com.traninfo.fastlcdp.repository.MetadataRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,8 +78,7 @@ public class MetadataService {
                 fieldMetadata.setFieldLength(field.getLength());
                 fieldMetadata.setFieldScale(field.getScale());
                 fieldMetadata.setIsNullable(field.getNullable());
-                fieldMetadata.setIsPrimaryKey(field.getPrimaryKey());
-                fieldMetadata.setIsAutoIncrement(field.getAutoIncrement());
+                fieldMetadata.setPrimaryKeyType(field.getPrimaryKey().name());
                 fieldMetadata.setDefaultValue(field.getDefaultValue());
                 fieldMetadata.setComment(field.getComment());
                 metadataList.add(fieldMetadata);
@@ -176,8 +176,7 @@ public class MetadataService {
             field.setLength(metadata.getFieldLength());
             field.setScale(metadata.getFieldScale());
             field.setNullable(metadata.getIsNullable());
-            field.setPrimaryKey(metadata.getIsPrimaryKey());
-            field.setAutoIncrement(metadata.getIsAutoIncrement());
+            field.setPrimaryKey(PrimaryKeyType.valueOf(metadata.getPrimaryKeyType()));
             field.setDefaultValue(metadata.getDefaultValue());
             field.setComment(metadata.getComment());
             fields.add(field);
@@ -252,8 +251,7 @@ public class MetadataService {
         FieldDefinition idField = new FieldDefinition();
         idField.setName("id");
         idField.setType("LONG");
-        idField.setPrimaryKey(true);
-        idField.setAutoIncrement(true);
+        idField.setPrimaryKey(PrimaryKeyType.AUTO_INCREMENT);
         idField.setNullable(false);
         idField.setComment("主键ID");
         fields.add(idField);

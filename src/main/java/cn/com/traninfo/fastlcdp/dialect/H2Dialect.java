@@ -1,5 +1,6 @@
 package cn.com.traninfo.fastlcdp.dialect;
 
+import cn.com.traninfo.fastlcdp.enums.PrimaryKeyType;
 import cn.com.traninfo.fastlcdp.model.FieldDefinition;
 import cn.com.traninfo.fastlcdp.model.TableDefinition;
 import org.springframework.util.StringUtils;
@@ -209,7 +210,7 @@ public class H2Dialect extends AbstractDatabaseDialect {
         sql.append(" ").append(generateFieldType(field));
         
         // 自增（H2中AUTO_INCREMENT要在类型后面）
-        if (field.getAutoIncrement() != null && field.getAutoIncrement()) {
+        if (PrimaryKeyType.AUTO_INCREMENT.equals(field.getPrimaryKey())) {
             sql.append(" ").append(getAutoIncrementKeyword());
         }
         

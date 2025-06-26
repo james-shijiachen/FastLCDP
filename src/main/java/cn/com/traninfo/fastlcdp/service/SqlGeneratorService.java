@@ -4,6 +4,7 @@ import cn.com.traninfo.fastlcdp.config.DatabaseConfig;
 import cn.com.traninfo.fastlcdp.dialect.DatabaseDialect;
 import cn.com.traninfo.fastlcdp.dialect.DatabaseDialectFactory;
 import cn.com.traninfo.fastlcdp.model.*;
+import cn.com.traninfo.fastlcdp.enums.PrimaryKeyType;
 import cn.com.traninfo.fastlcdp.service.XmlParserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -407,6 +408,44 @@ public class SqlGeneratorService {
             logger.error("生成SQL失败，数据库类型: {}, 文件: {}", databaseType, xmlFile.getName(), e);
             throw new RuntimeException("Failed to generate SQL for database type: " + databaseType, e);
         }
+    }
+    
+    /**
+     * 生成序列创建SQL
+     * 
+     * @param schema 数据库模式
+     * @return 序列创建SQL列表
+     */
+    public List<String> generateCreateSequencesSql(DatabaseSchema schema) {
+        DatabaseDialect dialect = DatabaseDialectFactory.createDialect(databaseConfig.getType());
+        
+        return schema.getTables().stream()
+                .flatMap(table -> table.getFields().stream())
+                .filter(field -> field.getPrimaryKey() == PrimaryKeyType.SEQUENCE)
+                .map(field -> {
+                    String sequenceName = "seq_" + field.getName();
+                    return dialect.generateCreateSequenceSql(sequenceName);
+                })
+                .collect(Collectors.toList());
+    }
+    
+    /**
+     * 生成序列删除SQL
+     * 
+     * @param schema 数据库模式
+     * @return 序列删除SQL列表
+     */
+    public List<String> generateDropSequencesSql(DatabaseSchema schema) {
+        DatabaseDialect dialect = DatabaseDialectFactory.createDialect(databaseConfig.getType());
+        
+        return schema.getTables().stream()
+                .flatMap(table -> table.getFields().stream())
+                .filter(field -> field.getPrimaryKey() == PrimaryKeyType.SEQUENCE)
+                .map(field -> {
+                    String sequenceName = "seq_" + field.getName();
+                    return dialect.generateDropSequenceSql(sequenceName);
+                })
+                .collect(Collectors.toList());
     }
     
     /**

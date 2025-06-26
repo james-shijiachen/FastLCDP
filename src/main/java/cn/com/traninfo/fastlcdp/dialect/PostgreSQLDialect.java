@@ -3,7 +3,12 @@ package cn.com.traninfo.fastlcdp.dialect;
 import cn.com.traninfo.fastlcdp.model.FieldDefinition;
 import cn.com.traninfo.fastlcdp.model.TableDefinition;
 import cn.com.traninfo.fastlcdp.model.IndexDefinition;
+import cn.com.traninfo.fastlcdp.model.RelationDefinition;
+import cn.com.traninfo.fastlcdp.enums.PrimaryKeyType;
 import org.springframework.util.StringUtils;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * PostgreSQL数据库方言实现
@@ -59,7 +64,7 @@ public class PostgreSQLDialect extends AbstractDatabaseDialect {
         switch (type) {
             // 新的通用类型映射
             case "INTEGER":
-                if (field.getAutoIncrement() != null && field.getAutoIncrement()) {
+                if (PrimaryKeyType.AUTO_INCREMENT.equals(field.getPrimaryKey())) {
                     fieldType.append("SERIAL");
                 } else {
                     fieldType.append("INTEGER");
@@ -67,7 +72,7 @@ public class PostgreSQLDialect extends AbstractDatabaseDialect {
                 break;
                 
             case "LONG":
-                if (field.getAutoIncrement() != null && field.getAutoIncrement()) {
+                if (PrimaryKeyType.AUTO_INCREMENT.equals(field.getPrimaryKey())) {
                     fieldType.append("BIGSERIAL");
                 } else {
                     fieldType.append("BIGINT");
@@ -128,7 +133,7 @@ public class PostgreSQLDialect extends AbstractDatabaseDialect {
                 break;
                 
             case "INT":
-                if (field.getAutoIncrement() != null && field.getAutoIncrement()) {
+                if (PrimaryKeyType.AUTO_INCREMENT.equals(field.getPrimaryKey())) {
                     fieldType.append("SERIAL");
                 } else {
                     fieldType.append("INTEGER");
@@ -136,7 +141,7 @@ public class PostgreSQLDialect extends AbstractDatabaseDialect {
                 break;
                 
             case "BIGINT":
-                if (field.getAutoIncrement() != null && field.getAutoIncrement()) {
+                if (PrimaryKeyType.AUTO_INCREMENT.equals(field.getPrimaryKey())) {
                     fieldType.append("BIGSERIAL");
                 } else {
                     fieldType.append("BIGINT");
@@ -145,7 +150,7 @@ public class PostgreSQLDialect extends AbstractDatabaseDialect {
                 
             case "TINYINT":
             case "SMALLINT":
-                if (field.getAutoIncrement() != null && field.getAutoIncrement()) {
+                if (PrimaryKeyType.AUTO_INCREMENT.equals(field.getPrimaryKey())) {
                     fieldType.append("SMALLSERIAL");
                 } else {
                     fieldType.append("SMALLINT");
@@ -207,17 +212,19 @@ public class PostgreSQLDialect extends AbstractDatabaseDialect {
         // 字段类型
         sql.append(" ").append(generateFieldType(field));
         
-        // PostgreSQL的SERIAL类型自动包含NOT NULL，不需要额外指定
-        String fieldType = generateFieldType(field);
-        boolean isSerial = fieldType.contains("SERIAL");
+        // 序列主键的默认值
+        if (field.getPrimaryKey() == PrimaryKeyType.SEQUENCE) {
+            String sequenceName = "seq_" + field.getName();
+            sql.append(" DEFAULT nextval('").append(sequenceName).append("')");
+        }
         
         // 是否允许为空
-        if (!isSerial && field.getNullable() != null && !field.getNullable()) {
+        if (field.getNullable() != null && !field.getNullable()) {
             sql.append(" NOT NULL");
         }
         
-        // 默认值（SERIAL类型不需要默认值）
-        if (!isSerial && StringUtils.hasText(field.getDefaultValue())) {
+        // 默认值（非序列字段）
+        if (StringUtils.hasText(field.getDefaultValue()) && field.getPrimaryKey() != PrimaryKeyType.SEQUENCE) {
             sql.append(" DEFAULT ");
             if (field.getDefaultValue().equalsIgnoreCase("CURRENT_TIMESTAMP") ||
                 field.getDefaultValue().equalsIgnoreCase("NOW()")) {
@@ -227,6 +234,21 @@ public class PostgreSQLDialect extends AbstractDatabaseDialect {
             } else {
                 sql.append(escapeStringValue(field.getDefaultValue()));
             }
+        }
+        
+        // 处理主键类型
+        if (field.getPrimaryKey() == PrimaryKeyType.AUTO_INCREMENT) {
+            sql.append(" ").append(getAutoIncrementKeyword());
+        }
+        
+        // 兼容旧的自增字段
+        if (PrimaryKeyType.AUTO_INCREMENT.equals(field.getPrimaryKey())) {
+            sql.append(" ").append(getAutoIncrementKeyword());
+        }
+        
+        // 注释
+        if (StringUtils.hasText(field.getComment())) {
+            sql.append(" -- ").append(field.getComment());
         }
         
         return sql.toString();
@@ -297,5 +319,21 @@ public class PostgreSQLDialect extends AbstractDatabaseDialect {
         sql.append(")");
         
         return sql.toString();
+    }
+    
+    @Override
+    public String generateLimitSql(String baseSql, int offset, int limit) {
+        return baseSql + " LIMIT " + limit + " OFFSET " + offset;
+    }
+    
+    @Override
+    public String generateCreateSequenceSql(String sequenceName) {
+        return "CREATE SEQUENCE " + escapeIdentifier(sequenceName) + 
+               " START 1 INCREMENT 1";
+    }
+    
+    @Override
+    public String generateDropSequenceSql(String sequenceName) {
+        return "DROP SEQUENCE IF EXISTS " + escapeIdentifier(sequenceName);
     }
 }

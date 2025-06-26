@@ -1,7 +1,10 @@
 package cn.com.traninfo.fastlcdp.util;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 import org.xml.sax.SAXException;
 
 import javax.xml.XMLConstants;
@@ -12,6 +15,7 @@ import javax.xml.validation.Validator;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.net.URL;
 
 /**
@@ -21,38 +25,40 @@ import java.net.URL;
  * @author FastLCDP
  * @since 1.0.0
  */
+@Component
 public class XmlSchemaValidator {
     
     private static final Logger logger = LoggerFactory.getLogger(XmlSchemaValidator.class);
-    
-    private static final String DEFAULT_SCHEMA_PATH = "/database-schema.xsd";
-    
-    private final Schema schema;
-    
-    /**
-     * 使用默认的XSD schema构造校验器
+
+    private String DEFAULT_SCHEMA_PATH;
+
+    @Value("${sax.maxErrorCount:10}")
+    private Integer maxErrorCount;
+
+    private Schema schema;
+
+    /**:
+     * 默认构造校验器
+     *
      */
-    public XmlSchemaValidator() {
-        this(DEFAULT_SCHEMA_PATH);
+    public XmlSchemaValidator(@Value("${sax.schemaPath:/database-schema.xsd}") String schemaPath) throws IOException, SAXException {
+        this.DEFAULT_SCHEMA_PATH = schemaPath;
+        this.loadValidator(DEFAULT_SCHEMA_PATH);
     }
-    
+
     /**
      * 使用指定的XSD schema路径构造校验器
      * 
      * @param schemaPath XSD schema文件路径（classpath相对路径）
      */
-    public XmlSchemaValidator(String schemaPath) {
-        try {
-            SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-            InputStream schemaStream = getClass().getResourceAsStream(schemaPath);
-            if (schemaStream == null) {
-                throw new IllegalArgumentException("Schema file not found: " + schemaPath);
-            }
-            this.schema = factory.newSchema(new StreamSource(schemaStream));
-            logger.info("XML Schema validator initialized with schema: {}", schemaPath);
-        } catch (SAXException e) {
-            throw new RuntimeException("Failed to load XML schema: " + schemaPath, e);
+    public void loadValidator(String schemaPath) throws SAXException {
+        SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+        InputStream schemaStream = XmlSchemaValidator.class.getResourceAsStream(schemaPath);
+        if(schemaStream == null){
+            throw new IllegalArgumentException("Schema resource not found: " + schemaPath);
         }
+        this.schema = factory.newSchema(new StreamSource(schemaStream));
+        logger.info("XML Schema validator initialized with schema: {}", schemaPath);
     }
     
     /**
@@ -60,14 +66,10 @@ public class XmlSchemaValidator {
      * 
      * @param schemaFile XSD schema文件
      */
-    public XmlSchemaValidator(File schemaFile) {
-        try {
-            SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-            this.schema = factory.newSchema(schemaFile);
-            logger.info("XML Schema validator initialized with schema file: {}", schemaFile.getAbsolutePath());
-        } catch (SAXException e) {
-            throw new RuntimeException("Failed to load XML schema from file: " + schemaFile.getAbsolutePath(), e);
-        }
+    public void loadValidator(File schemaFile) throws SAXException {
+        SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+        this.schema = factory.newSchema(schemaFile);
+        logger.info("XML Schema validator initialized with schema file: {}", schemaFile.getAbsolutePath());
     }
     
     /**
@@ -75,14 +77,10 @@ public class XmlSchemaValidator {
      * 
      * @param schemaUrl XSD schema URL
      */
-    public XmlSchemaValidator(URL schemaUrl) {
-        try {
-            SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-            this.schema = factory.newSchema(schemaUrl);
-            logger.info("XML Schema validator initialized with schema URL: {}", schemaUrl.toString());
-        } catch (SAXException e) {
-            throw new RuntimeException("Failed to load XML schema from URL: " + schemaUrl.toString(), e);
-        }
+    public void loadValidator(URL schemaUrl) throws SAXException {
+        SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+        this.schema = factory.newSchema(schemaUrl);
+        logger.info("XML Schema validator initialized with schema URL: {}", schemaUrl.toString());
     }
     
     /**
@@ -91,28 +89,81 @@ public class XmlSchemaValidator {
      * @param xmlFile 要校验的XML文件
      * @return 校验结果
      */
-    public ValidationResult validate(File xmlFile) {
+    public XmlValidationResult validate(File xmlFile) {
+
+        XmlValidationResult result = XmlValidationResult.success();
+        result.setFilePath(xmlFile.getAbsolutePath());
+
         try {
             Validator validator = schema.newValidator();
+            XmlValidationErrorHandler errorHandler = new XmlValidationErrorHandler(maxErrorCount);
+            validator.setErrorHandler(errorHandler);
+
             validator.validate(new StreamSource(xmlFile));
+
+            if (errorHandler.hasErrors()) {
+                result.setValid(false);
+                result.setErrors(errorHandler.getErrors());
+                result.setWarnings(errorHandler.getWarnings());
+            }
+
             logger.debug("XML file validation successful: {}", xmlFile.getAbsolutePath());
-            return ValidationResult.success();
         } catch (SAXException e) {
-            logger.warn("XML file validation failed: {} - {}", xmlFile.getAbsolutePath(), e.getMessage());
-            return ValidationResult.failure(e.getMessage());
+            result.setValid(false);
+            result.addError("XML file validation failed: " + e.getMessage());
+            logger.error("XML file validation failed: {}", xmlFile.getAbsolutePath(), e);
         } catch (IOException e) {
+            result.setValid(false);
+            result.addError("Failed to read XML file: " + e.getMessage());
             logger.error("Failed to read XML file: {}", xmlFile.getAbsolutePath(), e);
-            return ValidationResult.failure("Failed to read XML file: " + e.getMessage());
         }
+        return result;
     }
-    
+
     /**
-     * 校验XML文件
+     * 校验XML文件内容
+     * @param xmlContent
+     * @return
+     */
+    public XmlValidationResult validate(String xmlContent) {
+
+        XmlValidationResult result = XmlValidationResult.success();
+        result.setFilePath("<string>");
+
+        try {
+            Validator validator = schema.newValidator();
+            XmlValidationErrorHandler errorHandler = new XmlValidationErrorHandler(maxErrorCount);
+            validator.setErrorHandler(errorHandler);
+
+            validator.validate(new StreamSource(new StringReader(xmlContent)));
+
+            if (errorHandler.hasErrors()) {
+                result.setValid(false);
+                result.setErrors(errorHandler.getErrors());
+                result.setWarnings(errorHandler.getWarnings());
+            }
+
+            logger.debug("XML file validation successful: {}", xmlContent);
+
+        } catch (SAXException e) {
+            result.setValid(false);
+            result.addError("XML Content validation failed: " + e.getMessage());
+            logger.error("XML Content validation failed: {}", xmlContent, e);
+        } catch (IOException e) {
+            result.setValid(false);
+            result.addError("Failed to read XML Content: " + e.getMessage());
+            logger.error("Failed to read XML Content: {}", xmlContent, e);
+        }
+        return result;
+    }
+
+    /**
+     * 校验XML文件路径
      * 
      * @param xmlFilePath XML文件路径
      * @return 校验结果
      */
-    public ValidationResult validate(String xmlFilePath) {
+    public XmlValidationResult validateXmlFilePath(String xmlFilePath) {
         return validate(new File(xmlFilePath));
     }
     
@@ -122,77 +173,31 @@ public class XmlSchemaValidator {
      * @param xmlStream XML输入流
      * @return 校验结果
      */
-    public ValidationResult validate(InputStream xmlStream) {
+    public XmlValidationResult validate(InputStream xmlStream) {
+        XmlValidationResult result = XmlValidationResult.success();
+        result.setFilePath("<stream>");
+
         try {
             Validator validator = schema.newValidator();
+            XmlValidationErrorHandler errorHandler = new XmlValidationErrorHandler(maxErrorCount);
+            validator.setErrorHandler(errorHandler);
             validator.validate(new StreamSource(xmlStream));
-            logger.debug("XML stream validation successful");
-            return ValidationResult.success();
-        } catch (SAXException e) {
-            logger.warn("XML stream validation failed: {}", e.getMessage());
-            return ValidationResult.failure(e.getMessage());
-        } catch (IOException e) {
-            logger.error("Failed to read XML stream", e);
-            return ValidationResult.failure("Failed to read XML stream: " + e.getMessage());
-        }
-    }
-    
-    /**
-     * 校验结果类
-     */
-    public static class ValidationResult {
-        private final boolean valid;
-        private final String errorMessage;
-        
-        private ValidationResult(boolean valid, String errorMessage) {
-            this.valid = valid;
-            this.errorMessage = errorMessage;
-        }
-        
-        /**
-         * 创建成功的校验结果
-         * 
-         * @return 成功的校验结果
-         */
-        public static ValidationResult success() {
-            return new ValidationResult(true, null);
-        }
-        
-        /**
-         * 创建失败的校验结果
-         * 
-         * @param errorMessage 错误信息
-         * @return 失败的校验结果
-         */
-        public static ValidationResult failure(String errorMessage) {
-            return new ValidationResult(false, errorMessage);
-        }
-        
-        /**
-         * 是否校验成功
-         * 
-         * @return true表示校验成功，false表示校验失败
-         */
-        public boolean isValid() {
-            return valid;
-        }
-        
-        /**
-         * 获取错误信息
-         * 
-         * @return 错误信息，校验成功时为null
-         */
-        public String getErrorMessage() {
-            return errorMessage;
-        }
-        
-        @Override
-        public String toString() {
-            if (valid) {
-                return "ValidationResult{valid=true}";
-            } else {
-                return "ValidationResult{valid=false, errorMessage='" + errorMessage + "'}";
+            if (errorHandler.hasErrors()) {
+                result.setValid(false);
+                result.setErrors(errorHandler.getErrors());
+                result.setWarnings(errorHandler.getWarnings());
             }
+            logger.debug("XML stream validation successful");
+
+        } catch (SAXException e) {
+            result.setValid(false);
+            result.addError("XML stream validation failed: " + e.getMessage());
+            logger.error("XML stream validation failed:", e);
+        } catch (IOException e) {
+            result.setValid(false);
+            result.addError("Failed to read XML stream: " + e.getMessage());
+            logger.error("Failed to read XML stream", e);
         }
+        return result;
     }
 }

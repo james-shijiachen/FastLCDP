@@ -1,6 +1,7 @@
 package cn.com.traninfo.fastlcdp.service;
 
 import cn.com.traninfo.fastlcdp.model.*;
+import cn.com.traninfo.fastlcdp.enums.PrimaryKeyType;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -325,7 +326,7 @@ class SqlGeneratorServiceTest {
         FieldDefinition field = new FieldDefinition();
         field.setName(name);
         field.setType(type);
-        field.setPrimaryKey(true);
+        field.setPrimaryKey(PrimaryKeyType.AUTO_INCREMENT);
         field.setAutoIncrement(true);
         field.setNullable(false);
         return field;

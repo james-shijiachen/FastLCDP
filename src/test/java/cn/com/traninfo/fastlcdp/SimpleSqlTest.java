@@ -1,6 +1,7 @@
 package cn.com.traninfo.fastlcdp;
 
 import cn.com.traninfo.fastlcdp.model.*;
+import cn.com.traninfo.fastlcdp.enums.PrimaryKeyType;
 import cn.com.traninfo.fastlcdp.service.SqlGeneratorService;
 
 import java.util.ArrayList;
@@ -91,7 +92,7 @@ public class SimpleSqlTest {
         FieldDefinition idField = new FieldDefinition();
         idField.setName("id");
         idField.setType("LONG");
-        idField.setPrimaryKey(true);
+        idField.setPrimaryKey(PrimaryKeyType.AUTO_INCREMENT);
         idField.setAutoIncrement(true);
         idField.setComment("用户ID");
         fields.add(idField);
@@ -157,7 +158,7 @@ public class SimpleSqlTest {
         FieldDefinition idField = new FieldDefinition();
         idField.setName("id");
         idField.setType("LONG");
-        idField.setPrimaryKey(true);
+        idField.setPrimaryKey(PrimaryKeyType.AUTO_INCREMENT);
         idField.setAutoIncrement(true);
         idField.setComment("订单ID");
         fields.add(idField);

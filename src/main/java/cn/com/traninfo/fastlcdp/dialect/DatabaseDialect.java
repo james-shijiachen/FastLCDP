@@ -59,6 +59,16 @@ public interface DatabaseDialect {
     String generatePrimaryKeyDefinition(List<FieldDefinition> primaryKeyFields);
     
     /**
+     * 生成序列创建SQL
+     */
+    String generateCreateSequenceSql(String sequenceName);
+    
+    /**
+     * 生成删除序列SQL
+     */
+    String generateDropSequenceSql(String sequenceName);
+    
+    /**
      * 生成索引创建SQL
      */
     String generateCreateIndexSql(String tableName, IndexDefinition index);

@@ -3,6 +3,7 @@ package cn.com.traninfo.fastlcdp.util;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.xml.sax.SAXException;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -18,23 +19,23 @@ import static org.junit.jupiter.api.Assertions.*;
  * @since 1.0.0
  */
 class XmlSchemaValidatorTest {
-    
+
     private XmlSchemaValidator validator;
     
     @TempDir
     Path tempDir;
-    
+
     @BeforeEach
-    void setUp() {
-        validator = new XmlSchemaValidator();
+    void setUp() throws IOException, SAXException {
+        validator = new XmlSchemaValidator("/database-schema.xsd");
     }
     
     @Test
     void testValidXmlFile() {
         // 测试有效的XML文件
-        File xmlFile = new File("examples/sample-database.xml");
+        File xmlFile = new File("examples/simple_db.xml");
         if (xmlFile.exists()) {
-            XmlSchemaValidator.ValidationResult result = validator.validate(xmlFile);
+            XmlValidationResult result = validator.validate(xmlFile);
             assertTrue(result.isValid(), "Valid XML file should pass validation");
             assertNull(result.getErrorMessage(), "Valid XML should have no error message");
         }
@@ -45,7 +46,7 @@ class XmlSchemaValidatorTest {
         // 测试继承功能的XML文件
         File xmlFile = new File("src/test/resources/test-inheritance.xml");
         if (xmlFile.exists()) {
-            XmlSchemaValidator.ValidationResult result = validator.validate(xmlFile);
+            XmlValidationResult result = validator.validate(xmlFile);
             assertTrue(result.isValid(), "Valid inheritance XML file should pass validation");
             assertNull(result.getErrorMessage(), "Valid XML should have no error message");
         }
@@ -70,7 +71,7 @@ class XmlSchemaValidatorTest {
             writer.write("</database>\n");
         }
         
-        XmlSchemaValidator.ValidationResult result = validator.validate(invalidXml);
+        XmlValidationResult result = validator.validate(invalidXml);
         assertFalse(result.isValid(), "Invalid XML file should fail validation");
         assertNotNull(result.getErrorMessage(), "Invalid XML should have error message");
         assertTrue(result.getErrorMessage().contains("name") || result.getErrorMessage().contains("type"), 
@@ -95,7 +96,7 @@ class XmlSchemaValidatorTest {
             writer.write("</database>\n");
         }
         
-        XmlSchemaValidator.ValidationResult result = validator.validate(invalidXml);
+        XmlValidationResult result = validator.validate(invalidXml);
         assertFalse(result.isValid(), "XML with invalid data type should fail validation");
         assertNotNull(result.getErrorMessage(), "Invalid XML should have error message");
         assertTrue(result.getErrorMessage().contains("INVALID_TYPE") || result.getErrorMessage().contains("enumeration"), 
@@ -127,7 +128,7 @@ class XmlSchemaValidatorTest {
             writer.write("</database>\n");
         }
         
-        XmlSchemaValidator.ValidationResult result = validator.validate(invalidXml);
+        XmlValidationResult result = validator.validate(invalidXml);
         assertFalse(result.isValid(), "XML with invalid index type should fail validation");
         assertNotNull(result.getErrorMessage(), "Invalid XML should have error message");
     }
@@ -174,7 +175,7 @@ class XmlSchemaValidatorTest {
             writer.write("</database>\n");
         }
         
-        XmlSchemaValidator.ValidationResult result = validator.validate(validXml);
+        XmlValidationResult result = validator.validate(validXml);
         assertTrue(result.isValid(), "Complete valid XML file should pass validation");
         assertNull(result.getErrorMessage(), "Valid XML should have no error message");
     }
@@ -183,7 +184,7 @@ class XmlSchemaValidatorTest {
     void testNonExistentFile() {
         // 测试不存在的文件
         File nonExistentFile = new File("non-existent-file.xml");
-        XmlSchemaValidator.ValidationResult result = validator.validate(nonExistentFile);
+        XmlValidationResult result = validator.validate(nonExistentFile);
         assertFalse(result.isValid(), "Non-existent file should fail validation");
         assertNotNull(result.getErrorMessage(), "Non-existent file should have error message");
     }
@@ -191,10 +192,10 @@ class XmlSchemaValidatorTest {
     @Test
     void testValidationResultToString() {
         // 测试ValidationResult的toString方法
-        XmlSchemaValidator.ValidationResult successResult = XmlSchemaValidator.ValidationResult.success();
+        XmlValidationResult successResult = XmlValidationResult.success();
         assertTrue(successResult.toString().contains("valid=true"));
         
-        XmlSchemaValidator.ValidationResult failureResult = XmlSchemaValidator.ValidationResult.failure("Test error");
+        XmlValidationResult failureResult = XmlValidationResult.failure("Test error");
         assertTrue(failureResult.toString().contains("valid=false"));
         assertTrue(failureResult.toString().contains("Test error"));
     }

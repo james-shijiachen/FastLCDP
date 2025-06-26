@@ -6,6 +6,9 @@ import lombok.extern.slf4j.Slf4j;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.SchemaOutputResolver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.xml.transform.Result;
 import javax.xml.transform.stream.StreamResult;
 import java.io.File;
@@ -21,7 +24,6 @@ import java.io.IOException;
  */
 @Slf4j
 public class XmlSchemaGenerator {
-
     /**
      * 生成XSD文件
      *
@@ -53,7 +55,6 @@ public class XmlSchemaGenerator {
                 return result;
             }
         });
-        
         log.info("XML Schema文件生成成功: {}", schemaFile.getAbsolutePath());
     }
     

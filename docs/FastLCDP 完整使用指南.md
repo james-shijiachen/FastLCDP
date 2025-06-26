@@ -128,9 +128,17 @@ FastLCDP 是一个基于XML配置的数据库表结构生成工具，支持通�
 | name | String | 是 | 表名 | `users` |
 | comment | String | 否 | 表注释 | `用户表` |
 | extends | String | 否 | 继承的父表名 | `base_entity` |
+| type | TableTypeEnum | 否 | 表类型，默认ENTITY | `ABSTRACT`, `ENTITY` |
 | engine | EngineType | 否 | 存储引擎，未设置时继承数据库默认值 | `InnoDB` |
 | charset | CharsetType | 否 | 表字符集，未设置时继承数据库默认值 | `utf8mb4` |
 | collation | CollationType | 否 | 表排序规则，未设置时继承数据库默认值 | `utf8mb4_general_ci` |
+
+#### 表类型说明（TableTypeEnum）
+
+| 值 | 说明 |
+|------|------|
+| `ABSTRACT` | 抽象表，仅用于继承，不会生成实际的数据库表 |
+| `ENTITY` | 实体表（默认），会生成实际的数据库表 |
 
 ### 属性继承规则
 采用三级继承体系：
@@ -185,32 +193,73 @@ flowchart TD
 ### 企业级示例
 ```xml
 <!-- 多层继承结构 -->
-<table name="base_audit" comment="审计基表">
+<table name="base_audit" type="ABSTRACT" comment="审计基表">
     <fields>
+        <field name="id" type="LONG" primaryKey="AUTO_INCREMENT" comment="主键ID"/>
         <field name="created_by" type="LONG" comment="创建人ID"/>
         <field name="updated_by" type="LONG" comment="更新人ID"/>
+        <field name="created_time" type="DATETIME" defaultValue="CURRENT_TIMESTAMP" comment="创建时间"/>
+        <field name="updated_time" type="DATETIME" defaultValue="CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" comment="更新时间"/>
     </fields>
 </table>
 
-<table name="biz_entity" extends="base_audit" comment="业务基表">
+<table name="biz_entity" extends="base_audit" type="ABSTRACT" comment="业务基表">
     <fields>
-        <field name="data_status" type="SMALLINT" comment="数据状态"/>
+        <field name="data_status" type="INTEGER" defaultValue="1" comment="数据状态：0-禁用，1-启用"/>
+        <field name="sort_order" type="INTEGER" defaultValue="0" comment="排序顺序"/>
     </fields>
 </table>
 
 <table name="account" extends="biz_entity" comment="账户表">
     <fields>
-        <field name="account_no" type="STRING" length=32 comment="账号"/>
+        <field name="account_no" type="STRING" length="32" unique="true" comment="账号"/>
+        <field name="account_name" type="STRING" length="100" comment="账户名称"/>
+        <field name="balance" type="DECIMAL" precision="15" scale="2" defaultValue="0.00" comment="账户余额"/>
+    </fields>
+    <indexes>
+        <index name="uk_account_no" type="UNIQUE">
+            <columns>
+                <column name="account_no"/>
+            </columns>
+        </index>
+    </indexes>
+</table>
+
+<!-- 复合主键示例 -->
+<table name="user_role_mapping" comment="用户角色映射表">
+    <fields>
+        <field name="user_id" type="LONG" primaryKey="COMPOSITE" comment="用户ID"/>
+        <field name="role_id" type="LONG" primaryKey="COMPOSITE" comment="角色ID"/>
+        <field name="granted_time" type="DATETIME" defaultValue="CURRENT_TIMESTAMP" comment="授权时间"/>
+        <field name="granted_by" type="LONG" comment="授权人ID"/>
+    </fields>
+    <indexes>
+        <index name="pk_user_role" type="PRIMARY">
+            <columns>
+                <column name="user_id"/>
+                <column name="role_id"/>
+            </columns>
+        </index>
+    </indexes>
+</table>
+
+<!-- UUID主键示例 -->
+<table name="document" comment="文档表">
+    <fields>
+        <field name="doc_uuid" type="STRING" length="36" primaryKey="UUID" comment="文档UUID"/>
+        <field name="title" type="STRING" length="200" comment="文档标题"/>
+        <field name="content" type="TEXT" comment="文档内容"/>
+        <field name="created_time" type="DATETIME" defaultValue="CURRENT_TIMESTAMP" comment="创建时间"/>
     </fields>
 </table>
 ```
 
 #### 继承示例
 ```xml
-<!-- 基础实体表 -->
-<table name="base_entity" comment="基础实体表">
+<!-- 基础实体表（抽象表） -->
+<table name="base_entity" type="ABSTRACT" comment="基础实体表">
     <fields>
-        <field name="id" type="LONG" primaryKey="true" autoIncrement="true" comment="主键ID"/>
+        <field name="id" type="LONG" primaryKey="AUTO_INCREMENT" comment="主键ID"/>
         <field name="created_time" type="DATETIME" defaultValue="CURRENT_TIMESTAMP" comment="创建时间"/>
         <field name="updated_time" type="DATETIME" defaultValue="CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" comment="更新时间"/>
         <field name="is_deleted" type="BOOLEAN" length="1" defaultValue="0" comment="是否删除"/>
@@ -262,11 +311,39 @@ flowchart TD
 | precision | Integer | 否 | 数值精度（正整数，用于DECIMAL类型） | `10` |
 | scale | Integer | 否 | 小数位数（非负整数，用于DECIMAL类型） | `2` |
 | nullable | Boolean | 否 | 是否允许NULL，默认true | `false` |
-| primaryKey | Boolean | 否 | 是否为主键，默认false | `true` |
+| primaryKey | PrimaryKeyType | 否 | 主键类型，默认NONE | `SINGLE`, `COMPOSITE`, `AUTO_INCREMENT` |
 | autoIncrement | Boolean | 否 | 是否自增，默认false | `true` |
 | unique | Boolean | 否 | 是否唯一，默认false | `true` |
 | defaultValue | String | 否 | 默认值 | `0`, `CURRENT_TIMESTAMP` |
 | comment | String | 否 | 字段注释 | `用户名` |
+
+#### 主键类型说明（PrimaryKeyType）
+
+| 值 | 说明 |
+|------|------|
+| `NONE` | 非主键字段（默认） |
+| `SINGLE` | 单字段主键 |
+| `COMPOSITE` | 复合主键的组成字段 |
+| `AUTO_INCREMENT` | 自增主键（通常用于整数类型） |
+| `UUID` | UUID主键（通常用于字符串类型） |
+| `SEQUENCE` | 序列主键（适用于支持序列的数据库） |
+
+#### 主键类型使用示例
+
+```xml
+<!-- 自增主键 -->
+<field name="id" type="LONG" primaryKey="AUTO_INCREMENT" comment="主键ID"/>
+
+<!-- UUID主键 -->
+<field name="uuid" type="STRING" length="36" primaryKey="UUID" comment="UUID主键"/>
+
+<!-- 复合主键 -->
+<field name="user_id" type="LONG" primaryKey="COMPOSITE" comment="用户ID"/>
+<field name="role_id" type="LONG" primaryKey="COMPOSITE" comment="角色ID"/>
+
+<!-- 序列主键 -->
+<field name="seq_id" type="LONG" primaryKey="SEQUENCE" comment="序列主键"/>
+```
 
 ### 支持的数据类型
 
@@ -1454,141 +1531,141 @@ import java.util.List;
  * 提供多种方式加载XSD Schema并校验XML文件
  */
 public class XmlSchemaValidator {
-    
-    private Schema schema;
-    
-    /**
-     * 使用默认的XSD Schema（从classpath加载）
-     */
-    public XmlSchemaValidator() throws SAXException {
-        this("/database-schema.xsd");
-    }
-    
-    /**
-     * 使用指定的XSD Schema文件路径（classpath）
-     */
-    public XmlSchemaValidator(String xsdClasspathResource) throws SAXException {
-        InputStream xsdStream = getClass().getResourceAsStream(xsdClasspathResource);
-        if (xsdStream == null) {
-            throw new IllegalArgumentException("XSD文件未找到: " + xsdClasspathResource);
-        }
-        initSchema(new StreamSource(xsdStream));
-    }
-    
-    /**
-     * 使用XSD文件对象
-     */
-    public XmlSchemaValidator(File xsdFile) throws SAXException {
-        if (!xsdFile.exists()) {
-            throw new IllegalArgumentException("XSD文件不存在: " + xsdFile.getAbsolutePath());
-        }
-        initSchema(new StreamSource(xsdFile));
-    }
-    
-    /**
-     * 使用XSD URL
-     */
-    public XmlSchemaValidator(URL xsdUrl) throws SAXException {
-        initSchema(new StreamSource(xsdUrl.toString()));
-    }
-    
-    /**
-     * 使用XSD输入流
-     */
-    public XmlSchemaValidator(InputStream xsdStream) throws SAXException {
-        initSchema(new StreamSource(xsdStream));
-    }
-    
-    private void initSchema(StreamSource xsdSource) throws SAXException {
-        SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-        this.schema = factory.newSchema(xsdSource);
-    }
-    
-    /**
-     * 校验XML文件
-     */
-    public ValidationResult validate(File xmlFile) {
-        try {
-            Validator validator = schema.newValidator();
-            ValidationErrorHandler errorHandler = new ValidationErrorHandler();
-            validator.setErrorHandler(errorHandler);
-            validator.validate(new StreamSource(xmlFile));
-            
-            return new ValidationResult(errorHandler.getErrors().isEmpty(), errorHandler.getErrors());
-        } catch (Exception e) {
-            List<String> errors = new ArrayList<>();
-            errors.add("校验异常: " + e.getMessage());
-            return new ValidationResult(false, errors);
-        }
-    }
-    
-    /**
-     * 校验XML字符串
-     */
-    public ValidationResult validate(String xmlContent) {
-        try {
-            Validator validator = schema.newValidator();
-            ValidationErrorHandler errorHandler = new ValidationErrorHandler();
-            validator.setErrorHandler(errorHandler);
-            validator.validate(new StreamSource(new StringReader(xmlContent)));
-            
-            return new ValidationResult(errorHandler.getErrors().isEmpty(), errorHandler.getErrors());
-        } catch (Exception e) {
-            List<String> errors = new ArrayList<>();
-            errors.add("校验异常: " + e.getMessage());
-            return new ValidationResult(false, errors);
-        }
-    }
-    
-    /**
-     * 校验XML输入流
-     */
-    public ValidationResult validate(InputStream xmlStream) {
-        try {
-            Validator validator = schema.newValidator();
-            ValidationErrorHandler errorHandler = new ValidationErrorHandler();
-            validator.setErrorHandler(errorHandler);
-            validator.validate(new StreamSource(xmlStream));
-            
-            return new ValidationResult(errorHandler.getErrors().isEmpty(), errorHandler.getErrors());
-        } catch (Exception e) {
-            List<String> errors = new ArrayList<>();
-            errors.add("校验异常: " + e.getMessage());
-            return new ValidationResult(false, errors);
-        }
-    }
-    
-    /**
-     * 校验结果类
-     */
-    public static class ValidationResult {
-        private final boolean valid;
-        private final List<String> errors;
-        
-        public ValidationResult(boolean valid, List<String> errors) {
-            this.valid = valid;
-            this.errors = errors;
-        }
-        
-        public boolean isValid() {
-            return valid;
-        }
-        
-        public List<String> getErrors() {
-            return errors;
-        }
-        
-        public void printErrors() {
-            if (!valid) {
-                System.err.println("XML校验失败，错误信息:");
-                for (String error : errors) {
-                    System.err.println("  - " + error);
-                }
-            } else {
-                System.out.println("XML校验成功！");
+
+   private Schema schema;
+
+   /**
+    * 使用默认的XSD Schema（从classpath加载）
+    */
+   public XmlSchemaValidator() throws SAXException {
+      this("/database-schema.xsd");
+   }
+
+   /**
+    * 使用指定的XSD Schema文件路径（classpath）
+    */
+   public XmlSchemaValidator(String xsdClasspathResource) throws SAXException {
+      InputStream xsdStream = getClass().getResourceAsStream(xsdClasspathResource);
+      if (xsdStream == null) {
+         throw new IllegalArgumentException("XSD文件未找到: " + xsdClasspathResource);
+      }
+      initSchema(new StreamSource(xsdStream));
+   }
+
+   /**
+    * 使用XSD文件对象
+    */
+   public XmlSchemaValidator(File xsdFile) throws SAXException {
+      if (!xsdFile.exists()) {
+         throw new IllegalArgumentException("XSD文件不存在: " + xsdFile.getAbsolutePath());
+      }
+      initSchema(new StreamSource(xsdFile));
+   }
+
+   /**
+    * 使用XSD URL
+    */
+   public XmlSchemaValidator(URL xsdUrl) throws SAXException {
+      initSchema(new StreamSource(xsdUrl.toString()));
+   }
+
+   /**
+    * 使用XSD输入流
+    */
+   public XmlSchemaValidator(InputStream xsdStream) throws SAXException {
+      initSchema(new StreamSource(xsdStream));
+   }
+
+   private void initSchema(StreamSource xsdSource) throws SAXException {
+      SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+      this.schema = factory.newSchema(xsdSource);
+   }
+
+   /**
+    * 校验XML文件
+    */
+   public ValidationResult validate(File xmlFile) {
+      try {
+         Validator validator = schema.newValidator();
+         XmlValidationErrorHandler errorHandler = new XmlValidationErrorHandler();
+         validator.setErrorHandler(errorHandler);
+         validator.validate(new StreamSource(xmlFile));
+
+         return new ValidationResult(errorHandler.getErrors().isEmpty(), errorHandler.getErrors());
+      } catch (Exception e) {
+         List<String> errors = new ArrayList<>();
+         errors.add("校验异常: " + e.getMessage());
+         return new ValidationResult(false, errors);
+      }
+   }
+
+   /**
+    * 校验XML字符串
+    */
+   public ValidationResult validate(String xmlContent) {
+      try {
+         Validator validator = schema.newValidator();
+         XmlValidationErrorHandler errorHandler = new XmlValidationErrorHandler();
+         validator.setErrorHandler(errorHandler);
+         validator.validate(new StreamSource(new StringReader(xmlContent)));
+
+         return new ValidationResult(errorHandler.getErrors().isEmpty(), errorHandler.getErrors());
+      } catch (Exception e) {
+         List<String> errors = new ArrayList<>();
+         errors.add("校验异常: " + e.getMessage());
+         return new ValidationResult(false, errors);
+      }
+   }
+
+   /**
+    * 校验XML输入流
+    */
+   public ValidationResult validate(InputStream xmlStream) {
+      try {
+         Validator validator = schema.newValidator();
+         XmlValidationErrorHandler errorHandler = new XmlValidationErrorHandler();
+         validator.setErrorHandler(errorHandler);
+         validator.validate(new StreamSource(xmlStream));
+
+         return new ValidationResult(errorHandler.getErrors().isEmpty(), errorHandler.getErrors());
+      } catch (Exception e) {
+         List<String> errors = new ArrayList<>();
+         errors.add("校验异常: " + e.getMessage());
+         return new ValidationResult(false, errors);
+      }
+   }
+
+   /**
+    * 校验结果类
+    */
+   public static class ValidationResult {
+      private final boolean valid;
+      private final List<String> errors;
+
+      public ValidationResult(boolean valid, List<String> errors) {
+         this.valid = valid;
+         this.errors = errors;
+      }
+
+      public boolean isValid() {
+         return valid;
+      }
+
+      public List<String> getErrors() {
+         return errors;
+      }
+
+      public void printErrors() {
+         if (!valid) {
+            System.err.println("XML校验失败，错误信息:");
+            for (String error : errors) {
+               System.err.println("  - " + error);
             }
-        }
-    }
+         } else {
+            System.out.println("XML校验成功！");
+         }
+      }
+   }
 }
 ```
 
