@@ -22,9 +22,9 @@
 
 | 技术栈 | 版本 | 作用 | 推荐描述 | 推荐值 |
 |--------|------|------|----------|--------|
-| Spring Data JPA | 包含在Spring Boot中 | 数据访问层 | 与Hibernate完美集成 | ⭐⭐⭐⭐⭐ |
-| Hibernate | 通过JPA集成 | ORM框架 | 最成熟的Java ORM框架 | ⭐⭐⭐⭐⭐ |
-| MyBatis Plus| 推荐替代 | ORM框架 | SQL控制更精确 | ⭐⭐⭐⭐ |
+| MyBatis Plus| 包含在Spring Boot中 | ORM框架 | SQL控制更精确 | ⭐⭐⭐⭐⭐ |
+| Spring Data JPA | 推荐替代 | 数据访问层 | 与Hibernate完美集成 | ⭐⭐⭐⭐ |
+| Hibernate | 通过JPA集成 | ORM框架 | 最成熟的Java ORM框架 | ⭐⭐⭐⭐ |
 
 ### 🗄️ 数据库访问层
 

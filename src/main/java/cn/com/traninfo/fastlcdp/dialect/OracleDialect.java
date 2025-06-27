@@ -267,7 +267,7 @@ public class OracleDialect extends AbstractDatabaseDialect {
         sql.append("CREATE ");
         
         // 索引类型
-        if ("UNIQUE".equalsIgnoreCase(index.getType())) {
+        if (index.getType() != null && "UNIQUE".equalsIgnoreCase(index.getType().name())) {
             sql.append("UNIQUE ");
         }
         
@@ -287,8 +287,8 @@ public class OracleDialect extends AbstractDatabaseDialect {
             String columns = index.getColumns().stream()
                     .map(column -> {
                         StringBuilder columnDef = new StringBuilder(escapeIdentifier(column.getName()));
-                        if (StringUtils.hasText(column.getOrder())) {
-                            columnDef.append(" ").append(column.getOrder());
+                        if (column.getOrder() != null) {
+                            columnDef.append(" ").append(column.getOrder().name());
                         }
                         return columnDef.toString();
                     })

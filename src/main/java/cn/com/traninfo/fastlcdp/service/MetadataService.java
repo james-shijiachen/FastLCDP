@@ -1,13 +1,17 @@
 package cn.com.traninfo.fastlcdp.service;
 
+import cn.com.traninfo.fastlcdp.base.service.EntityService;
+import cn.com.traninfo.fastlcdp.base.service.SearchService;
 import cn.com.traninfo.fastlcdp.config.DatabaseConfig;
 import cn.com.traninfo.fastlcdp.dialect.DatabaseDialect;
 import cn.com.traninfo.fastlcdp.dialect.DatabaseDialectFactory;
 import cn.com.traninfo.fastlcdp.entity.MetadataEntity;
+import cn.com.traninfo.fastlcdp.enums.IndexTypeEnum;
 import cn.com.traninfo.fastlcdp.enums.PrimaryKeyTypeEnum;
 import cn.com.traninfo.fastlcdp.model.*;
-import cn.com.traninfo.fastlcdp.repository.MetadataRepository;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.Getter;
+import org.apache.ibatis.session.SqlSessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,25 +27,32 @@ import java.util.List;
  * 元数据服务类
  */
 @Service
-@Transactional
 public class MetadataService {
     
     private static final Logger logger = LoggerFactory.getLogger(MetadataService.class);
     
     @Autowired
-    private MetadataRepository metadataRepository;
+    private EntityService<MetadataEntity> entityService;
+    
+    @Autowired
+    private SearchService<MetadataEntity> searchService;
     
     @Autowired
     private DatabaseConfig databaseConfig;
     
     @Autowired
     private XmlParserService xmlParserService;
+    
+    @Autowired
+    private SqlSessionFactory sqlSessionFactory;
+
     @Getter
     private List<MetadataEntity> metadataList;
 
     /**
      * 保存模式定义到数据库
      */
+    @Transactional
     public void saveSchemaDefinition(DatabaseSchema schema) {
         logger.info("开始保存模式定义: {}", schema.getName());
         
@@ -58,7 +69,14 @@ public class MetadataService {
         }
         
         // 批量保存
-        metadataRepository.saveAll(metadataList);
+        if (!metadataList.isEmpty()) {
+            try {
+                entityService.saveBatch(metadataList);
+            } catch (Exception e) {
+                logger.error("批量保存元数据失败: {}", e.getMessage(), e);
+                throw new RuntimeException("批量保存元数据失败", e);
+            }
+        }
         
         logger.info("模式定义保存完成，共保存 {} 条元数据记录", metadataList.size());
     }
@@ -95,7 +113,7 @@ public class MetadataService {
             for (IndexDefinition index : table.getIndexes()) {
                 MetadataEntity indexMetadata = new MetadataEntity(schemaName, table.getName());
                 indexMetadata.setIndexName(index.getName());
-                indexMetadata.setIndexType(index.getType());
+                indexMetadata.setIndexType(index.getType() != null ? index.getType().name() : null);
                 indexMetadata.setComment(index.getComment());
                 metadataList.add(indexMetadata);
             }
@@ -122,7 +140,9 @@ public class MetadataService {
     public DatabaseSchema getSchemaDefinition(String schemaName) {
         logger.info("查询模式定义: {}", schemaName);
         
-        List<MetadataEntity> metadataList = metadataRepository.findBySchemaName(schemaName);
+        QueryWrapper<MetadataEntity> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("schema_name", schemaName);
+        List<MetadataEntity> metadataList = searchService.list(queryWrapper);
         if (metadataList.isEmpty()) {
             logger.warn("未找到模式定义: {}", schemaName);
             return null;
@@ -140,7 +160,14 @@ public class MetadataService {
         schema.setName(schemaName);
         
         // 获取所有表名
-        List<String> tableNames = metadataRepository.findTableNamesBySchemaName(schemaName);
+        QueryWrapper<MetadataEntity> tableQueryWrapper = new QueryWrapper<>();
+        tableQueryWrapper.eq("schema_name", schemaName)
+                         .select("DISTINCT table_name");
+        List<MetadataEntity> tableEntities = searchService.list(tableQueryWrapper);
+        List<String> tableNames = tableEntities.stream()
+                .map(MetadataEntity::getTableName)
+                .distinct()
+                .collect(java.util.stream.Collectors.toList());
         List<TableDefinition> tables = new ArrayList<>();
         
         for (String tableName : tableNames) {
@@ -158,7 +185,10 @@ public class MetadataService {
      * 将元数据转换为表定义
      */
     private TableDefinition convertMetadataToTable(String schemaName, String tableName) {
-        List<MetadataEntity> tableMetadata = metadataRepository.findBySchemaNameAndTableName(schemaName, tableName);
+        QueryWrapper<MetadataEntity> tableMetadataWrapper = new QueryWrapper<>();
+        tableMetadataWrapper.eq("schema_name", schemaName)
+                           .eq("table_name", tableName);
+        List<MetadataEntity> tableMetadata = searchService.list(tableMetadataWrapper);
         if (tableMetadata.isEmpty()) {
             return null;
         }
@@ -173,7 +203,11 @@ public class MetadataService {
                 .ifPresent(m -> table.setComment(m.getComment()));
         
         // 转换字段
-        List<MetadataEntity> fieldMetadata = metadataRepository.findFieldsBySchemaNameAndTableName(schemaName, tableName);
+        QueryWrapper<MetadataEntity> fieldWrapper = new QueryWrapper<>();
+        fieldWrapper.eq("schema_name", schemaName)
+                   .eq("table_name", tableName)
+                   .isNotNull("field_name");
+        List<MetadataEntity> fieldMetadata = searchService.list(fieldWrapper);
         List<FieldDefinition> fields = new ArrayList<>();
         for (MetadataEntity metadata : fieldMetadata) {
             FieldDefinition field = new FieldDefinition();
@@ -190,19 +224,27 @@ public class MetadataService {
         table.setFields(fields);
         
         // 转换索引
-        List<MetadataEntity> indexMetadata = metadataRepository.findIndexesBySchemaNameAndTableName(schemaName, tableName);
+        QueryWrapper<MetadataEntity> indexWrapper = new QueryWrapper<>();
+        indexWrapper.eq("schema_name", schemaName)
+                   .eq("table_name", tableName)
+                   .isNotNull("index_name");
+        List<MetadataEntity> indexMetadata = searchService.list(indexWrapper);
         List<IndexDefinition> indexes = new ArrayList<>();
         for (MetadataEntity metadata : indexMetadata) {
             IndexDefinition index = new IndexDefinition();
             index.setName(metadata.getIndexName());
-            index.setType(metadata.getIndexType());
+            index.setType(metadata.getIndexType() != null ? IndexTypeEnum.valueOf(metadata.getIndexType()) : null);
             index.setComment(metadata.getComment());
             indexes.add(index);
         }
         table.setIndexes(indexes);
         
         // 转换关系
-        List<MetadataEntity> relationMetadata = metadataRepository.findRelationsBySchemaNameAndTableName(schemaName, tableName);
+        QueryWrapper<MetadataEntity> relationWrapper = new QueryWrapper<>();
+        relationWrapper.eq("schema_name", schemaName)
+                      .eq("table_name", tableName)
+                      .isNotNull("relation_type");
+        List<MetadataEntity> relationMetadata = searchService.list(relationWrapper);
         List<RelationDefinition> relations = new ArrayList<>();
         for (MetadataEntity metadata : relationMetadata) {
             RelationDefinition relation = new RelationDefinition();
@@ -418,9 +460,9 @@ public class MetadataService {
         // 模式名索引
         IndexDefinition schemaIndex = new IndexDefinition();
         schemaIndex.setName("idx_metadata_schema");
-        schemaIndex.setType("INDEX");
-        List<IndexDefinition.IndexColumnDefinition> schemaColumns = new ArrayList<>();
-        IndexDefinition.IndexColumnDefinition schemaColumn = new IndexDefinition.IndexColumnDefinition();
+        schemaIndex.setType(IndexTypeEnum.NORMAL);
+        List<IndexColumnDefinition> schemaColumns = new ArrayList<>();
+        IndexColumnDefinition schemaColumn = new IndexColumnDefinition();
         schemaColumn.setName("schema_name");
         schemaColumns.add(schemaColumn);
         schemaIndex.setColumns(schemaColumns);
@@ -429,11 +471,11 @@ public class MetadataService {
         // 表名索引
         IndexDefinition tableIndex = new IndexDefinition();
         tableIndex.setName("idx_metadata_table");
-        tableIndex.setType("INDEX");
-        List<IndexDefinition.IndexColumnDefinition> tableColumns = new ArrayList<>();
-        IndexDefinition.IndexColumnDefinition schemaTableColumn1 = new IndexDefinition.IndexColumnDefinition();
+        tableIndex.setType(IndexTypeEnum.NORMAL);
+        List<IndexColumnDefinition> tableColumns = new ArrayList<>();
+        IndexColumnDefinition schemaTableColumn1 = new IndexColumnDefinition();
         schemaTableColumn1.setName("schema_name");
-        IndexDefinition.IndexColumnDefinition schemaTableColumn2 = new IndexDefinition.IndexColumnDefinition();
+        IndexColumnDefinition schemaTableColumn2 = new IndexColumnDefinition();
         schemaTableColumn2.setName("table_name");
         tableColumns.add(schemaTableColumn1);
         tableColumns.add(schemaTableColumn2);
@@ -449,41 +491,52 @@ public class MetadataService {
      * 检查模式是否存在
      */
     public boolean schemaExists(String schemaName) {
-        return metadataRepository.existsBySchemaName(schemaName);
+        QueryWrapper<MetadataEntity> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("schema_name", schemaName);
+        return searchService.exists(queryWrapper);
     }
 
     /**
      * 删除模式定义
      */
+    @Transactional
     public void deleteSchemaDefinition(String schemaName) {
         logger.info("删除模式定义: {}", schemaName);
-        metadataRepository.deleteBySchemaName(schemaName);
+        QueryWrapper<MetadataEntity> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("schema_name", schemaName);
+        entityService.delete(queryWrapper);
     }
     
     /**
      * 根据模式名称删除元数据
      */
+    @Transactional
     public void deleteBySchemaName(String schemaName) {
-        metadataRepository.deleteBySchemaName(schemaName);
+        QueryWrapper<MetadataEntity> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("schema_name", schemaName);
+        entityService.delete(queryWrapper);
     }
     
     /**
      * 根据模式名称查找元数据
      */
     public List<MetadataEntity> findBySchemaName(String schemaName) {
-        return metadataRepository.findBySchemaName(schemaName);
+        QueryWrapper<MetadataEntity> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("schema_name", schemaName);
+        return searchService.list(queryWrapper);
     }
     
     /**
      * 查找所有元数据
      */
     public List<MetadataEntity> findAllMetadata() {
-        return metadataRepository.findAll();
+        return searchService.list(new QueryWrapper<>());
     }
     
     /**
      * 从XML文件保存模式定义
      */
+    @Transactional
     public void saveSchemaFromXml(File xmlFile) {
         logger.info("从XML文件保存模式定义: {}", xmlFile.getName());
         

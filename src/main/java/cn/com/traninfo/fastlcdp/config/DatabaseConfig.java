@@ -1,11 +1,15 @@
 package cn.com.traninfo.fastlcdp.config;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 /**
  * 数据库配置类
  */
+@Setter
+@Getter
 @Component
 @ConfigurationProperties(prefix = "database")
 public class DatabaseConfig {
@@ -13,34 +17,22 @@ public class DatabaseConfig {
     /**
      * 数据库类型枚举
      */
+    @Getter
     public enum DatabaseType {
-        H2("H2", "org.h2.Driver", "jdbc:h2:mem:testdb"),
-        MYSQL("MySQL", "com.mysql.cj.jdbc.Driver", "jdbc:mysql://localhost:3306/"),
-        POSTGRESQL("PostgreSQL", "org.postgresql.Driver", "jdbc:postgresql://localhost:5432/"),
-        ORACLE("Oracle", "oracle.jdbc.driver.OracleDriver", "jdbc:oracle:thin:@localhost:1521:"),
-        SQLSERVER("SQL Server", "com.microsoft.sqlserver.jdbc.SQLServerDriver", "jdbc:sqlserver://localhost:1433;databaseName=");
+        H2("H2", "org.h2.Driver"),
+        MYSQL("MySQL", "com.mysql.cj.jdbc.Driver"),
+        POSTGRESQL("PostgreSQL", "org.postgresql.Driver"),
+        ORACLE("Oracle", "oracle.jdbc.driver.OracleDriver"),
+        SQLSERVER("SQL Server", "com.microsoft.sqlserver.jdbc.SQLServerDriver");
         
         private final String displayName;
         private final String driverClassName;
-        private final String urlPrefix;
         
-        DatabaseType(String displayName, String driverClassName, String urlPrefix) {
+        DatabaseType(String displayName, String driverClassName) {
             this.displayName = displayName;
             this.driverClassName = driverClassName;
-            this.urlPrefix = urlPrefix;
         }
-        
-        public String getDisplayName() {
-            return displayName;
-        }
-        
-        public String getDriverClassName() {
-            return driverClassName;
-        }
-        
-        public String getUrlPrefix() {
-            return urlPrefix;
-        }
+
     }
     
     /**
@@ -77,73 +69,19 @@ public class DatabaseConfig {
      * 数据库方言配置
      */
     private DialectConfig dialect = new DialectConfig();
-    
-    public DatabaseType getType() {
-        return type;
-    }
-    
-    public void setType(DatabaseType type) {
-        this.type = type;
-    }
-    
-    public String getCharset() {
-        return charset;
-    }
-    
-    public void setCharset(String charset) {
-        this.charset = charset;
-    }
-    
-    public String getCollation() {
-        return collation;
-    }
-    
-    public void setCollation(String collation) {
-        this.collation = collation;
-    }
-    
+
     /**
      * 检查是否启用元数据存储
      */
     public boolean isMetadataStorageEnabled() {
         return true; // 默认启用元数据存储
     }
-    
-    public boolean isEnableMetadataStorage() {
-        return enableMetadataStorage;
-    }
-    
-    public void setEnableMetadataStorage(boolean enableMetadataStorage) {
-        this.enableMetadataStorage = enableMetadataStorage;
-    }
-    
-    public String getMetadataTablePrefix() {
-        return metadataTablePrefix;
-    }
-    
-    public void setMetadataTablePrefix(String metadataTablePrefix) {
-        this.metadataTablePrefix = metadataTablePrefix;
-    }
-    
-    public boolean isAutoCreateMetadataTables() {
-        return autoCreateMetadataTables;
-    }
-    
-    public void setAutoCreateMetadataTables(boolean autoCreateMetadataTables) {
-        this.autoCreateMetadataTables = autoCreateMetadataTables;
-    }
-    
-    public DialectConfig getDialect() {
-        return dialect;
-    }
-    
-    public void setDialect(DialectConfig dialect) {
-        this.dialect = dialect;
-    }
-    
+
     /**
      * 数据库方言配置
      */
+    @Setter
+    @Getter
     public static class DialectConfig {
         /**
          * 标识符引用字符
@@ -174,53 +112,6 @@ public class DatabaseConfig {
          * 限制查询语法
          */
         private String limitSyntax = "LIMIT";
-        
-        public String getIdentifierQuote() {
-            return identifierQuote;
-        }
-        
-        public void setIdentifierQuote(String identifierQuote) {
-            this.identifierQuote = identifierQuote;
-        }
-        
-        public boolean isSupportsIfNotExists() {
-            return supportsIfNotExists;
-        }
-        
-        public void setSupportsIfNotExists(boolean supportsIfNotExists) {
-            this.supportsIfNotExists = supportsIfNotExists;
-        }
-        
-        public String getAutoIncrementKeyword() {
-            return autoIncrementKeyword;
-        }
-        
-        public void setAutoIncrementKeyword(String autoIncrementKeyword) {
-            this.autoIncrementKeyword = autoIncrementKeyword;
-        }
-        
-        public String getCurrentTimestampFunction() {
-            return currentTimestampFunction;
-        }
-        
-        public void setCurrentTimestampFunction(String currentTimestampFunction) {
-            this.currentTimestampFunction = currentTimestampFunction;
-        }
-        
-        public String getStringConcatOperator() {
-            return stringConcatOperator;
-        }
-        
-        public void setStringConcatOperator(String stringConcatOperator) {
-            this.stringConcatOperator = stringConcatOperator;
-        }
-        
-        public String getLimitSyntax() {
-            return limitSyntax;
-        }
-        
-        public void setLimitSyntax(String limitSyntax) {
-            this.limitSyntax = limitSyntax;
-        }
+
     }
 }

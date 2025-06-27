@@ -3,25 +3,19 @@ spring:
   application:
     name: fastlcdp
 
-  # Internationalization Configuration
-  messages:
-    basename: messages
-    encoding: UTF-8
-    cache-duration: 3600
-
   # Data Source Configuration
   datasource:
     # Default H2 in-memory database for testing
-    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+#    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+#    driver-class-name: org.h2.Driver
+#    username: sa
+#    password:
 
     # MySQL Database Configuration Example (uncomment and modify connection info)
-    # url: jdbc:mysql://localhost:3306/fastlcdp?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
-    # driver-class-name: com.mysql.cj.jdbc.Driver
-    # username: root
-    # password: password
+     url: jdbc:mysql://localhost:3306/fastlcdp?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+     driver-class-name: com.mysql.cj.jdbc.Driver
+     username: root
+     password: 1234
 
     # PostgreSQL Database Configuration Example (uncomment and modify connection info)
     # url: jdbc:postgresql://localhost:5432/fastlcdp
@@ -29,33 +23,14 @@ spring:
     # username: postgres
     # password: password
 
-  # JPA Configuration
-  jpa:
-    hibernate:
-      ddl-auto: none  # Do not auto-create tables, controlled by our framework
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-        # MySQL Dialect (uncomment when using MySQL)
-        # dialect: org.hibernate.dialect.MySQL8Dialect
-        # PostgreSQL Dialect (uncomment when using PostgreSQL)
-        # dialect: org.hibernate.dialect.PostgreSQLDialect
-
-  # File Upload Configuration
-  servlet:
-    multipart:
-      max-file-size: 10MB
-      max-request-size: 10MB
-
   # H2 Console Configuration (for development and testing only)
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
-      settings:
-        web-allow-others: true
-        trace: false
+#  h2:
+#    console:
+#      enabled: true
+#      path: /h2-console
+#      settings:
+#        web-allow-others: true
+#        trace: false
 
 # SpringDoc Configuration
 springdoc:
@@ -86,13 +61,6 @@ server:
     buffer-pool-size: 1024
     # 直接缓冲区
     direct-buffers: true
-    # 访问日志
-    accesslog:
-      enabled: false
-      dir: logs
-      pattern: combined
-      prefix: access_log
-      suffix: .log
 
 # Logging Configuration (使用log4j2)
 logging:
@@ -101,6 +69,31 @@ logging:
     org.springframework.web: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+# Database Configuration
+database:
+  type: MYSQL  # 数据库类型: H2, MYSQL, POSTGRESQL, ORACLE, SQL_SERVER
+  charset: utf8mb4
+  collation: utf8mb4_unicode_ci
+  enable-metadata-save: true
+  metadata-table-prefix: xml_meta_
+  auto-create-metadata-tables: true  # 启用自动建表功能
+
+# MyBatis Plus Configuration
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+    banner: false
+  mapper-locations: classpath*:mapper/**/*Mapper.xml
+  type-aliases-package: cn.com.traninfo.fastlcdp.entity
 
 # Management Endpoints Configuration
 management:
@@ -111,10 +104,3 @@ management:
   endpoint:
     health:
       show-details: when-authorized
-
-# Application Information
-info:
-  app:
-    name: FastLCDP
-    description: Spring Boot framework for generating database tables based on XML parsing
-    version: 1.0.0

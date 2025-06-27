@@ -111,7 +111,7 @@ public class SqlGeneratorService {
     private String generateIndexSql(IndexDefinition index) {
         StringBuilder sql = new StringBuilder();
         
-        String indexType = index.getType().toUpperCase();
+        String indexType = index.getType() != null ? index.getType().name().toUpperCase() : "NORMAL";
         switch (indexType) {
             case "UNIQUE":
                 sql.append("  UNIQUE KEY");
@@ -136,7 +136,7 @@ public class SqlGeneratorService {
                     if (col.getLength() != null) {
                         colSql.append("(").append(col.getLength()).append(")");
                     }
-                    if ("DESC".equalsIgnoreCase(col.getOrder())) {
+                    if (col.getOrder() != null && "DESC".equalsIgnoreCase(col.getOrder().name())) {
                         colSql.append(" DESC");
                     }
                     return colSql.toString();
@@ -145,8 +145,8 @@ public class SqlGeneratorService {
         
         sql.append(columns).append(")");
         
-        if (StringUtils.hasText(index.getMethod()) && !"BTREE".equalsIgnoreCase(index.getMethod())) {
-            sql.append(" USING ").append(index.getMethod().toUpperCase());
+        if (index.getMethod() != null && !"BTREE".equalsIgnoreCase(index.getMethod().name())) {
+            sql.append(" USING ").append(index.getMethod().name().toUpperCase());
         }
         
         if (StringUtils.hasText(index.getComment())) {
@@ -170,12 +170,12 @@ public class SqlGeneratorService {
         sql.append(" REFERENCES `").append(relation.getReferenceTable()).append("`");
         sql.append(" (`").append(relation.getReferenceColumn()).append("`)");
         
-        if (StringUtils.hasText(relation.getOnDelete()) && !"RESTRICT".equalsIgnoreCase(relation.getOnDelete())) {
-            sql.append(" ON DELETE ").append(relation.getOnDelete().replace("_", " ").toUpperCase());
+        if (relation.getOnDelete() != null && !"RESTRICT".equalsIgnoreCase(relation.getOnDelete().name())) {
+            sql.append(" ON DELETE ").append(relation.getOnDelete().name().toUpperCase());
         }
         
-        if (StringUtils.hasText(relation.getOnUpdate()) && !"RESTRICT".equalsIgnoreCase(relation.getOnUpdate())) {
-            sql.append(" ON UPDATE ").append(relation.getOnUpdate().replace("_", " ").toUpperCase());
+        if (relation.getOnUpdate() != null && !"RESTRICT".equalsIgnoreCase(relation.getOnUpdate().name())) {
+            sql.append(" ON UPDATE ").append(relation.getOnUpdate().name().toUpperCase());
         }
         
         return sql.toString();

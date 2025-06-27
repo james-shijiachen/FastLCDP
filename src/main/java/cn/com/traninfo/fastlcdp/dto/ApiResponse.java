@@ -1,4 +1,4 @@
-package cn.com.traninfo.fastlcdp.model.dto;
+package cn.com.traninfo.fastlcdp.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;

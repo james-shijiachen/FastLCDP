@@ -1,75 +1,72 @@
 package cn.com.traninfo.fastlcdp.entity;
 
-import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import com.baomidou.mybatisplus.annotation.*;
+import lombok.Data;
 
 import java.time.LocalDateTime;
 
 /**
  * 元数据实体类，用于保存XML中的元数据到数据库
  */
-@Entity
-@Table(name = "metadata")
-@Getter
-@Setter
-@ToString
+@Data
+@TableName("metadata")
 public class MetadataEntity {
     
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @TableId(type = IdType.AUTO)
     private Long id;
     
-    @Column(name = "table_name", nullable = false, length = 100)
+    @TableField("schema_name")
+    private String schemaName;
+    
+    @TableField("table_name")
     private String tableName;
     
-    @Column(name = "field_name", length = 100)
+    @TableField("field_name")
     private String fieldName;
     
-    @Column(name = "field_type", length = 50)
+    @TableField("field_type")
     private String fieldType;
     
-    @Column(name = "field_length")
+    @TableField("field_length")
     private Integer fieldLength;
     
-    @Column(name = "field_scale")
+    @TableField("field_scale")
     private Integer fieldScale;
     
-    @Column(name = "is_nullable")
+    @TableField("is_nullable")
     private Boolean isNullable;
     
-    @Column(name = "primary_key_type")
+    @TableField("primary_key_type")
     private String primaryKeyType;
     
-    @Column(name = "default_value", length = 255)
+    @TableField("default_value")
     private String defaultValue;
     
-    @Column(name = "comment", length = 500)
+    @TableField("comment")
     private String comment;
     
-    @Column(name = "index_name", length = 100)
+    @TableField("index_name")
     private String indexName;
     
-    @Column(name = "index_type", length = 20)
+    @TableField("index_type")
     private String indexType;
     
-    @Column(name = "relation_type", length = 50)
+    @TableField("relation_type")
     private String relationType;
     
-    @Column(name = "reference_table", length = 100)
+    @TableField("reference_table")
     private String referenceTable;
     
-    @Column(name = "reference_field", length = 100)
+    @TableField("reference_field")
     private String referenceField;
     
-    @Column(name = "xml_content", columnDefinition = "TEXT")
+    @TableField("xml_content")
     private String xmlContent;
     
-    @Column(name = "created_time", nullable = false)
+    @TableField(value = "created_time", fill = FieldFill.INSERT)
     private LocalDateTime createdTime;
     
-    @Column(name = "updated_time")
+    @TableField(value = "updated_time", fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updatedTime;
     
     // 构造函数

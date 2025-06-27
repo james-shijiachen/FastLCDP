@@ -1,45 +1,40 @@
 package cn.com.traninfo.fastlcdp.entity;
 
-import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Data;
 
 /**
  * 表元数据，用于保存XML中的元数据到数据库
  */
-@Entity
-@Table(name = "metadata_table")
-@Getter
-@Setter
-@ToString
+@Data
+@TableName("table")
 public class TableEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @TableId(type = IdType.AUTO)
     private Long id;
 
-    @Column(name = "name", nullable = false, length = 100)
+    @TableField("name")
     private String name;
 
-    @Column(name = "type", nullable = false, length = 20)
+    @TableField("type")
     private String type;
 
-    @Column(name = "comment", length = 500)
+    @TableField("comment")
     private String comment;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "extends_table")
-    private TableEntity extendsTable;
+    @TableField("extends_table")
+    private Long extendsTableId;
 
-    @Column(name = "engine", length = 20)
+    @TableField("engine")
     private String engine;
 
-    @Column(name = "charset", length = 100)
+    @TableField("charset")
     private String charset;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, optional = false)
-    @JoinColumn(name = "database_id")
-    private DatabaseSchemaEntity database;
+    @TableField("database_id")
+    private Long databaseId;
 
 }

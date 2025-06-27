@@ -233,10 +233,13 @@ public class MySQLDialect extends AbstractDatabaseDialect {
         }
         
         // 主键定义
-        List<FieldDefinition> primaryKeyFields = table.getFields().stream()
-                .filter(field -> field.getPrimaryKey() != null && !PrimaryKeyTypeEnum.NONE.equals(field.getPrimaryKey()))
-                .collect(Collectors.toList());
-        
+        List<FieldDefinition> primaryKeyFields = null;
+        if (table.getFields() != null) {
+            primaryKeyFields = table.getFields().stream()
+                    .filter(field -> field.getPrimaryKey() != null && !PrimaryKeyTypeEnum.NONE.equals(field.getPrimaryKey()))
+                    .collect(Collectors.toList());
+        }
+
         if (!primaryKeyFields.isEmpty()) {
             sql.append(",\n    ").append(generatePrimaryKeyDefinition(primaryKeyFields));
         }
@@ -332,12 +335,14 @@ public class MySQLDialect extends AbstractDatabaseDialect {
         StringBuilder sql = new StringBuilder();
         
         // 索引类型
-        if ("UNIQUE".equalsIgnoreCase(index.getType())) {
-            sql.append("UNIQUE ");
-        } else if ("FULLTEXT".equalsIgnoreCase(index.getType())) {
-            sql.append("FULLTEXT ");
-        } else if ("SPATIAL".equalsIgnoreCase(index.getType())) {
-            sql.append("SPATIAL ");
+        if (index.getType() != null) {
+            if ("UNIQUE".equalsIgnoreCase(index.getType().name())) {
+                sql.append("UNIQUE ");
+            } else if ("FULLTEXT".equalsIgnoreCase(index.getType().name())) {
+                sql.append("FULLTEXT ");
+            } else if ("SPATIAL".equalsIgnoreCase(index.getType().name())) {
+                sql.append("SPATIAL ");
+            }
         }
         
         sql.append("KEY ");
@@ -356,8 +361,8 @@ public class MySQLDialect extends AbstractDatabaseDialect {
                         if (column.getLength() != null && column.getLength() > 0) {
                             columnDef.append("(").append(column.getLength()).append(")");
                         }
-                        if (StringUtils.hasText(column.getOrder())) {
-                            columnDef.append(" ").append(column.getOrder());
+                        if (column.getOrder() != null) {
+                            columnDef.append(" ").append(column.getOrder().name());
                         }
                         return columnDef.toString();
                     })
@@ -381,7 +386,7 @@ public class MySQLDialect extends AbstractDatabaseDialect {
     
     @Override
     public String generateDescribeTableSql(String tableName) {
-        return "DESCRIBE " + escapeIdentifier(tableName);
+        return super.generateDescribeTableSql(tableName);
     }
     
     @Override

@@ -112,12 +112,14 @@ public abstract class AbstractDatabaseDialect implements DatabaseDialect {
         sql.append("CREATE ");
         
         // 索引类型
-        if ("UNIQUE".equalsIgnoreCase(index.getType())) {
-            sql.append("UNIQUE ");
-        } else if ("FULLTEXT".equalsIgnoreCase(index.getType())) {
-            sql.append("FULLTEXT ");
-        } else if ("SPATIAL".equalsIgnoreCase(index.getType())) {
-            sql.append("SPATIAL ");
+        if (index.getType() != null) {
+            if ("UNIQUE".equalsIgnoreCase(index.getType().name())) {
+                sql.append("UNIQUE ");
+            } else if ("FULLTEXT".equalsIgnoreCase(index.getType().name())) {
+                sql.append("FULLTEXT ");
+            } else if ("SPATIAL".equalsIgnoreCase(index.getType().name())) {
+                sql.append("SPATIAL ");
+            }
         }
         
         sql.append("INDEX ");
@@ -131,8 +133,8 @@ public abstract class AbstractDatabaseDialect implements DatabaseDialect {
         sql.append("ON ").append(escapeIdentifier(tableName));
         
         // 索引方法
-        if (StringUtils.hasText(index.getMethod())) {
-            sql.append(" USING ").append(index.getMethod());
+        if (index.getMethod() != null) {
+            sql.append(" USING ").append(index.getMethod().name());
         }
         
         // 索引列
@@ -144,8 +146,8 @@ public abstract class AbstractDatabaseDialect implements DatabaseDialect {
                         if (column.getLength() != null && column.getLength() > 0) {
                             columnDef.append("(").append(column.getLength()).append(")");
                         }
-                        if (StringUtils.hasText(column.getOrder())) {
-                            columnDef.append(" ").append(column.getOrder());
+                        if (column.getOrder() != null) {
+                            columnDef.append(" ").append(column.getOrder().name());
                         }
                         return columnDef.toString();
                     })
@@ -177,11 +179,11 @@ public abstract class AbstractDatabaseDialect implements DatabaseDialect {
         sql.append("(").append(escapeIdentifier(relation.getReferenceColumn())).append(")");
         
         // 级联操作
-        if (StringUtils.hasText(relation.getOnDelete())) {
-            sql.append(" ON DELETE ").append(relation.getOnDelete());
+        if (relation.getOnDelete() != null) {
+            sql.append(" ON DELETE ").append(relation.getOnDelete().name());
         }
-        if (StringUtils.hasText(relation.getOnUpdate())) {
-            sql.append(" ON UPDATE ").append(relation.getOnUpdate());
+        if (relation.getOnUpdate() != null) {
+            sql.append(" ON UPDATE ").append(relation.getOnUpdate().name());
         }
         
         return sql.toString();
@@ -207,10 +209,13 @@ public abstract class AbstractDatabaseDialect implements DatabaseDialect {
         }
         
         // 主键定义
-        List<FieldDefinition> primaryKeyFields = table.getFields().stream()
-                .filter(field -> field.getPrimaryKey() != null && !PrimaryKeyTypeEnum.NONE.equals(field.getPrimaryKey()))
-                .collect(Collectors.toList());
-        
+        List<FieldDefinition> primaryKeyFields = null;
+        if (table.getFields() != null) {
+            primaryKeyFields = table.getFields().stream()
+                    .filter(field -> field.getPrimaryKey() != null && !PrimaryKeyTypeEnum.NONE.equals(field.getPrimaryKey()))
+                    .collect(Collectors.toList());
+        }
+
         if (!primaryKeyFields.isEmpty()) {
             sql.append(",\n    ").append(generatePrimaryKeyDefinition(primaryKeyFields));
         }

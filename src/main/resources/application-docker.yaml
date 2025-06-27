@@ -15,16 +15,9 @@ spring:
       idle-timeout: 600000
       max-lifetime: 1800000
   
-  # JPA配置
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: false
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.H2Dialect
-        format_sql: true
-        use_sql_comments: false
+  # MyBatis Plus配置
+  # Note: MyBatis Plus does not require explicit configuration here
+  # Database table creation is controlled by our framework
   
   # H2控制台配置
   h2:
@@ -62,15 +55,3 @@ logging:
     cn.com.traninfo.fastlcdp: INFO
     org.springframework: WARN
     org.hibernate: WARN
-
-# FastLCDP配置
-fastlcdp:
-  database:
-    type: MYSQL
-    charset: UTF8MB4
-    collation: utf8mb4_unicode_ci
-    metadata-storage-enabled: true
-  xml:
-    parsing-enabled: true
-  sql:
-    generation-enabled: true
