@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<database name="simple_db" version="1.0" comment="简单示例数据库"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="../src/main/resources/database-schema.xsd">
+    <tables>
+        <!-- 用户表 -->
+        <table name="user" comment="用户表">
+            <fields>
+                <field name="id" type="LONG" primaryKey="AUTO_INCREMENT" comment="用户ID"/>
+                <field name="username" type="STRING" length="50" nullable="false" unique="true" comment="用户名"/>
+                <field name="email" type="STRING" length="100" nullable="false" unique="true" comment="邮箱"/>
+                <field name="password" type="STRING" length="255" nullable="false" comment="密码"/>
+                <field name="age" type="INTEGER" comment="年龄"/>
+                <field name="balance" type="DECIMAL" precision="10" scale="2" defaultValue="0.00" comment="余额"/>
+                <field name="is_active" type="BOOLEAN" nullable="false" defaultValue="true" comment="是否激活"/>
+                <field name="created_at" type="DATETIME" defaultValue="CURRENT_TIMESTAMP" comment="创建时间"/>
+            </fields>
+            <indexes>
+                <index name="uk_username" type="UNIQUE">
+                    <columns>
+                        <column name="username"/>
+                    </columns>
+                </index>
+                <index name="idx_email" type="NORMAL">
+                    <columns>
+                        <column name="email"/>
+                    </columns>
+                </index>
+            </indexes>
+        </table>
+        
+        <!-- 订单表 -->
+        <table name="order" comment="订单表">
+            <fields>
+                <field name="id" type="LONG" primaryKey="AUTO_INCREMENT" comment="订单ID"/>
+                <field name="order_no" type="STRING" length="32" nullable="false" unique="true" comment="订单号"/>
+                <field name="user_id" type="LONG" nullable="false" comment="用户ID"/>
+                <field name="total_amount" type="DECIMAL" precision="10" scale="2" nullable="false" comment="总金额"/>
+                <field name="status" type="STRING" length="20" nullable="false" defaultValue="pending" comment="订单状态"/>
+                <field name="created_at" type="DATETIME" defaultValue="CURRENT_TIMESTAMP" comment="创建时间"/>
+                <field name="updated_at" type="DATETIME" defaultValue="CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" comment="更新时间"/>
+            </fields>
+            <indexes>
+                <index name="uk_order_no" type="UNIQUE">
+                    <columns>
+                        <column name="order_no"/>
+                    </columns>
+                </index>
+                <index name="idx_user_id" type="NORMAL">
+                    <columns>
+                        <column name="user_id"/>
+                    </columns>
+                </index>
+                <index name="idx_status_created" type="NORMAL">
+                    <columns>
+                        <column name="status"/>
+                        <column name="created_at" order="DESC"/>
+                    </columns>
+                </index>
+            </indexes>
+            <relations>
+                <relation name="fk_order_user" column="user_id" referenceTable="user" referenceColumn="id" onDelete="RESTRICT" onUpdate="CASCADE"/>
+            </relations>
+        </table>
+    </tables>
+</database>

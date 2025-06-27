@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<database name="normal_db" version="1.0" charset="utf8mb4" collation="utf8mb4_general_ci" comment="示例数据库"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="../src/main/resources/database-schema.xsd">
+    <tables>
+        <!-- 基础用户表 -->
+        <table name="base_user" comment="基础用户表" engine="InnoDB" charset="utf8mb4">
+            <fields>
+                <field name="id" type="LONG" primaryKey="AUTO_INCREMENT" comment="主键ID"/>
+                <field name="created_time" type="DATETIME" nullable="false" defaultValue="CURRENT_TIMESTAMP" comment="创建时间"/>
+                <field name="updated_time" type="DATETIME" nullable="false" defaultValue="CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" comment="更新时间"/>
+                <field name="is_deleted" type="BOOLEAN" length="1" nullable="false" defaultValue="0" comment="是否删除：0-否，1-是"/>
+            </fields>
+            <indexes>
+                <index name="idx_created_time" type="NORMAL">
+                    <columns>
+                        <column name="created_time" order="DESC"/>
+                    </columns>
+                </index>
+            </indexes>
+        </table>
+        
+        <!-- 用户表（继承基础用户表） -->
+        <table name="user" extends="base_user" comment="用户表" engine="InnoDB" charset="utf8mb4">
+            <fields>
+                <field name="username" type="STRING" length="50" nullable="false" unique="true" comment="用户名"/>
+                <field name="email" type="STRING" length="100" nullable="false" unique="true" comment="邮箱"/>
+                <field name="password" type="STRING" length="255" nullable="false" comment="密码"/>
+                <field name="nickname" type="STRING" length="50" comment="昵称"/>
+                <field name="avatar" type="STRING" length="255" comment="头像URL"/>
+                <field name="phone" type="STRING" length="20" comment="手机号"/>
+                <field name="gender" type="BOOLEAN" length="1" comment="性别：0-未知，1-男，2-女"/>
+                <field name="birthday" type="DATETIME" comment="生日"/>
+                <field name="status" type="BOOLEAN" length="1" nullable="false" defaultValue="1" comment="状态：0-禁用，1-正常"/>
+                <field name="last_login_time" type="DATETIME" comment="最后登录时间"/>
+            </fields>
+            <indexes>
+                <index name="uk_username" type="UNIQUE">
+                    <columns>
+                        <column name="username"/>
+                    </columns>
+                </index>
+                <index name="uk_email" type="UNIQUE">
+                    <columns>
+                        <column name="email"/>
+                    </columns>
+                </index>
+                <index name="idx_status" type="NORMAL">
+                    <columns>
+                        <column name="status"/>
+                    </columns>
+                </index>
+                <index name="idx_phone" type="NORMAL">
+                    <columns>
+                        <column name="phone"/>
+                    </columns>
+                </index>
+            </indexes>
+        </table>
+        
+        <!-- 角色表 -->
+        <table name="role" comment="角色表" engine="InnoDB" charset="utf8mb4">
+            <fields>
+                <field name="id" type="LONG" primaryKey="AUTO_INCREMENT" comment="主键ID"/>
+                <field name="role_name" type="STRING" length="50" nullable="false" unique="true" comment="角色名称"/>
+                <field name="role_code" type="STRING" length="50" nullable="false" unique="true" comment="角色编码"/>
+                <field name="description" type="STRING" length="200" comment="角色描述"/>
+                <field name="sort_order" type="INTEGER" defaultValue="0" comment="排序"/>
+                <field name="status" type="BOOLEAN" length="1" nullable="false" defaultValue="1" comment="状态：0-禁用，1-启用"/>
+                <field name="created_time" type="DATETIME" nullable="false" defaultValue="CURRENT_TIMESTAMP" comment="创建时间"/>
+                <field name="updated_time" type="DATETIME" nullable="false" defaultValue="CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" comment="更新时间"/>
+            </fields>
+            <indexes>
+                <index name="uk_role_name" type="UNIQUE">
+                    <columns>
+                        <column name="role_name"/>
+                    </columns>
+                </index>
+                <index name="uk_role_code" type="UNIQUE">
+                    <columns>
+                        <column name="role_code"/>
+                    </columns>
+                </index>
+            </indexes>
+        </table>
+        
+        <!-- 用户角色关联表 -->
+        <table name="user_role" comment="用户角色关联表" engine="InnoDB" charset="utf8mb4">
+            <fields>
+                <field name="id" type="LONG" primaryKey="AUTO_INCREMENT" comment="主键ID"/>
+                <field name="user_id" type="LONG" nullable="false" comment="用户ID"/>
+                <field name="role_id" type="LONG" nullable="false" comment="角色ID"/>
+                <field name="created_time" type="DATETIME" nullable="false" defaultValue="CURRENT_TIMESTAMP" comment="创建时间"/>
+            </fields>
+            <indexes>
+                <index name="uk_user_role" type="UNIQUE">
+                    <columns>
+                        <column name="user_id"/>
+                        <column name="role_id"/>
+                    </columns>
+                </index>
+                <index name="idx_user_id" type="NORMAL">
+                    <columns>
+                        <column name="user_id"/>
+                    </columns>
+                </index>
+                <index name="idx_role_id" type="NORMAL">
+                    <columns>
+                        <column name="role_id"/>
+                    </columns>
+                </index>
+            </indexes>
+            <relations>
+                <relation name="fk_user_role_user" column="user_id" referenceTable="user" referenceColumn="id" onDelete="CASCADE" onUpdate="CASCADE" comment="用户外键"/>
+                <relation name="fk_user_role_role" column="role_id" referenceTable="role" referenceColumn="id" onDelete="CASCADE" onUpdate="CASCADE" comment="角色外键"/>
+            </relations>
+        </table>
+        
+        <!-- 权限表 -->
+        <table name="permission" comment="权限表" engine="InnoDB" charset="utf8mb4">
+            <fields>
+                <field name="id" type="LONG" primaryKey="AUTO_INCREMENT" comment="主键ID"/>
+                <field name="permission_name" type="STRING" length="100" nullable="false" comment="权限名称"/>
+                <field name="permission_code" type="STRING" length="100" nullable="false" unique="true" comment="权限编码"/>
+                <field name="resource_type" type="STRING" length="20" nullable="false" comment="资源类型：menu-菜单，button-按钮，api-接口"/>
+                <field name="resource_url" type="STRING" length="200" comment="资源URL"/>
+                <field name="parent_id" type="LONG" defaultValue="0" comment="父权限ID"/>
+                <field name="sort_order" type="INTEGER" defaultValue="0" comment="排序"/>
+                <field name="status" type="BOOLEAN" length="1" nullable="false" defaultValue="1" comment="状态：0-禁用，1-启用"/>
+                <field name="created_time" type="DATETIME" nullable="false" defaultValue="CURRENT_TIMESTAMP" comment="创建时间"/>
+                <field name="updated_time" type="DATETIME" nullable="false" defaultValue="CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" comment="更新时间"/>
+            </fields>
+            <indexes>
+                <index name="uk_permission_code" type="UNIQUE">
+                    <columns>
+                        <column name="permission_code"/>
+                    </columns>
+                </index>
+                <index name="idx_parent_id" type="NORMAL">
+                    <columns>
+                        <column name="parent_id"/>
+                    </columns>
+                </index>
+                <index name="idx_resource_type" type="NORMAL">
+                    <columns>
+                        <column name="resource_type"/>
+                    </columns>
+                </index>
+            </indexes>
+        </table>
+        
+        <!-- 角色权限关联表 -->
+        <table name="role_permission" comment="角色权限关联表" engine="InnoDB" charset="utf8mb4">
+            <fields>
+                <field name="id" type="LONG" primaryKey="AUTO_INCREMENT" comment="主键ID"/>
+                <field name="role_id" type="LONG" nullable="false" comment="角色ID"/>
+                <field name="permission_id" type="LONG" nullable="false" comment="权限ID"/>
+                <field name="created_time" type="DATETIME" nullable="false" defaultValue="CURRENT_TIMESTAMP" comment="创建时间"/>
+            </fields>
+            <indexes>
+                <index name="uk_role_permission" type="UNIQUE">
+                    <columns>
+                        <column name="role_id"/>
+                        <column name="permission_id"/>
+                    </columns>
+                </index>
+                <index name="idx_role_id" type="NORMAL">
+                    <columns>
+                        <column name="role_id"/>
+                    </columns>
+                </index>
+                <index name="idx_permission_id" type="NORMAL">
+                    <columns>
+                        <column name="permission_id"/>
+                    </columns>
+                </index>
+            </indexes>
+            <relations>
+                <relation name="fk_role_permission_role" column="role_id" referenceTable="role" referenceColumn="id" onDelete="CASCADE" onUpdate="CASCADE" comment="角色外键"/>
+                <relation name="fk_role_permission_permission" column="permission_id" referenceTable="permission" referenceColumn="id" onDelete="CASCADE" onUpdate="CASCADE" comment="权限外键"/>
+            </relations>
+        </table>
+        
+        <!-- 文章表（继承基础用户表，展示复杂继承） -->
+        <table name="article" extends="base_user" comment="文章表" engine="InnoDB" charset="utf8mb4">
+            <fields>
+                <field name="title" type="STRING" length="200" nullable="false" comment="文章标题"/>
+                <field name="content" type="TEXT" comment="文章内容"/>
+                <field name="summary" type="TEXT" comment="文章摘要"/>
+                <field name="author_id" type="LONG" nullable="false" comment="作者ID"/>
+                <field name="category_id" type="LONG" comment="分类ID"/>
+                <field name="tags" type="STRING" length="500" comment="标签，逗号分隔"/>
+                <field name="view_count" type="INTEGER" defaultValue="0" comment="浏览次数"/>
+                <field name="like_count" type="INTEGER" defaultValue="0" comment="点赞次数"/>
+                <field name="comment_count" type="INTEGER" defaultValue="0" comment="评论次数"/>
+                <field name="status" type="BOOLEAN" length="1" nullable="false" defaultValue="1" comment="状态：0-草稿，1-发布，2-下线"/>
+                <field name="publish_time" type="DATETIME" comment="发布时间"/>
+            </fields>
+            <indexes>
+                <index name="idx_title" type="FULLTEXT">
+                    <columns>
+                        <column name="title"/>
+                    </columns>
+                </index>
+                <index name="idx_author_id" type="NORMAL">
+                    <columns>
+                        <column name="author_id"/>
+                    </columns>
+                </index>
+                <index name="idx_category_id" type="NORMAL">
+                    <columns>
+                        <column name="category_id"/>
+                    </columns>
+                </index>
+                <index name="idx_status_publish_time" type="NORMAL">
+                    <columns>
+                        <column name="status"/>
+                        <column name="publish_time" order="DESC"/>
+                    </columns>
+                </index>
+                <index name="idx_view_count" type="NORMAL">
+                    <columns>
+                        <column name="view_count" order="DESC"/>
+                    </columns>
+                </index>
+            </indexes>
+            <relations>
+                <relation name="fk_article_author" column="author_id" referenceTable="user" referenceColumn="id" onDelete="RESTRICT" onUpdate="CASCADE" comment="作者外键"/>
+            </relations>
+        </table>
+    </tables>
+</database>
