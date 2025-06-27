@@ -42,7 +42,7 @@ public class ComplexDatabaseTest {
     private XmlSchemaValidator validator;
 
     private DatabaseSchema schema;
-    private static final String XML_FILE_PATH = "examples/complex_db.xml";
+    private static final String XML_FILE_PATH = "data/complex_db.xml";
 
     @BeforeEach
     void setUp() throws Exception {

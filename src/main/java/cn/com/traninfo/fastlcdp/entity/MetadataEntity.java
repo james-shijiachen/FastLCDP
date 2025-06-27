@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @TableName("metadata")
 public class MetadataEntity {
     
-    @TableId(type = IdType.AUTO)
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
     
     @TableField("schema_name")

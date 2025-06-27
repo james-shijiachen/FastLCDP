@@ -12,16 +12,16 @@ spring:
 #    password:
 
     # MySQL Database Configuration Example (uncomment and modify connection info)
-     url: jdbc:mysql://localhost:3306/fastlcdp?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
-     driver-class-name: com.mysql.cj.jdbc.Driver
-     username: root
-     password: 1234
+#     url: jdbc:mysql://localhost:3306/fastlcdp?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+#     driver-class-name: com.mysql.cj.jdbc.Driver
+#     username: root
+#     password: 1234
 
     # PostgreSQL Database Configuration Example (uncomment and modify connection info)
-    # url: jdbc:postgresql://localhost:5432/fastlcdp
-    # driver-class-name: org.postgresql.Driver
-    # username: postgres
-    # password: password
+     url: jdbc:postgresql://localhost:5432/fastlcdp
+     driver-class-name: org.postgresql.Driver
+     username: postgres
+     password: postgres
 
   # H2 Console Configuration (for development and testing only)
 #  h2:
@@ -72,7 +72,7 @@ logging:
 
 # Database Configuration
 database:
-  type: MYSQL  # 数据库类型: H2, MYSQL, POSTGRESQL, ORACLE, SQL_SERVER
+  type: POSTGRESQL  # 数据库类型: H2, MYSQL, POSTGRESQL, ORACLE, SQL_SERVER
   charset: utf8mb4
   collation: utf8mb4_unicode_ci
   enable-metadata-save: true
@@ -87,7 +87,7 @@ mybatis-plus:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
   global-config:
     db-config:
-      id-type: auto
+      id-type: assign_id
       logic-delete-field: deleted
       logic-delete-value: 1
       logic-not-delete-value: 0

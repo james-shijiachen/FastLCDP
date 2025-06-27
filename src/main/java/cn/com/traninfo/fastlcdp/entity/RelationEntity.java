@@ -13,7 +13,7 @@ import lombok.Data;
 @TableName("relation")
 public class RelationEntity {
     
-    @TableId(type = IdType.AUTO)
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
     
     @TableField("name")

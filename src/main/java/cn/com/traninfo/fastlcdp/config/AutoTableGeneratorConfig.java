@@ -29,7 +29,7 @@ import java.util.*;
  */
 @Slf4j
 @Configuration
-public class AutoTableConfig implements ApplicationListener<ApplicationReadyEvent> {
+public class AutoTableGeneratorConfig implements ApplicationListener<ApplicationReadyEvent> {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -355,8 +355,7 @@ public class AutoTableConfig implements ApplicationListener<ApplicationReadyEven
     private String getAutoIncrementKeyword() {
         return switch (databaseConfig.getType()) {
             case H2, MYSQL -> " AUTO_INCREMENT";
-            case POSTGRESQL -> " SERIAL";
-            case ORACLE -> ""; // Oracle使用序列
+            case ORACLE, POSTGRESQL -> ""; //使用序列
             case SQLSERVER -> " IDENTITY(1,1)";
         };
     }

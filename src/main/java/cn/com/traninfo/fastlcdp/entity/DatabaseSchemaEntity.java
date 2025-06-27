@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @TableName("database_schema")
 public class DatabaseSchemaEntity {
 
-    @TableId(type = IdType.AUTO)
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     @TableField("name")

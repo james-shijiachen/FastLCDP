@@ -33,7 +33,7 @@ class XmlSchemaValidatorTest {
     @Test
     void testValidXmlFile() {
         // 测试有效的XML文件
-        File xmlFile = new File("examples/simple_db.xml");
+        File xmlFile = new File("data/simple_db.xml");
         if (xmlFile.exists()) {
             XmlValidationResult result = validator.validate(xmlFile);
             assertTrue(result.isValid(), "Valid XML file should pass validation");
