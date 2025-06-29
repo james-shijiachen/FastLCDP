@@ -14,6 +14,14 @@ FastLCDP is an AI-powered low-code development platform. The core philosophy of 
 - **Modern ER Diagram Design Tool**: Provides a visual interface for entity-relationship modeling, supporting creation, editing, and deletion of entities and relationships.
 - **Visual Editing Capabilities**: Based on AI-powered graph editing models, users can complete entity-relationship modeling without complex coding.
 
+### [**ProcessEngineer**](./ProcessEngineer/README.md)
+- **Business Process Designer**: Provides visual business process modeling tools with BPMN standard support for process design and management.
+- **Process Engine Integration**: Supports mainstream BPM engines like Activiti, Flowable, and Camunda for process deployment and execution.
+
+### [**TaskManager**](./TaskManager/README.md)
+- **Smart Task Management System**: Provides project management and team collaboration features with task assignment, progress tracking, and team collaboration.
+- **Visual Kanban Board**: Uses kanban view for task status management with drag-and-drop operations and real-time synchronization.
+
 ## 🚀 Quick Start
 
 ### Using Docker (Recommended)
