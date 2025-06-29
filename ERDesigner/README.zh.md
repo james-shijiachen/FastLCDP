@@ -63,7 +63,7 @@ ERDesigner是一个现代化、直观的ER（实体关系）图设计工具，�
 
 #### 1. 克隆仓库
 ```bash
-git clone https://github.com/james-shijiachen/fastLCDP.git
+git clone https://github.com/james-shijiachen/FastLCDP.git
 cd FastLCDP/ERDesigner
 ```
 

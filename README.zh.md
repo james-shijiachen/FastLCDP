@@ -28,7 +28,7 @@ FastLCDP是一款基于AI的低代码开发平台，产品的核心理念是让A
 
 1. **克隆项目**
 ```bash
-git clone https://github.com/james-shijiachen/fastLCDP.git
+git clone https://github.com/james-shijiachen/FastLCDP.git
 cd FastLCDP
 ```
 

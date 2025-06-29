@@ -73,7 +73,7 @@ TaskManager is a modern task management and collaboration platform that helps te
 
 #### 1. Clone the Repository
 ```bash
-git clone https://github.com/james-shijiachen/fastLCDP.git
+git clone https://github.com/james-shijiachen/FastLCDP.git
 cd FastLCDP/TaskManager
 ```
 

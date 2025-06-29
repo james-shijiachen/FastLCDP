@@ -35,7 +35,7 @@ ERDesigner Frontend is a modern ER diagram design tool based on Vue 3 and TypeSc
 
 ```bash
 # Clone the project
-git clone https://github.com/james-shijiachen/fastLCDP.git
+git clone https://github.com/james-shijiachen/FastLCDP.git
 cd FastLCDP/ERDesigner/frontend
 
 # Install dependencies

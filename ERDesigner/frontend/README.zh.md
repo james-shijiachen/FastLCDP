@@ -35,7 +35,7 @@ ERDesigner前端是一个基于Vue 3和TypeScript的现代化ER图设计工具�
 
 ```bash
 # 克隆项目
-git clone https://github.com/james-shijiachen/fastLCDP.git
+git clone https://github.com/james-shijiachen/FastLCDP.git
 cd FastLCDP/ERDesigner/frontend
 
 # 安装依赖

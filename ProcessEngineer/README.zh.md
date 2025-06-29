@@ -64,7 +64,7 @@ ProcessEngineer是一个现代化的业务流程设计和管理工具，帮助�
 
 #### 1. 克隆仓库
 ```bash
-git clone https://github.com/james-shijiachen/fastLCDP.git
+git clone https://github.com/james-shijiachen/FastLCDP.git
 cd FastLCDP/ProcessEngineer
 ```
 

@@ -28,7 +28,7 @@ FastLCDP is an AI-powered low-code development platform. The core philosophy of 
 
 1. **Clone the Repository**
 ```bash
-git clone https://github.com/james-shijiachen/fastLCDP.git
+git clone https://github.com/james-shijiachen/FastLCDP.git
 cd FastLCDP
 ```
 

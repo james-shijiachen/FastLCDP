@@ -67,7 +67,7 @@ ERDesigner is a modern, intuitive ER (Entity-Relationship) diagram design tool t
 
 #### 1. Clone the Repository
 ```bash
-git clone https://github.com/james-shijiachen/fastLCDP.git
+git clone https://github.com/james-shijiachen/FastLCDP.git
 cd FastLCDP/ERDesigner
 ```
 
