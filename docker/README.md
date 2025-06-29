@@ -1,149 +1,151 @@
-# ERDesigner Docker部署
+# Docker Deployment Guide
 
-## 项目概述
+[中文](./README.zh.md) | **English**
 
-本配置提供了ERDesigner项目的完整Docker部署方案，包含前端（Vue 3）和后端（Spring Boot）服务，使用H2文件数据库，支持本地开发和生产环境部署。
+## Project Overview
 
-## 快速开始
+This configuration provides a complete Docker deployment solution for the ERDesigner project, including frontend (Vue 3) and backend (Spring Boot) services, using H2 file database, supporting both local development and production environment deployment.
 
-### 方式一：使用启动脚本（推荐）
+## Quick Start
+
+### Method 1: Using Startup Scripts (Recommended)
 
 **Linux/macOS:**
 ```bash
-# 在 docker 目录下执行
+# Execute in the docker directory
 cd docker
 
-# 启动生产环境
+# Start production environment
 ./start-erdesigner.sh start
 
-# 启动开发环境
+# Start development environment
 ./start-erdesigner.sh dev
 
-# 查看服务状态
+# Check service status
 ./start-erdesigner.sh status
 
-# 查看日志
+# View logs
 ./start-erdesigner.sh logs
 
-# 停止服务
+# Stop services
 ./start-erdesigner.sh stop
 ```
 
 **Windows:**
 ```cmd
-REM 在 docker 目录下执行
+REM Execute in the docker directory
 cd docker
 
-REM 启动生产环境
+REM Start production environment
 start-erdesigner.bat start
 
-REM 启动开发环境
+REM Start development environment
 start-erdesigner.bat dev
 
-REM 查看服务状态
+REM Check service status
 start-erdesigner.bat status
 ```
 
-### 方式二：直接使用 Docker Compose
+### Method 2: Direct Docker Compose Usage
 
 ```bash
-# 在 docker 目录下执行
+# Execute in the docker directory
 cd docker
 
-# 启动生产环境
+# Start production environment
 docker-compose up -d
 
-# 启动开发环境
+# Start development environment
 docker-compose -f docker-compose.dev.yml up -d
 
-# 查看服务状态
+# Check service status
 docker-compose ps
 ```
 
-### 1. 构建和启动应用
+### 1. Build and Start Application
 
 ```bash
-# 构建并启动应用
+# Build and start application
 docker-compose up -d
 
-# 查看日志
+# View logs
 docker-compose logs -f fastlcdp-app
 ```
 
-### 2. 访问应用
+### 2. Access Application
 
-- **ERDesigner前端**: http://localhost:3001
-- **ERDesigner后端API**: http://localhost:8080
-- **API文档**: http://localhost:8080/swagger-ui.html
-- **H2数据库控制台**: http://localhost:8080/h2-console
+- **ERDesigner Frontend**: http://localhost:3001
+- **ERDesigner Backend API**: http://localhost:8080
+- **API Documentation**: http://localhost:8080/swagger-ui.html
+- **H2 Database Console**: http://localhost:8080/h2-console
   - JDBC URL: `jdbc:h2:file:./data/erdesigner`
-  - 用户名: `sa`
-  - 密码: (留空)
-- **后端健康检查**: http://localhost:8080/actuator/health
+  - Username: `sa`
+  - Password: (leave empty)
+- **Backend Health Check**: http://localhost:8080/actuator/health
 
-### 3. 数据持久化
+### 3. Data Persistence
 
-数据库文件存储在 `./data` 目录中，该目录会被挂载到容器内，确保数据持久化。
+Database files are stored in the `./data` directory, which is mounted to the container to ensure data persistence.
 
-### 4. 日志查看
+### 4. Log Viewing
 
-应用日志存储在 `./logs` 目录中，可以直接查看：
+Application logs are stored in the `./logs` directory and can be viewed directly:
 
 ```bash
-# 查看后端日志
+# View backend logs
 docker-compose logs -f erdesigner-backend
 
-# 查看前端日志
+# View frontend logs
 docker-compose logs -f erdesigner-frontend
 
-# 查看所有服务日志
+# View all service logs
 docker-compose logs -f
 ```
 
-### 5. 停止应用
+### 5. Stop Application
 
 ```bash
-# 停止所有服务
+# Stop all services
 docker-compose down
 
-# 停止服务并删除数据卷
+# Stop services and remove data volumes
 docker-compose down -v
 
-# 重新构建并启动
+# Rebuild and start
 docker-compose up --build -d
 ```
 
-## 🏗️ 服务架构
+## 🏗️ Service Architecture
 
-### 服务组件
-- **erdesigner-frontend**: Vue 3前端应用 (端口: 3001)
-- **erdesigner-backend**: Spring Boot后端API (端口: 8080)
-- **erdesigner-network**: 内部网络，连接前后端服务
+### Service Components
+- **erdesigner-frontend**: Vue 3 frontend application (Port: 3001)
+- **erdesigner-backend**: Spring Boot backend API (Port: 8080)
+- **erdesigner-network**: Internal network connecting frontend and backend services
 
-### 数据持久化
-- **数据库文件**: `./data/` 目录（H2数据库文件）
-- **应用日志**: `./logs/` 目录
+### Data Persistence
+- **Database Files**: `./data/` directory (H2 database files)
+- **Application Logs**: `./logs/` directory
 
-## 🔧 配置说明
+## 🔧 Configuration
 
-### 环境变量
+### Environment Variables
 
-#### 后端环境变量
-- `SPRING_PROFILES_ACTIVE=docker` - 激活Docker配置文件
+#### Backend Environment Variables
+- `SPRING_PROFILES_ACTIVE=docker` - Activate Docker configuration profile
 
-#### 前端环境变量
-- `VITE_API_BASE_URL=http://localhost:8080` - 后端API地址
+#### Frontend Environment Variables
+- `VITE_API_BASE_URL=http://localhost:8080` - Backend API address
 
-### 自定义配置
+### Custom Configuration
 
-如需修改配置，可以编辑 `docker-compose.yml` 文件：
+To modify configuration, edit the `docker-compose.yml` file:
 
 ```yaml
 services:
   erdesigner-backend:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - DB_TYPE=MYSQL  # 切换到MySQL
+      - DB_TYPE=MYSQL  # Switch to MySQL
       - DB_HOST=mysql
       - DB_PORT=3306
   
@@ -152,11 +154,11 @@ services:
       - VITE_API_BASE_URL=http://your-backend-url
 ```
 
-## 🚀 生产环境部署
+## 🚀 Production Deployment
 
-### 使用外部数据库
+### Using External Database
 
-1. **添加MySQL服务**
+1. **Add MySQL Service**
 ```yaml
 services:
   mysql:
@@ -173,7 +175,7 @@ volumes:
   mysql_data:
 ```
 
-2. **更新后端配置**
+2. **Update Backend Configuration**
 ```yaml
 erdesigner-backend:
   environment:
@@ -184,7 +186,7 @@ erdesigner-backend:
     - DB_PASSWORD=rootpassword
 ```
 
-### 使用Nginx反向代理
+### Using Nginx Reverse Proxy
 
 ```yaml
 nginx:
@@ -199,25 +201,25 @@ nginx:
     - erdesigner-backend
 ```
 
-## 🛠️ 开发模式
+## 🛠️ Development Mode
 
-### 本地开发
+### Local Development
 
-如果只需要启动后端服务进行前端开发：
+If you only need to start the backend service for frontend development:
 
 ```bash
-# 只启动后端
+# Start backend only
 docker-compose up erdesigner-backend -d
 
-# 前端本地开发
+# Frontend local development
 cd ../ERDesigner/frontend
 npm install
 npm run dev
 ```
 
-### 热重载开发
+### Hot Reload Development
 
-修改 `docker-compose.yml` 添加卷挂载：
+Modify `docker-compose.yml` to add volume mounting:
 
 ```yaml
 erdesigner-frontend:
@@ -226,54 +228,54 @@ erdesigner-frontend:
   command: npm run dev
 ```
 
-## 📊 监控和调试
+## 📊 Monitoring and Debugging
 
-### 容器状态检查
+### Container Status Check
 ```bash
-# 查看容器状态
+# Check container status
 docker-compose ps
 
-# 查看容器资源使用
+# Check container resource usage
 docker stats
 
-# 进入容器调试
+# Enter container for debugging
 docker-compose exec erdesigner-backend bash
 docker-compose exec erdesigner-frontend sh
 ```
 
-### 网络调试
+### Network Debugging
 ```bash
-# 查看网络
+# View networks
 docker network ls
 docker network inspect docker_erdesigner-network
 
-# 测试服务连通性
+# Test service connectivity
 docker-compose exec erdesigner-frontend wget -qO- http://erdesigner-backend:8080/actuator/health
 ```
 
-## 配置说明
+## Configuration Details
 
-### 环境变量
+### Environment Variables
 
-- `SPRING_PROFILES_ACTIVE=docker`: 使用Docker配置文件
+- `SPRING_PROFILES_ACTIVE=docker`: Use Docker configuration profile
 
-### 数据卷
+### Data Volumes
 
-- `./logs:/app/logs`: 日志文件持久化
-- `./examples:/app/examples:ro`: 示例文件（只读）
-- `./data:/app/data`: 数据库文件持久化
+- `./logs:/app/logs`: Log file persistence
+- `./examples:/app/examples:ro`: Example files (read-only)
+- `./data:/app/data`: Database file persistence
 
-### 端口映射
+### Port Mapping
 
-- `8080:8080`: 应用服务端口
+- `8080:8080`: Application service port
 
-## 扩展配置
+## Extended Configuration
 
-如果需要连接外部数据库，可以修改 `application-docker.yaml` 中的数据源配置，并在 `docker-compose.yml` 中添加相应的环境变量。
+If you need to connect to an external database, you can modify the datasource configuration in `application-docker.yaml` and add corresponding environment variables in `docker-compose.yml`.
 
-### 连接外部MySQL数据库示例
+### External MySQL Database Connection Example
 
-在 `docker-compose.yml` 中添加环境变量：
+Add environment variables in `docker-compose.yml`:
 
 ```yaml
 environment:
@@ -283,21 +285,21 @@ environment:
   - SPRING_DATASOURCE_PASSWORD=your-password
 ```
 
-## 故障排除
+## Troubleshooting
 
-### 应用启动失败
+### Application Startup Failure
 
-1. 检查日志：`docker-compose logs fastlcdp-app`
-2. 确保端口8080未被占用
-3. 检查数据目录权限
+1. Check logs: `docker-compose logs fastlcdp-app`
+2. Ensure port 8080 is not occupied
+3. Check data directory permissions
 
-### 数据库连接问题
+### Database Connection Issues
 
-1. 确保 `./data` 目录存在且有写权限
-2. 检查H2数据库文件是否正常创建
+1. Ensure `./data` directory exists and has write permissions
+2. Check if H2 database files are created properly
 
-### 性能优化
+### Performance Optimization
 
-1. 根据需要调整JVM内存参数
-2. 修改Hikari连接池配置
-3. 启用Spring Boot的懒加载功能
+1. Adjust JVM memory parameters as needed
+2. Modify Hikari connection pool configuration
+3. Enable Spring Boot lazy loading feature
