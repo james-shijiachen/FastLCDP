@@ -1,0 +1,127 @@
+spring:
+  application:
+    name: processengineer
+
+  # Data Source Configuration
+  datasource:
+    # Default H2 in-memory database for testing
+#    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+#    driver-class-name: org.h2.Driver
+#    username: sa
+#    password:
+
+    # MySQL Database Configuration Example (uncomment and modify connection info)
+#     url: jdbc:mysql://localhost:3306/processengineer?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+#     driver-class-name: com.mysql.cj.jdbc.Driver
+#     username: root
+#     password: 1234
+
+    # PostgreSQL Database Configuration Example (uncomment and modify connection info)
+     url: jdbc:postgresql://localhost:5432/processengineer
+     driver-class-name: org.postgresql.Driver
+     username: postgres
+     password: postgres
+
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  # H2 Console Configuration (for development and testing only)
+#  h2:
+#    console:
+#      enabled: true
+#      path: /h2-console
+#      settings:
+#        web-allow-others: true
+#        trace: false
+
+# SpringDoc Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  packages-to-scan: cn.com.traninfo.processengineer.controller
+  paths-to-match: /api/**
+
+# Server Configuration
+server:
+  port: 8082
+  servlet:
+    context-path: /processengineer
+  # Undertow 优化配置
+  undertow:
+    threads:
+      io: 16
+      worker: 256
+    buffer-size: 1024
+    direct-buffers: true
+
+# Management Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+  info:
+    env:
+      enabled: true
+
+# Logging Configuration
+logging:
+  level:
+    cn.com.traninfo.processengineer: INFO
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/processengineer.log
+    max-size: 10MB
+    max-history: 30
+
+---
+# Docker Profile
+spring:
+  config:
+    activate:
+      on-profile: docker
+  datasource:
+    url: jdbc:postgresql://host.docker.internal:5432/processengineer
+    username: postgres
+    password: postgres
+
+logging:
+  level:
+    root: INFO
+    cn.com.traninfo.processengineer: INFO
+
+---
+# Production Profile
+spring:
+  config:
+    activate:
+      on-profile: prod
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: validate
+
+logging:
+  level:
+    root: WARN
+    cn.com.traninfo.processengineer: INFO

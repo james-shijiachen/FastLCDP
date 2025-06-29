@@ -1,0 +1,166 @@
+version: '3.8'
+
+services:
+  # Nginx反向代理服务
+  nginx:
+    image: nginx:alpine
+    container_name: fastlcdp-nginx
+    ports:
+      - "3000:3000"  # 前端统一入口
+      - "8080:8080"  # 后端统一入口
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - erdesigner-backend
+      - erdesigner-frontend
+      - processengineer-backend
+      - processengineer-frontend
+      - taskmanager-backend
+      - taskmanager-frontend
+    networks:
+      - fastlcdp-network
+    restart: unless-stopped
+
+  # ERDesigner后端服务
+  erdesigner-backend:
+    build:
+      context: ../ERDesigner/backend
+      dockerfile: ../../docker/Dockerfile.backend
+    container_name: erdesigner-backend
+    expose:
+      - "8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SERVER_SERVLET_CONTEXT_PATH=/erdesigner
+    volumes:
+      - ../logs/erdesigner:/app/logs
+      - ../data/erdesigner:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/erdesigner/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - fastlcdp-network
+
+  # ERDesigner前端服务
+  erdesigner-frontend:
+    build:
+      context: ../ERDesigner/frontend
+      dockerfile: ../../docker/Dockerfile.frontend
+    container_name: erdesigner-frontend
+    expose:
+      - "3001"
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8080/erdesigner
+      - VITE_BASE_PATH=/erdesigner
+    depends_on:
+      - erdesigner-backend
+    restart: unless-stopped
+    networks:
+      - fastlcdp-network
+
+  # ProcessEngineer后端服务
+  processengineer-backend:
+    build:
+      context: ../ProcessEngineer/backend
+      dockerfile: ../../docker/Dockerfile.backend
+    container_name: processengineer-backend
+    expose:
+      - "8082"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SERVER_SERVLET_CONTEXT_PATH=/processengineer
+    volumes:
+      - ../logs/processengineer:/app/logs
+      - ../data/processengineer:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/processengineer/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - fastlcdp-network
+
+  # ProcessEngineer前端服务
+  processengineer-frontend:
+    build:
+      context: ../ProcessEngineer/frontend
+      dockerfile: ../../docker/Dockerfile.frontend
+    container_name: processengineer-frontend
+    expose:
+      - "3002"
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8080/processengineer
+      - VITE_BASE_PATH=/processengineer
+    depends_on:
+      - processengineer-backend
+    restart: unless-stopped
+    networks:
+      - fastlcdp-network
+
+  # TaskManager后端服务
+  taskmanager-backend:
+    build:
+      context: ../TaskManager/backend
+      dockerfile: ../../docker/Dockerfile.backend
+    container_name: taskmanager-backend
+    expose:
+      - "8083"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SERVER_SERVLET_CONTEXT_PATH=/taskmanager
+    volumes:
+      - ../logs/taskmanager:/app/logs
+      - ../data/taskmanager:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/taskmanager/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - fastlcdp-network
+
+  # TaskManager前端服务
+  taskmanager-frontend:
+    build:
+      context: ../TaskManager/frontend
+      dockerfile: ../../docker/Dockerfile.frontend
+    container_name: taskmanager-frontend
+    expose:
+      - "3003"
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8080/taskmanager
+      - VITE_BASE_PATH=/taskmanager
+    depends_on:
+      - taskmanager-backend
+    restart: unless-stopped
+    networks:
+      - fastlcdp-network
+
+networks:
+  fastlcdp-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
+
+volumes:
+  erdesigner_data:
+    driver: local
+  processengineer_data:
+    driver: local
+  taskmanager_data:
+    driver: local
+  erdesigner_logs:
+    driver: local
+  processengineer_logs:
+    driver: local
+  taskmanager_logs:
+    driver: local

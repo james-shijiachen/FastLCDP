@@ -4,11 +4,47 @@
 
 ## Project Overview
 
-This configuration provides a complete Docker deployment solution for the ERDesigner project, including frontend (Vue 3) and backend (Spring Boot) services, using H2 file database, supporting both local development and production environment deployment.
+This configuration provides complete Docker deployment solutions for the FastLCDP platform, supporting both single-project and multi-project deployment modes:
+
+- **Single Project Mode**: Deploy ERDesigner independently
+- **Multi-Project Mode**: Deploy ERDesigner, ProcessEngineer, and TaskManager together with unified access through ContextPath
+
+### Multi-Project Access (Recommended)
+- **Frontend Unified Entry**: http://localhost:3000
+- **Backend Unified Entry**: http://localhost:8080
+- **ERDesigner**: http://localhost:3000/erdesigner
+- **ProcessEngineer**: http://localhost:3000/processengineer
+- **TaskManager**: http://localhost:3000/taskmanager
 
 ## Quick Start
 
-### Method 1: Using Startup Scripts (Recommended)
+### Multi-Project Deployment (Recommended)
+
+**Linux/macOS:**
+```bash
+# Execute in the docker directory
+cd docker
+
+# Start all projects with unified access
+./start-multi-projects.sh
+```
+
+**Windows:**
+```cmd
+REM Execute in the docker directory
+cd docker
+
+REM Start all projects with unified access
+start-multi-projects.bat
+```
+
+**Manual Start:**
+```bash
+cd docker
+docker-compose -f docker-compose.multi.yml up --build -d
+```
+
+### Single Project Deployment (ERDesigner Only)
 
 **Linux/macOS:**
 ```bash
