@@ -2,10 +2,10 @@
 
 **中文** | [English](README.md)
 
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/james-shijiachen/fastLCDP/blob/main/LICENSE)
 [![Java](https://img.shields.io/badge/Java-21+-orange.svg)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3+-green.svg)](https://spring.io/projects/spring-boot)
 [![MyBatis Plus](https://img.shields.io/badge/MyBatis%20Plus-3.5+-blue.svg)](https://baomidou.com/)
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/james-shijiachen/fastLCDP/blob/main/LICENSE)
 
 ## 项目概述
 
@@ -530,11 +530,6 @@ ERDesigner后端是一个强大的Spring Boot应用程序，为ERDesigner前端�
 </database>
 ```
 
-## 📋 环境要求
-
-- Java 21 或更高版本
-- Maven 3.6 或更高版本
-
 ## 🛠️ 开发指南
 
 ### 项目结构
@@ -650,6 +645,33 @@ mvn jacoco:report
 ```bash
 open target/site/jacoco/index.html
 ```
+
+## 📊 监控和健康检查
+
+### 健康检查端点
+- `GET /actuator/health` - 应用健康状态
+- `GET /actuator/info` - 应用信息
+- `GET /actuator/metrics` - 应用指标
+
+### 日志记录
+日志使用Log4j2配置，存储位置：
+- 开发环境：控制台输出
+- 文件输出：`logs/erdesigner-backend.log`
+- 生产环境：JSON格式
+
+## 🔒 安全性
+
+### 认证
+应用支持多种认证方式：
+- JWT令牌认证
+- 会话认证
+- 服务间调用的API密钥认证
+
+### 授权
+基于角色的访问控制（RBAC），包含以下角色：
+- `USER` - 基本图表创建和编辑
+- `ADMIN` - 完整系统管理
+- `VIEWER` - 只读访问
 
 ## ❓ 常见问题
 
@@ -786,33 +808,6 @@ curl -X POST http://localhost:8080/api/database/validate \
 
 或使用在线验证工具验证XSD Schema合规性。
 - 数据库（默认使用H2嵌入式数据库）
-
-## 📊 监控和健康检查
-
-### 健康检查端点
-- `GET /actuator/health` - 应用健康状态
-- `GET /actuator/info` - 应用信息
-- `GET /actuator/metrics` - 应用指标
-
-### 日志记录
-日志使用Log4j2配置，存储位置：
-- 开发环境：控制台输出
-- 文件输出：`logs/erdesigner-backend.log`
-- 生产环境：JSON格式
-
-## 🔒 安全性
-
-### 认证
-应用支持多种认证方式：
-- JWT令牌认证
-- 会话认证
-- 服务间调用的API密钥认证
-
-### 授权
-基于角色的访问控制（RBAC），包含以下角色：
-- `USER` - 基本图表创建和编辑
-- `ADMIN` - 完整系统管理
-- `VIEWER` - 只读访问
 
 ---
 

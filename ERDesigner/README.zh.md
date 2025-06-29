@@ -2,11 +2,14 @@
 
 **中文** | [English](README.md)
 
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/james-shijiachen/fastLCDP/blob/main/LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/james-shijiachen/fastLCDP/blob/main/LICENSE)
 [![Vue](https://img.shields.io/badge/Vue-3.0+-green.svg)](https://vuejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
+[![node.js](https://img.shields.io/badge/node.js-18.0+-green.svg)](https://nodejs.org/)
+[![npm](https://img.shields.io/badge/npm-8.0+-orange.svg)](https://www.npmjs.com/)
 [![Java](https://img.shields.io/badge/Java-21+-orange.svg)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3+-green.svg)](https://spring.io/projects/spring-boot)
+[![Maven](https://img.shields.io/badge/Maven-3.6+-orange.svg)](https://maven.apache.org/)
 
 ## 项目概述
 
@@ -111,13 +114,6 @@ docker-compose up -d
    - 保存为JSON以便后续编辑
    - 导出为PNG图片用于文档
 
-### 高级功能
-
-- **模板**: 使用预定义模板创建常见数据库模式
-- **验证**: 实时验证关系和约束
-- **协作**: 与团队成员分享图表
-- **版本历史**: 跟踪和回滚变更
-
 ## 🔧 配置说明
 
 ### 后端配置
@@ -148,28 +144,6 @@ export default defineConfig({
   }
 })
 ```
-
-## 🤝 贡献指南
-
-我们欢迎贡献！请查看我们的[贡献指南](../CONTRIBUTING.md)了解详情。
-
-### 开发流程
-1. Fork 仓库
-2. 创建功能分支
-3. 进行更改
-4. 如适用，添加测试
-5. 提交拉取请求
-
-## 📄 许可证
-
-本项目采用Apache License 2.0许可证 - 查看[LICENSE](../LICENSE)文件了解详情。
-
-## 🆘 支持
-
-- 📚 [文档](../docs/)
-- 🐛 [问题跟踪](https://github.com/james-shijiachen/fastLCDP/issues)
-- 💬 [讨论区](https://github.com/james-shijiachen/fastLCDP/discussions)
-- 📧 [邮件支持](mailto:support@fastlcdp.com)
 
 ## 🗺️ 发展路线图
 

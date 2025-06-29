@@ -2,38 +2,38 @@
 
 [中文](README.zh.md) | **English**
 
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/james-shijiachen/fastLCDP/blob/main/LICENSE)
 [![Java](https://img.shields.io/badge/Java-21+-orange.svg)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3+-green.svg)](https://spring.io/projects/spring-boot)
 [![MyBatis Plus](https://img.shields.io/badge/MyBatis%20Plus-3.5+-blue.svg)](https://baomidou.com/)
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/james-shijiachen/fastLCDP/blob/main/LICENSE)
 
 ## Overview
 
-The ERDesigner Backend is a robust Spring Boot application that provides comprehensive API services for the ERDesigner frontend. It handles ER diagram metadata management, DDL generation, multi-database support, and provides a complete REST API for database schema design operations.
+ERDesigner Backend is a Spring Boot application that provides API services for database schema design and management. It supports XML-based database schema definition, multi-database DDL generation, and comprehensive REST API services.
 
-## 🚀 Key Features
+## 🚀 Core Features
 
-### Core Functionality
-- 🗄️ **Metadata Management** - Store and manage ER diagram metadata with version control
-- 🔄 **DDL Generation** - Generate SQL DDL statements from ER diagram definitions
-- 🌐 **Multi-Database Support** - Support for H2, MySQL, PostgreSQL, Oracle, and SQL Server
-- 📊 **Schema Validation** - Validate entity relationships and database constraints
-- 🔌 **REST API** - Comprehensive RESTful API for all operations
-- 📈 **Auto Table Creation** - Automatic database table creation based on entity annotations
+### Basic Features
+- 🗄️ **XML Schema Definition** - Define database schemas using XML configuration
+- 🔄 **DDL Generation** - Generate SQL DDL statements for multiple databases
+- 🌐 **Multi-Database Support** - Support for MySQL, PostgreSQL, Oracle, SQL Server, H2, SQLite
+- 📊 **Schema Validation** - Validate XML configuration and database constraints
+- 🔌 **REST API** - Complete RESTful API for all operations
+- 📈 **Table Inheritance** - Support for table inheritance relationships
 
 ### Advanced Features
-- 🛡️ **Security** - Spring Security integration for authentication and authorization
+- 🛡️ **XSD Schema Validation** - Complete XSD schema definition with IDE smart prompts
 - 📝 **API Documentation** - OpenAPI 3.0 specification with Swagger UI
 - 🔍 **Health Monitoring** - Spring Boot Actuator for application monitoring
-- 🗃️ **Database Migration** - Automatic schema migration and version management
-- 🎯 **Custom Validation** - Business logic validation for ER diagram consistency
-- 📊 **Audit Logging** - Track all changes and operations
+- 🗃️ **Keyword Handling** - Automatic handling of database keyword conflicts
+- 🎯 **Batch Processing** - Support for large XML file processing
+- 📊 **Audit Logging** - Track all database operations
 
 ## 🏗️ Technical Architecture
 
 ### Framework Stack
 - **Core Framework**: Spring Boot 3.3+
-- **Language**: Java 21 with modern features
+- **Language**: Java 21+
 - **Database Access**: MyBatis Plus 3.5+
 - **Security**: Spring Security 6+
 - **Documentation**: SpringDoc OpenAPI 3
@@ -41,18 +41,18 @@ The ERDesigner Backend is a robust Spring Boot application that provides compreh
 - **Build Tool**: Maven 3.6+
 
 ### Database Support
-- **H2** - Default embedded database for development
 - **MySQL** - Production-ready relational database
 - **PostgreSQL** - Advanced open-source database
 - **Oracle** - Enterprise database solution
 - **SQL Server** - Microsoft database platform
+- **H2** - Embedded database for development
+- **SQLite** - Lightweight database solution
 
-## 📋 Prerequisites
+## 📋 Environment Requirements
 
 - Java 21+
 - Maven 3.6+
-- Spring Boot 3.3+
-- Database (H2/MySQL/PostgreSQL/Oracle/SQL Server)
+- Database (default uses H2 embedded database)
 
 ## 🗄️ Database Schema & XML Configuration
 
@@ -95,13 +95,10 @@ The ERDesigner Backend is a robust Spring Boot application that provides compreh
 ```
 
 **Supported Field Types:**
-- Integer Types: `INTEGER`, `LONG`
-- Floating Point Types: `DECIMAL`
-- String Types: `CHAR`, `STRING`, `TEXT`
-- Date/Time Types: `DATETIME`
-- Binary Types: `BLOB`
-- Boolean Types: `BOOLEAN`
-- JSON Types: `JSON`
+```
+STRING, INTEGER, LONG, DECIMAL, BOOLEAN, 
+DATETIME, DATE, TIME, TEXT, JSON, BLOB, UUID
+```
 
 > Note: Field types must strictly follow XSD Schema definitions, see `src/main/resources/database-schema.xsd`
 
@@ -196,17 +193,11 @@ Reference XSD Schema in XML files:
                         <column name="username"/>
                     </columns>
                 </index>
-                <index name="idx_email" type="NORMAL">
-                    <columns>
-                        <column name="email"/>
-                    </columns>
-                </index>
             </indexes>
         </table>
     </tables>
 </database>
 ```
-
 #### 2. Using Table Inheritance
 
 ```xml
@@ -231,18 +222,6 @@ Reference XSD Schema in XML files:
                 <field name="username" type="STRING" length="50" nullable="false" comment="Username"/>
                 <field name="email" type="STRING" length="100" nullable="false" comment="Email"/>
             </fields>
-        </table>
-        
-        <!-- Article Table Also Inherits Base Entity Table -->
-        <table name="article" extends="base_entity" comment="Article Table">
-            <fields>
-                <field name="title" type="STRING" length="200" nullable="false" comment="Title"/>
-                <field name="content" type="TEXT" comment="Content"/>
-                <field name="author_id" type="LONG" nullable="false" comment="Author ID"/>
-            </fields>
-            <relations>
-                <relation name="fk_article_author" column="author_id" referenceTable="user" referenceColumn="id" onDelete="CASCADE" onUpdate="CASCADE"/>
-            </relations>
         </table>
     </tables>
 </database>
@@ -625,33 +604,18 @@ ERDesigner/backend/
 │   │   │   └── com/fastlcdp/erdesigner/
 │   │   │       ├── ErDesignerApplication.java          # Main Application Class
 │   │   │       ├── config/                            # Configuration Classes
-│   │   │       │   ├── DatabaseConfig.java            # Database Configuration
-│   │   │       │   ├── SwaggerConfig.java             # API Documentation Configuration
-│   │   │       │   └── WebConfig.java                 # Web Configuration
 │   │   │       ├── controller/                        # REST Controllers
-│   │   │       │   ├── DatabaseController.java        # Database Operations API
-│   │   │       │   └── SystemController.java          # System Status API
 │   │   │       ├── service/                           # Business Logic Services
-│   │   │       │   ├── DatabaseService.java           # Database Service
-│   │   │       │   ├── XmlParserService.java          # XML Parsing Service
-│   │   │       │   └── SqlGeneratorService.java       # SQL Generation Service
 │   │   │       ├── model/                             # Data Models
-│   │   │       │   ├── dto/                           # Data Transfer Objects
-│   │   │       │   ├── entity/                        # Database Entities
-│   │   │       │   └── xml/                           # XML Model Classes
 │   │   │       ├── repository/                        # Data Access Layer
 │   │   │       ├── exception/                         # Custom Exceptions
 │   │   │       └── util/                              # Utility Classes
 │   │   └── resources/
 │   │       ├── application.yml                        # Main Configuration
-│   │       ├── application-docker.yml                 # Docker Configuration
 │   │       ├── database-schema.xsd                    # XSD Schema Definition
-│   │       ├── static/                                # Static Resources
-│   │       └── templates/                             # Template Files
+│   │       └── static/                                # Static Resources
 │   └── test/
-│       ├── java/                                      # Unit Tests
-│       └── resources/                                 # Test Resources
-├── target/                                            # Build Output
+│       └── java/                                      # Unit Tests
 ├── pom.xml                                            # Maven Configuration
 └── README.md                                          # Project Documentation
 ```
@@ -676,54 +640,28 @@ public class PostgreSQLDialect implements DatabaseDialect {
 }
 ```
 
-2. **Register Dialect**
+2. **Update Type Mapper**
 ```java
-@Configuration
-public class DatabaseDialectConfig {
-    @Bean
-    public DatabaseDialectRegistry dialectRegistry() {
-        DatabaseDialectRegistry registry = new DatabaseDialectRegistry();
-        registry.register(new MySQLDialect());
-        registry.register(new PostgreSQLDialect());
-        return registry;
+@Component
+public class TypeMapper {
+    public String mapToSqlType(FieldType fieldType, DatabaseType dbType) {
+        // Add new field type SQL mapping logic
     }
 }
-```
-
-#### Adding New Field Types
-
-1. **Extend Field Type Enum**
-```java
-public enum FieldType {
-    // Existing types...
-    UUID("UUID", "UUID type for unique identifiers"),
-    GEOMETRY("GEOMETRY", "Spatial geometry type");
-}
-```
-
-2. **Update XSD Schema**
-```xml
-<xs:simpleType name="fieldType">
-    <xs:restriction base="xs:string">
-        <!-- Existing types... -->
-        <xs:enumeration value="UUID"/>
-        <xs:enumeration value="GEOMETRY"/>
-    </xs:restriction>
-</xs:simpleType>
 ```
 
 ## 🧪 Testing
 
 ### Unit Tests
 
-Run unit tests:
+Run all unit tests:
 ```bash
 mvn test
 ```
 
 Run specific test class:
 ```bash
-mvn test -Dtest=XmlParserServiceTest
+mvn test -Dtest=XmlParserTest
 ```
 
 ### Integration Tests
@@ -733,9 +671,9 @@ Run integration tests:
 mvn verify
 ```
 
-Run with specific profile:
+Test with specific database:
 ```bash
-mvn verify -Pintegration-test
+mvn test -Dspring.profiles.active=test-mysql
 ```
 
 ### Test Coverage
@@ -750,300 +688,24 @@ View coverage report:
 open target/site/jacoco/index.html
 ```
 
-## ❓ Frequently Asked Questions
-
-### Q: How to handle keyword conflicts?
-**A:** Use backticks or quotes around field/table names:
-```xml
-<field name="order" type="STRING" comment="Use quotes for reserved keywords"/>
-<table name="user" comment="Backticks will be added automatically for MySQL">
-```
-
-### Q: Which databases are supported?
-**A:** Currently supports:
-- **MySQL 5.7+** (Recommended)
-- **PostgreSQL 12+**
-- **Oracle 19c+**
-- **SQL Server 2019+**
-- **H2 Database** (For development/testing)
-
-### Q: How to handle large XML files?
-**A:** For large XML files (>10MB):
-1. Use streaming XML parser
-2. Split into multiple smaller files
-3. Use batch processing mode
-4. Increase JVM heap size: `-Xmx2g`
-
-### Q: What's the maximum table inheritance depth?
-**A:** Recommended maximum depth is 5 levels. Deeper inheritance may cause:
-- Performance issues
-- Complex SQL generation
-- Maintenance difficulties
-
-### Q: How to backup existing data before table generation?
-**A:** Always backup before running:
-```bash
-# MySQL
-mysqldump -u username -p database_name > backup.sql
-
-# PostgreSQL
-pg_dump -U username database_name > backup.sql
-```
-
-### Q: XSD Schema validation fails?
-**A:** Common solutions:
-1. Check XML encoding (must be UTF-8)
-2. Verify XSD schema path is correct
-3. Ensure all required attributes are present
-4. Validate field types against XSD definitions
-
-### Q: How to get IDE smart prompts?
-**A:** Configure your IDE:
-
-**IntelliJ IDEA:**
-1. File → Settings → Languages & Frameworks → Schemas and DTDs
-2. Add XSD schema file
-3. Associate with XML files
-
-**VS Code:**
-1. Install XML extension
-2. Configure schema association in settings.json:
-```json
-{
-  "xml.fileAssociations": [
-    {
-      "pattern": "**/*database*.xml",
-      "systemId": "path/to/database-schema.xsd"
-    }
-  ]
-}
-```
-
-### Q: How to validate XML configuration?
-**A:** Multiple validation methods:
-
-1. **API Validation:**
-```bash
-curl -X POST http://localhost:8080/api/database/validate \
-  -H "Content-Type: application/json" \
-  -d '{"xmlContent": "your-xml-content"}'
-```
-
-2. **Command Line Validation:**
-```bash
-xmllint --schema database-schema.xsd your-database.xml
-```
-
-3. **IDE Validation:** Real-time validation with XSD schema association
-
-## 📋 Prerequisites
-
-- Java 21 or higher
-- Maven 3.6 or higher
-- Database (H2 embedded by default)
-
-## 🚀 Quick Start
-
-### 1. Clone and Navigate
-```bash
-git clone https://github.com/james-shijiachen/fastLCDP.git
-cd FastLCDP/ERDesigner/backend
-```
-
-### 2. Build the Application
-```bash
-mvn clean install
-```
-
-### 3. Run the Application
-```bash
-mvn spring-boot:run
-```
-
-The application will start on http://localhost:8080
-
-### 4. Access API Documentation
-Open http://localhost:8080/swagger-ui.html in your browser
-
-## ⚙️ Configuration
-
-### Database Configuration
-
-Edit `src/main/resources/application.yaml`:
-
-```yaml
-spring:
-  application:
-    name: ERDesigner-Backend
-  datasource:
-    url: jdbc:h2:file:./data/erdesigner
-    username: sa
-    password: 
-    driver-class-name: org.h2.Driver
-
-database:
-  type: H2
-  charset: utf8mb4
-  collation: utf8mb4_unicode_ci
-  auto-create-metadata-tables: true
-  metadata:
-    save-to-database: true
-    table-prefix: "meta_"
-
-mybatis-plus:
-  configuration:
-    map-underscore-to-camel-case: true
-    cache-enabled: false
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-  global-config:
-    db-config:
-      id-type: ASSIGN_ID
-      logic-delete-field: deleted
-      logic-delete-value: 1
-      logic-not-delete-value: 0
-  mapper-locations: classpath*:mapper/**/*.xml
-  type-aliases-package: com.fastlcdp.erdesigner.entity
-```
-
-### Production Configuration
-
-For MySQL production setup:
-
-```yaml
-spring:
-  datasource:
-    url: jdbc:mysql://localhost:3306/erdesigner?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=UTC
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:password}
-    driver-class-name: com.mysql.cj.jdbc.Driver
-
-database:
-  type: MYSQL
-```
-
-## 📁 Project Structure
-
-```
-src/
-├── main/
-│   ├── java/
-│   │   └── com/fastlcdp/erdesigner/
-│   │       ├── config/          # Configuration classes
-│   │       ├── controller/      # REST controllers
-│   │       ├── entity/          # JPA entities
-│   │       ├── service/         # Business logic
-│   │       ├── mapper/          # MyBatis mappers
-│   │       ├── dto/             # Data transfer objects
-│   │       ├── util/            # Utility classes
-│   │       └── ErDesignerApplication.java
-│   └── resources/
-│       ├── application.yaml     # Main configuration
-│       ├── application-dev.yaml # Development config
-│       ├── application-prod.yaml# Production config
-│       └── mapper/              # MyBatis XML mappers
-└── test/
-    └── java/                    # Unit and integration tests
-```
-
-## 🔌 API Endpoints
-
-### Entity Management
-- `GET /api/entities` - List all entities
-- `POST /api/entities` - Create new entity
-- `PUT /api/entities/{id}` - Update entity
-- `DELETE /api/entities/{id}` - Delete entity
-- `GET /api/entities/{id}/fields` - Get entity fields
-
-### Relationship Management
-- `GET /api/relationships` - List all relationships
-- `POST /api/relationships` - Create relationship
-- `PUT /api/relationships/{id}` - Update relationship
-- `DELETE /api/relationships/{id}` - Delete relationship
-
-### Schema Operations
-- `POST /api/schema/generate-ddl` - Generate DDL from ER diagram
-- `POST /api/schema/validate` - Validate ER diagram
-- `GET /api/schema/export/{format}` - Export schema in various formats
-
-### Project Management
-- `GET /api/projects` - List projects
-- `POST /api/projects` - Create project
-- `GET /api/projects/{id}` - Get project details
-- `PUT /api/projects/{id}` - Update project
-- `DELETE /api/projects/{id}` - Delete project
-
-## 🧪 Testing
-
-### Run Unit Tests
-```bash
-mvn test
-```
-
-### Run Integration Tests
-```bash
-mvn verify
-```
-
-### Test Coverage
-```bash
-mvn jacoco:report
-```
-
-## 🔧 Development
-
-### Code Style
-The project follows Google Java Style Guide. Use the provided checkstyle configuration:
-
-```bash
-mvn checkstyle:check
-```
-
-### Database Migration
-The application automatically creates tables based on entity annotations. For custom migrations:
-
-1. Add migration scripts to `src/main/resources/db/migration/`
-2. Follow naming convention: `V{version}__{description}.sql`
-
-### Adding New Features
-
-1. Create entity classes with proper annotations
-2. Implement service layer with business logic
-3. Add REST controllers with proper validation
-4. Write comprehensive tests
-5. Update API documentation
-
-## 🐳 Docker Support
-
-### Build Docker Image
-```bash
-mvn clean package
-docker build -t erdesigner-backend .
-```
-
-### Run with Docker Compose
-```bash
-cd ../../docker
-docker-compose up -d
-```
-
 ## 📊 Monitoring and Health Checks
 
-### Health Check Endpoint
+### Health Check Endpoints
 - `GET /actuator/health` - Application health status
 - `GET /actuator/info` - Application information
 - `GET /actuator/metrics` - Application metrics
 
 ### Logging
 Logs are configured with Log4j2 and stored in:
-- Console output for development
+- Development: Console output
 - File output: `logs/erdesigner-backend.log`
-- JSON format for production environments
+- Production: JSON format
 
 ## 🔒 Security
 
 ### Authentication
 The application supports multiple authentication methods:
-- JWT token-based authentication
+- JWT token authentication
 - Session-based authentication
 - API key authentication for service-to-service calls
 
@@ -1053,41 +715,141 @@ Role-based access control (RBAC) with the following roles:
 - `ADMIN` - Full system administration
 - `VIEWER` - Read-only access
 
-## 🚀 Deployment
+## ❓ FAQ
 
-### Production Deployment
+### Q: How to handle database keyword conflicts?
 
-1. **Build the application**
-   ```bash
-   mvn clean package -Pprod
-   ```
+**A:** The system automatically detects and handles keyword conflicts:
 
-2. **Set environment variables**
-   ```bash
-   export DB_USERNAME=your_db_user
-   export DB_PASSWORD=your_db_password
-   export JWT_SECRET=your_jwt_secret
-   ```
+```xml
+<!-- System automatically adds backticks or brackets for keywords -->
+<field name="order" type="STRING" length="50"/>
+<!-- Generated SQL: `order` VARCHAR(50) (MySQL) or [order] VARCHAR(50) (SQL Server) -->
+```
 
-3. **Run the application**
-   ```bash
-   java -jar target/erdesigner-backend-*.jar --spring.profiles.active=prod
-   ```
+### Q: Which databases are supported?
 
-### Performance Tuning
+**A:** Currently supports the following databases:
+- MySQL 5.7+
+- PostgreSQL 10+
+- Oracle 11g+
+- SQL Server 2012+
+- H2 Database
+- SQLite 3.0+
 
-- **JVM Options**: `-Xmx2g -Xms1g -XX:+UseG1GC`
-- **Connection Pool**: HikariCP with optimized settings
-- **Caching**: Redis integration for session and data caching
+### Q: How to handle large XML files?
 
-## 🤝 Contributing
+**A:** For large XML files, it is recommended to:
 
-Please read our [Contributing Guide](../../CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+1. Use streaming parsing:
+```java
+@Service
+public class StreamingXmlParser {
+    public void parseXmlStream(InputStream xmlStream) {
+        // Use SAX or StAX for streaming parsing
+    }
+}
+```
 
-## 📄 License
+2. Process table definitions in batches:
+```java
+@Service
+public class BatchTableProcessor {
+    @Value("${app.batch.size:100}")
+    private int batchSize;
+    
+    public void processTables(List<Table> tables) {
+        // Process table definitions in batches
+    }
+}
+```
 
-This project is licensed under the Apache License 2.0 - see the [LICENSE](../../LICENSE) file for details.
+### Q: What is the maximum depth for table inheritance?
+
+**A:** There is no theoretical limit, but it is recommended not to exceed 5 levels to avoid:
+- Performance issues
+- Maintenance complexity
+- Circular inheritance detection overhead
+
+### Q: How to backup generated data?
+
+**A:** It is recommended to use native database backup tools:
+
+```bash
+# MySQL
+mysqldump -u username -p database_name > backup.sql
+
+# PostgreSQL
+pg_dump -U username database_name > backup.sql
+
+# SQL Server
+sqlcmd -S server -E -Q "BACKUP DATABASE [database_name] TO DISK='backup.bak'"
+```
+
+### Q: What to do when XSD Schema validation fails?
+
+**A:** Check the following points:
+
+1. Check if XML declaration is correct:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<database xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="../database-schema.xsd">
+```
+
+2. Check if required attributes are missing:
+```xml
+<!-- Error: missing name attribute -->
+<table comment="User table">
+
+<!-- Correct -->
+<table name="user" comment="User table">
+```
+
+3. Check if data types are valid:
+```xml
+<!-- Error: invalid data type -->
+<field name="id" type="INVALID_TYPE"/>
+
+<!-- Correct -->
+<field name="id" type="LONG"/>
+```
+
+### Q: How to get XML intelligent hints in IDE?
+
+**A:** Configure IDE to use XSD Schema:
+
+1. **IntelliJ IDEA:**
+   - File → Settings → Languages & Frameworks → Schemas and DTDs
+   - Add `database-schema.xsd` file
+
+2. **Eclipse:**
+   - Window → Preferences → XML → XML Catalog
+   - Add Schema Location mapping
+
+3. **VS Code:**
+   - Install XML extension
+   - Configure in settings.json:
+```json
+{
+  "xml.catalogs": [
+    "path/to/database-schema.xsd"
+  ]
+}
+```
+
+### Q: How to validate XML configuration correctness?
+
+**A:** Use validation API:
+
+```bash
+curl -X POST http://localhost:8080/api/database/validate \
+  -H "Content-Type: application/json" \
+  -d '{"xmlContent": "<?xml version=\"1.0\"?>..."}'
+```
+
+Or use online validation tools to verify XSD Schema compliance.
 
 ---
 
-**ERDesigner Backend** is part of the [ERDesigner](../README.md) project within the [FastLCDP](../../README.md) platform.
+**ERDesigner Backend** is part of the [ERDesigner](../README.md) project, which belongs to the [FastLCDP](../../README.md) platform.

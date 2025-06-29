@@ -2,11 +2,14 @@
 
 [中文](README.zh.md) | **English**
 
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/james-shijiachen/fastLCDP/blob/main/LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/james-shijiachen/fastLCDP/blob/main/LICENSE)
 [![Vue](https://img.shields.io/badge/Vue-3.0+-green.svg)](https://vuejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
+[![node.js](https://img.shields.io/badge/node.js-18.0+-green.svg)](https://nodejs.org/)
+[![npm](https://img.shields.io/badge/npm-8.0+-orange.svg)](https://www.npmjs.com/)
 [![Java](https://img.shields.io/badge/Java-21+-orange.svg)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3+-green.svg)](https://spring.io/projects/spring-boot)
+[![Maven](https://img.shields.io/badge/Maven-3.6+-orange.svg)](https://maven.apache.org/)
 
 ## Overview
 
@@ -115,13 +118,6 @@ docker-compose up -d
    - Save as JSON for later editing
    - Export as PNG image for documentation
 
-### Advanced Features
-
-- **Templates**: Use predefined templates for common database patterns
-- **Validation**: Real-time validation of relationships and constraints
-- **Collaboration**: Share diagrams with team members
-- **Version History**: Track and revert changes
-
 ## 🔧 Configuration
 
 ### Backend Configuration
@@ -152,28 +148,6 @@ export default defineConfig({
   }
 })
 ```
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guide](../CONTRIBUTING.md) for details.
-
-### Development Workflow
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the Apache License 2.0 - see the [LICENSE](../LICENSE) file for details.
-
-## 🆘 Support
-
-- 📚 [Documentation](../docs/)
-- 🐛 [Issue Tracker](https://github.com/james-shijiachen/fastLCDP/issues)
-- 💬 [Discussions](https://github.com/james-shijiachen/fastLCDP/discussions)
-- 📧 [Email Support](mailto:support@fastlcdp.com)
 
 ## 🗺️ Roadmap
 

@@ -2,10 +2,12 @@
 
 **中文** | [English](README.md)
 
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/james-shijiachen/fastLCDP/blob/main/LICENSE)
 [![Vue](https://img.shields.io/badge/Vue-3.0+-green.svg)](https://vuejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-4.0+-purple.svg)](https://vitejs.dev/)
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/james-shijiachen/fastLCDP/blob/main/LICENSE)
+[![node.js](https://img.shields.io/badge/node.js-18.0+-green.svg)](https://nodejs.org/)
+[![npm](https://img.shields.io/badge/npm-8.0+-orange.svg)](https://www.npmjs.com/)
 
 ## 项目概述
 
@@ -53,28 +55,6 @@ npm run build
 
 # 预览构建结果
 npm run preview
-```
-
-## 🐳 Docker部署
-
-### 使用Docker Compose（推荐）
-
-```bash
-# 生产环境部署
-cd docker && docker-compose up -d
-
-# 开发环境
-cd docker && docker-compose -f docker-compose.dev.yml up -d
-```
-
-### 使用Docker
-
-```bash
-# 构建镜像
-docker build -f docker/Dockerfile -t fastlcdp-frontend .
-
-# 运行容器
-docker run -d -p 3000:8080 --name fastlcdp-frontend fastlcdp-frontend
 ```
 
 ## 📁 项目结构
@@ -153,14 +133,6 @@ cp .env.example .env
 2. 选择导出格式（JSON/SQL/PNG）
 3. 下载文件
 
-## 🤝 贡献指南
-
-1. Fork 项目
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 打开 Pull Request
-
 ## 📄 许可证
 
 本项目采用 Apache 2.0 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
@@ -171,13 +143,6 @@ cp .env.example .env
 - [Element Plus](https://element-plus.org/) - Vue 3组件库
 - [Vite](https://vitejs.dev/) - 下一代前端构建工具
 - [Pinia](https://pinia.vuejs.org/) - Vue状态管理库
-
-## 📞 联系我们
-
-如有问题或建议，请通过以下方式联系：
-
-- 提交 [Issue](https://github.com/your-username/FastLCDP-Frontend/issues)
-- 发送邮件至：shijiachen@traninfo.com.cn
 
 ---
 

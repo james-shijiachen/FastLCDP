@@ -1,11 +1,13 @@
 # FastLCDP Frontend
 
-[中文](README_zh.md) | **English**
+[中文](README.zh.md) | **English**
 
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/james-shijiachen/fastLCDP/blob/main/LICENSE)
 [![Vue](https://img.shields.io/badge/Vue-3.0+-green.svg)](https://vuejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-4.0+-purple.svg)](https://vitejs.dev/)
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/james-shijiachen/fastLCDP/blob/main/LICENSE)
+[![node.js](https://img.shields.io/badge/node.js-18.0+-green.svg)](https://nodejs.org/)
+[![npm](https://img.shields.io/badge/npm-8.0+-orange.svg)](https://www.npmjs.com/)
 
 ## Overview
 
@@ -53,28 +55,6 @@ npm run build
 
 # Preview the build
 npm run preview
-```
-
-## 🐳 Docker Deployment
-
-### Using Docker Compose (Recommended)
-
-```bash
-# Production deployment
-cd docker && docker-compose up -d
-
-# Development environment
-cd docker && docker-compose -f docker-compose.dev.yml up -d
-```
-
-### Using Docker
-
-```bash
-# Build image
-docker build -f docker/Dockerfile -t fastlcdp-frontend .
-
-# Run container
-docker run -d -p 3000:8080 --name fastlcdp-frontend fastlcdp-frontend
 ```
 
 ## 📁 Project Structure
@@ -153,14 +133,6 @@ Main configuration options:
 2. Choose export format (JSON/SQL/PNG)
 3. Download the file
 
-## 🤝 Contributing
-
-1. Fork the project
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
 ## 📄 License
 
 This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENSE) file for details.
@@ -171,13 +143,6 @@ This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENS
 - [Element Plus](https://element-plus.org/) - Vue 3 component library
 - [Vite](https://vitejs.dev/) - Next generation frontend build tool
 - [Pinia](https://pinia.vuejs.org/) - Vue state management library
-
-## 📞 Contact
-
-If you have any questions or suggestions, please contact us through:
-
-- Submit an [Issue](https://github.com/your-username/FastLCDP-Frontend/issues)
-- Send email to: shijiachen@traninfo.com.cn
 
 ---
 
