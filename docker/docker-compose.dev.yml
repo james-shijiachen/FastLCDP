@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  erdesigner-backend:
+    build:
+      context: ../ERDesigner/backend
+      dockerfile: ../../docker/Dockerfile.backend
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - JAVA_OPTS=-Xmx512m -Xms256m
+    volumes:
+      - erdesigner-data:/app/data
+      - erdesigner-logs:/app/logs
+      - ../ERDesigner/backend/src:/app/src:ro  # 开发模式：挂载源码目录（只读）
+    networks:
+      - erdesigner-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+
+  erdesigner-frontend:
+    build:
+      context: ../ERDesigner/frontend
+      dockerfile: ../../docker/Dockerfile.frontend
+      target: development  # 使用开发阶段
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - VITE_API_BASE_URL=http://localhost:8080
+    volumes:
+      - ../ERDesigner/frontend/src:/app/src:ro  # 开发模式：挂载源码目录（只读）
+      - ../ERDesigner/frontend/public:/app/public:ro
+    networks:
+      - erdesigner-network
+    depends_on:
+      erdesigner-backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+volumes:
+  erdesigner-data:
+    driver: local
+  erdesigner-logs:
+    driver: local
+
+networks:
+  erdesigner-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

@@ -1,17 +1,18 @@
+version: '3.8'
+
 services:
-  # FastLCDP应用服务
-  fastlcdp-app:
+  # ERDesigner后端服务
+  erdesigner-backend:
     build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: fastlcdp-app
+      context: ../ERDesigner/backend
+      dockerfile: ../../docker/Dockerfile.backend
+    container_name: erdesigner-backend
     ports:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     volumes:
       - ../logs:/app/logs
-      - ../examples:/app/examples:ro
       - ../data:/app/data
     restart: unless-stopped
     healthcheck:
@@ -20,6 +21,28 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    networks:
+      - erdesigner-network
+
+  # ERDesigner前端服务
+  erdesigner-frontend:
+    build:
+      context: ../ERDesigner/frontend
+      dockerfile: ../../docker/Dockerfile.frontend
+    container_name: erdesigner-frontend
+    ports:
+      - "3001:3001"
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8080
+    depends_on:
+      - erdesigner-backend
+    restart: unless-stopped
+    networks:
+      - erdesigner-network
+
+networks:
+  erdesigner-network:
+    driver: bridge
 
 volumes:
   app_data:

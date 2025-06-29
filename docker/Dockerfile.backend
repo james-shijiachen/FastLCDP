@@ -1,5 +1,20 @@
-#使用Eclipse Temurin提供的OpenJDK 21运行时镜像
-FROM eclipse-temurin:21-jdk-jammy
+FROM eclipse-temurin:21-jdk-jammy AS builder
+
+# 安装Maven
+RUN apt-get update && apt-get install -y maven && rm -rf /var/lib/apt/lists/*
+
+# 设置工作目录
+WORKDIR /app
+
+# 复制pom.xml和源代码
+COPY pom.xml .
+COPY src ./src
+
+# 构建应用
+RUN mvn clean package -DskipTests
+
+# 运行时镜像
+FROM eclipse-temurin:21-jre-jammy
 
 # 安装必要的工具
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
@@ -10,11 +25,11 @@ RUN groupadd -r appuser && useradd -r -g appuser appuser
 # 设置工作目录
 WORKDIR /app
 
-# 复制预构建的jar文件（需要先在本地构建）
-COPY target/*.jar app.jar
+# 从构建阶段复制jar文件
+COPY --from=builder /app/target/*.jar app.jar
 
-# 创建日志目录
-RUN mkdir -p /app/logs && chown -R appuser:appuser /app
+# 创建必要的目录
+RUN mkdir -p /app/logs /app/data && chown -R appuser:appuser /app
 
 # 切换到非root用户
 USER appuser

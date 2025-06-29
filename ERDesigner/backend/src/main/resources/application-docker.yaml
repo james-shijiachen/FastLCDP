@@ -1,0 +1,120 @@
+spring:
+  application:
+    name: ERDesigner-Backend
+  
+  # 数据源配置 - 使用H2文件数据库
+  datasource:
+    url: jdbc:h2:file:./data/erdesigner;DB_CLOSE_ON_EXIT=FALSE;AUTO_RECONNECT=TRUE
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  
+# 数据库配置
+database:
+  type: H2
+  charset: utf8mb4
+  collation: utf8mb4_unicode_ci
+  auto-create-metadata-tables: true
+  metadata:
+    save-to-database: true
+    table-prefix: "meta_"
+
+# MyBatis Plus配置
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: ASSIGN_ID
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  mapper-locations: classpath*:mapper/**/*.xml
+  type-aliases-package: com.fastlcdp.erdesigner.entity
+  
+  # H2控制台配置
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        web-allow-others: true
+
+# 服务器配置
+server:
+  port: 8080
+  servlet:
+    context-path: /
+  undertow:
+    threads:
+      io: 16
+      worker: 256
+    buffer-size: 1024
+    direct-buffers: true
+
+# 日志配置
+logging:
+  level:
+    com.fastlcdp.erdesigner: DEBUG
+    org.springframework.web: INFO
+    org.mybatis: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: /app/logs/erdesigner-backend.log
+    max-size: 100MB
+    max-history: 30
+
+# 管理端点配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env
+  endpoint:
+    health:
+      show-details: always
+  info:
+    env:
+      enabled: true
+
+# CORS配置
+cors:
+  allowed-origins:
+    - "http://localhost:3001"
+    - "http://erdesigner-frontend:3001"
+  allowed-methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - OPTIONS
+  allowed-headers:
+    - "*"
+  allow-credentials: true
+
+# API文档配置
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
+  show-actuator: true
+
+# 日志配置 (使用log4j2)
+logging:
+  level:
+    cn.com.traninfo.fastlcdp: INFO
+    org.springframework: WARN
+    org.hibernate: WARN
