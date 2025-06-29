@@ -280,7 +280,7 @@ public class ComplexDatabaseTest {
                 .findFirst()
                 .orElse(null);
         assertNotNull(granterRelation);
-        assertEquals("RESTRICT", granterRelation.getOnDelete());
+        assertEquals("RESTRICT", granterRelation.getOnDelete().name());
         
         System.out.println("✓ 复杂关系定义验证通过");
     }
