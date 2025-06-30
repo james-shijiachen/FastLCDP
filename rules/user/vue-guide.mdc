@@ -1,0 +1,54 @@
+---
+description: 
+globs: *.vue,*.ts
+alwaysApply: false
+---
+# Vue 开发规范与指南
+
+## 1. 目录结构
+- components/ 组件
+- stores/ Pinia 状态管理
+- types/ TypeScript 类型
+- utils/ 工具函数
+- i18n/ 国际化
+
+## 2. 命名规范
+- 文件/组件 PascalCase，props camelCase，事件 kebab-case
+- 变量 camelCase，常量 UPPER_SNAKE_CASE
+
+## 3. 组件开发
+- 单一职责，props/emit 明确
+- 组合式 API（<script setup lang="ts">）
+- 组件注释、类型声明齐全
+
+## 4. 状态管理
+- 推荐 Pinia，store 单一职责
+- 状态、getter、action 分离
+
+## 5. TypeScript
+- 所有数据结构、props、emit、store 必须有类型
+- 类型定义集中在 types/
+
+## 6. 样式与 UI
+- 推荐 CSS Modules/scoped，变量统一
+- 响应式设计，移动端适配
+
+## 7. 国际化
+- vue-i18n，所有文案抽离到 i18n/
+- 组件内用 $t 获取文案
+
+## 8. 测试
+- 单元测试推荐 Vitest/Jest，UI 测试推荐 Cypress
+
+## 9. 依赖与构建
+- 依赖锁定，按需引入
+- Vite 配置分环境
+
+## 10. 最佳实践
+- 代码格式化、eslint、prettier
+- 组件懒加载、图片懒加载
+- 代码分包、路由懒加载
+
+## 11. 参考
+- [Vue3 官方文档](mdc:https:/vuejs.org)
+- [Pinia 官方文档](mdc:https:/pinia.vuejs.org)

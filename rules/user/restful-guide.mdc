@@ -1,0 +1,43 @@
+---
+description: 
+globs: *.java,*.doc
+alwaysApply: false
+---
+# Restful 接口详细设计规范与指南
+
+## 1. 设计原则
+- 遵循 RESTful 风格，资源导向
+- 接口语义清晰，幂等性
+
+## 2. 命名与版本
+- 路径小写、用-分隔，资源名用复数
+- 版本号放在路径上 /api/v1/
+
+## 3. 请求参数
+- GET 用 query，POST/PUT 用 body（JSON）
+- 必填参数校验，类型明确
+
+## 4. 响应规范
+- 统一响应结构：code/message/data
+- 分页、列表、详情、错误响应格式统一
+
+## 5. 错误码与异常
+- 业务错误码分层（如 1000-1999 业务，2000-2999 权限）
+- 错误信息国际化
+
+## 6. 鉴权与安全
+- 推荐 JWT/OAuth2，接口权限粒度控制
+- 防止 CSRF/XSS/SQL 注入
+
+## 7. 文档与示例
+- 必须用 Swagger/OpenAPI 自动生成文档
+- 每个接口有请求/响应示例
+
+## 8. 最佳实践
+- 避免一次接口多义，接口粒度适中
+- 变更需兼容老版本
+- 及时废弃无用接口
+
+## 9. 参考
+- [RESTful API 设计指南](mdc:https:/restfulapi.net)
+- [OpenAPI 规范](mdc:https:/swagger.io/specification)

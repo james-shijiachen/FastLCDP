@@ -1,0 +1,78 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# ERDesigner 前端开发规则与指南
+
+## 1. 项目定位
+- ERDesigner 前端负责 ER 图可视化建模、画布交互、AI 辅助、API 对接、国际化。
+
+## 2. 技术栈
+- Vue 3、TypeScript、Vite、Pinia、vue-i18n、Fabric.js
+
+## 3. 目录结构
+```
+ERDesigner/frontend/
+├── package.json              # 项目依赖配置
+├── package-lock.json         # 依赖锁定
+├── tsconfig.json             # TypeScript 配置
+├── tsconfig.node.json        # Node专用TS配置
+├── vite.config.ts            # Vite 构建配置
+├── index.html                # 入口HTML
+├── README.md                 # 项目说明
+├── README.zh.md              # 中文说明
+├── dist/                     # 构建产物
+├── node_modules/             # 依赖包
+├── i18n/
+│   └── locales/
+│       ├── en.json           # 英文国际化
+│       └── zh.json           # 中文国际化
+├── src/
+│   ├── App.vue               # 根组件
+│   ├── main.ts               # 应用入口文件，创建并挂载 Vue 应用
+│   ├── index.ts              # 国际化插件（vue-i18n）配置与导出
+│   ├── style.css             # 全局样式
+│   ├── vite-env.d.ts         # Vite 环境类型
+│   ├── components/           # 业务组件
+│   │   ├── DatabaseTree.vue         # 数据库与实体树形结构展示，左侧导航，管理数据库/实体
+│   │   ├── RelationEditModal.vue    # 关系编辑弹窗，配置实体间关联（类型/字段/命名）
+│   │   ├── EntityEditModal.vue      # 实体编辑弹窗，编辑实体名称、字段、属性等
+│   │   ├── DatabaseEditModal.vue    # 数据库编辑弹窗，管理数据库分组信息
+│   │   └── ERCanvas.vue             # ER 图主画布，可视化编辑实体与关系，核心交互区
+│   ├── stores/               # Pinia 状态管理
+│   │   └── erDiagram.ts         # ER 图数据状态管理，包含实体、关系、数据库等全局状态
+│   ├── types/                # TypeScript 类型定义
+│   │   └── entity.ts            # ER 实体、字段、关系等核心数据类型定义
+```
+
+## 4. 开发规范
+- 组件单一职责，组合式 API，类型声明齐全
+- 状态管理用 Pinia，数据流清晰
+- 画布操作用 Fabric.js，ER 实体/关系建模类型集中在 types/
+- 国际化用 vue-i18n，文案抽离
+- 代码格式化、eslint/prettier
+
+## 5. ER 建模与数据表规范
+- 实体、关系、字段、索引、主外键、范式、注释等遵循 [../db-design-guide.mdc](mdc:../db-design-guide.mdc)
+- 支持实体继承、关系类型、字段约束
+- XML/JSON 格式需有 schema 校验
+
+## 6. API 设计规范
+- 遵循 [../restful-guide.mdc](mdc:../restful-guide.mdc)
+- 统一响应、错误码、分页、权限、国际化
+
+## 7. UI 设计规范
+- 遵循 [../ui-design-guide.mdc](mdc:../ui-design-guide.mdc)
+- 画布交互、实体/关系编辑、主题色彩、响应式
+
+## 8. 测试
+- 单元测试推荐 Vitest/Jest，UI 测试推荐 Cypress
+
+## 9. 最佳实践
+- 组件懒加载、性能优化、可用性测试
+- 结构变更用迁移脚本，版本可追溯
+
+## 10. 参考
+- [FastLCDP 全局规则](mdc:../fastlcdp-guide.mdc)
+- [Vue3 官方文档](mdc:https:/vuejs.org)

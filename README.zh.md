@@ -1,4 +1,4 @@
-# FastLCDP - 快速低代码数据库平台
+# FastLCDP - 快速低代码开发平台
 
 **中文** | [English](README.md)
 
@@ -6,88 +6,120 @@
 [![GitHub Issues](https://img.shields.io/github/issues/james-shijiachen/fastLCDP)](https://github.com/james-shijiachen/fastLCDP/issues)
 [![GitHub Stars](https://img.shields.io/github/stars/james-shijiachen/fastLCDP)](https://github.com/james-shijiachen/fastLCDP/stargazers)
 
-## 项目简介
+---
 
-FastLCDP是一款基于AI的低代码开发平台，产品的核心理念是让AI像人一样参与到软件项目的研发过程中，通过人和AI的完美结合加速软件项目的交付。平台包括以下几个核心产品：
+## 🚀 项目简介
 
-### [**ERDesigner**](./ERDesigner/README.md)
-- **现代化的ER图设计工具**：提供实体关系建模的可视化界面，支持实体、关系的创建、编辑和删除。
-- **可视化编辑能力**：基于AI的图编辑模型，用户无需复杂的代码编写，即可完成实体关系的建模。
+**FastLCDP** 是一个基于 AI 的低代码开发平台，让 AI 像人一样参与软件开发过程，通过人机协作加速项目交付。平台包含三大核心模块：
 
-### [**ProcessEngineer**](./ProcessEngineer/README.md)
-- **业务流程设计器**：提供可视化的业务流程建模工具，支持BPMN标准的流程设计和管理。
-- **流程引擎集成**：支持Activiti、Flowable、Camunda等主流BPM引擎，实现流程的部署和执行。
+- [**ERDesigner**](./ERDesigner/README.zh.md)：现代化 ER 图设计工具，支持可视化建模与 AI 智能编辑。
+- [**ProcessEngineer**](./ProcessEngineer/README.zh.md)：可视化业务流程设计器，支持 BPMN 标准与主流 BPM 引擎。
+- [**TaskManager**](./TaskManager/README.zh.md)：智能任务管理系统，支持看板、团队协作与实时同步。
 
-### [**TaskManager**](./TaskManager/README.md)
-- **智能任务管理系统**：提供项目管理和团队协作功能，支持任务分配、进度跟踪和团队协作。
-- **可视化看板**：采用看板视图管理任务状态，支持拖拽式操作和实时同步。
+---
 
-## 🚀 快速开始
+## 🛠️ 技术栈
+- **后端**：Java 21、Spring Boot 3.5+、MyBatis Plus、Undertow、Log4j2、Spring Security、OpenAPI、JAXB、Lombok
+- **前端**：Vue 3、TypeScript、Vite、Pinia、vue-i18n、Fabric.js
+- **数据库**：MySQL、PostgreSQL、Oracle、SQL Server、H2
+- **容器化**：Docker、Docker Compose
 
-### 使用Docker（推荐）
+---
 
-1. **克隆项目**
+## 📁 项目结构
+```
+FastLCDP/
+├── ERDesigner/              # ER 图设计工具
+│   ├── backend/             # Spring Boot 后端
+│   └── frontend/            # Vue 3 前端
+├── ProcessEngineer/         # 业务流程设计器
+│   ├── backend/             # Spring Boot 后端
+│   └── frontend/            # Vue 3 前端
+├── TaskManager/             # 任务管理系统
+│   ├── backend/             # Spring Boot 后端
+│   └── frontend/            # Vue 3 前端
+├── docker/                  # Docker 配置
+├── docs/                    # 文档
+└── rules/                   # 代码规范与 Cursor AI 规则
+```
+
+---
+
+## 📦 开发规范
+- 统一代码风格、命名、注释、异常处理
+- RESTful API 设计、国际化与安全最佳实践
+- [详细规则与最佳实践](rules/cursor/personal-rules.md)
+
+---
+
+## ⚡ 快速开始
+
+### 推荐：Docker 一键启动
 ```bash
 git clone https://github.com/james-shijiachen/FastLCDP.git
 cd FastLCDP
-```
-
-2. **使用Docker启动**
-```bash
 cd docker
 docker-compose up -d
 ```
+- ERDesigner 前端：http://localhost:3001/ERDesigner
+- ERDesigner 后端 API：http://localhost:8080/ERDesigner/api
+- API 文档：http://localhost:8080/ERDesigner/swagger-ui.html
 
-3. **访问应用**
-- ERDesigner前端: http://localhost:3001/ERDesigner
-- ERDesigner后端API: http://localhost:8080/ERDesigner/api
-- API文档: http://localhost:8080/ERDesigner/swagger-ui.html
-
-### 二、手动安装
-
-1. ** ERDesigner后端(示例) **
+### 手动安装
+#### ERDesigner 后端
 ```bash
 cd ERDesigner/backend
 mvn clean install
 mvn spring-boot:run
 ```
-
-2. ** ERDesigner前端(示例) **
+#### ERDesigner 前端
 ```bash
 cd ERDesigner/frontend
 npm install
 npm run dev
 ```
 
-## 📁 项目结构
+---
 
-```
-FastLCDP/
-├── ERDesigner/              # ER图设计工具
-│   ├── backend/             # Spring Boot后端
-│   └── frontend/            # Vue 3前端
-├── docker/                  # Docker配置
-└── docs/                    # 文档
-```
-
-## 贡献指南
-
-1. Fork 项目
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 打开 Pull Request
-
-## 许可证
-
-本项目采用 Apache License 2.0 许可证 - 查看 [LICENSE](https://github.com/james-shijiachen/fastLCDP/blob/main/LICENSE) 文件了解详情。
-
-## 联系方式
-
-- 项目主页: [https://github.com/james-shijiachen/fastLCDP](https://github.com/james-shijiachen/fastLCDP)
-- 问题反馈: [https://github.com/james-shijiachen/fastLCDP/issues](https://github.com/james-shijiachen/fastLCDP/issues)
-- 邮箱: [shijiachen@traninfo.com.cn](mailto:shijiachen@traninfo.com.cn)
+## 🧑‍💻 常用命令
+- 后端：`mvn clean compile`、`mvn test`、`mvn spring-boot:run`、`mvn clean package`
+- 前端：`npm install`、`npm run dev`、`npm run build`、`npm run preview`
+- Docker：`docker build -t fastlcdp .`、`docker-compose up -d`、`docker-compose logs -f`
 
 ---
 
-**FastLCDP Team** - 拥抱AI，拥抱未来！🚀
+## 🤝 贡献指南
+1. Fork 本项目
+2. 创建特性分支 (`git checkout -b feature/your-feature`)
+3. 提交更改 (`git commit -m 'feat: 新增功能说明'`)
+4. 推送到分支 (`git push origin feature/your-feature`)
+5. 创建 Pull Request
+
+**贡献建议：**
+- 遵循 [personal-rules.md](rules/cursor/personal-rules.md) 代码规范与提交信息格式
+- 新功能需补充单元测试
+- 提交前确保所有检查通过
+
+---
+
+## ❓ 常见问题
+- **Q: 如何保证规范与项目同步？**
+  - 定期审查并更新 [personal-rules.md](rules/cursor/personal-rules.md) 以反映最佳实践。
+- **Q: FastLCDP 可用于商业项目吗？**
+  - 可以，遵循 Apache 2.0 许可协议。
+- **Q: 哪里可以查看详细开发规范？**
+  - 见 [rules/cursor/personal-rules.md](rules/cursor/personal-rules.md)
+
+---
+
+## 📄 许可证
+本项目采用 Apache License 2.0 许可证，详见 [LICENSE](https://github.com/james-shijiachen/fastLCDP/blob/main/LICENSE)。
+
+## 📬 联系方式
+- 项目主页：[https://github.com/james-shijiachen/fastLCDP](https://github.com/james-shijiachen/fastLCDP)
+- 问题反馈：[https://github.com/james-shijiachen/fastLCDP/issues](https://github.com/james-shijiachen/fastLCDP/issues)
+- 邮箱：[shijiachen@traninfo.com.cn](mailto:shijiachen@traninfo.com.cn)
+
+---
+
+**FastLCDP 团队** - 拥抱 AI，拥抱未来！🚀

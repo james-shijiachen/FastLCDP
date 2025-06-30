@@ -6,84 +6,106 @@
 [![GitHub Issues](https://img.shields.io/github/issues/james-shijiachen/fastLCDP)](https://github.com/james-shijiachen/fastLCDP/issues)
 [![GitHub Stars](https://img.shields.io/github/stars/james-shijiachen/fastLCDP)](https://github.com/james-shijiachen/fastLCDP/stargazers)
 
-## Project Overview
+---
 
-FastLCDP is an AI-powered low-code development platform. The core philosophy of the product is to enable AI to participate in the software project development process like humans, accelerating software project delivery through the perfect combination of humans and AI. The platform includes the following core products:
+## 🚀 Project Overview
 
-### [**ERDesigner**](./ERDesigner/README.md)
-- **Modern ER Diagram Design Tool**: Provides a visual interface for entity-relationship modeling, supporting creation, editing, and deletion of entities and relationships.
-- **Visual Editing Capabilities**: Based on AI-powered graph editing models, users can complete entity-relationship modeling without complex coding.
+**FastLCDP** is an AI-powered low-code development platform. It enables AI to participate in the software development process like a human, accelerating delivery through the synergy of humans and AI. The platform consists of three core modules:
 
-### [**ProcessEngineer**](./ProcessEngineer/README.md)
-- **Business Process Designer**: Provides visual business process modeling tools with BPMN standard support for process design and management.
-- **Process Engine Integration**: Supports mainstream BPM engines like Activiti, Flowable, and Camunda for process deployment and execution.
+- [**ERDesigner**](./ERDesigner/README.md): Modern ER diagram design tool with visual modeling and AI-powered editing.
+- [**ProcessEngineer**](./ProcessEngineer/README.md): Visual business process designer supporting BPMN standards and mainstream BPM engines.
+- [**TaskManager**](./TaskManager/README.md): Smart task management system with Kanban, team collaboration, and real-time sync.
 
-### [**TaskManager**](./TaskManager/README.md)
-- **Smart Task Management System**: Provides project management and team collaboration features with task assignment, progress tracking, and team collaboration.
-- **Visual Kanban Board**: Uses kanban view for task status management with drag-and-drop operations and real-time synchronization.
+---
 
-## 🚀 Quick Start
+## 🛠️ Tech Stack
+- **Backend**: Java 21, Spring Boot 3.5+, MyBatis Plus, Undertow, Log4j2, Spring Security, OpenAPI, JAXB, Lombok
+- **Frontend**: Vue 3, TypeScript, Vite, Pinia, vue-i18n, Fabric.js
+- **Database**: MySQL, PostgreSQL, Oracle, SQL Server, H2
+- **Containerization**: Docker, Docker Compose
+
+---
+
+## 📁 Project Structure
+```
+FastLCDP/
+├── ERDesigner/              # ER Diagram Design Tool
+│   ├── backend/             # Spring Boot Backend
+│   └── frontend/            # Vue 3 Frontend
+├── ProcessEngineer/         # Business Process Designer
+│   ├── backend/             # Spring Boot Backend
+│   └── frontend/            # Vue 3 Frontend
+├── TaskManager/             # Task Management System
+│   ├── backend/             # Spring Boot Backend
+│   └── frontend/            # Vue 3 Frontend
+├── docker/                  # Docker Configuration
+├── docs/                    # Documentation
+└── rules/                   # Coding Rules & Cursor AI Rules
+```
+
+---
+
+## 📦 Development Standards
+- Unified code style, naming, annotation, and error handling
+- RESTful API design, internationalization, and security best practices
+- [Detailed rules and best practices](rules/cursor/personal-rules.md)
+
+---
+
+## ⚡ Quick Start
 
 ### Using Docker (Recommended)
-
-1. **Clone the Repository**
 ```bash
 git clone https://github.com/james-shijiachen/FastLCDP.git
 cd FastLCDP
-```
-
-2. **Start with Docker**
-```bash
 cd docker
 docker-compose up -d
 ```
-
-3. **Access Applications**
 - ERDesigner Frontend: http://localhost:3001/ERDesigner
 - ERDesigner Backend API: http://localhost:8080/ERDesigner/api
-- API Documentation: http://localhost:8080/ERDesigner/swagger-ui.html
+- API Docs: http://localhost:8080/ERDesigner/swagger-ui.html
 
 ### Manual Setup
-
-1. ** ERDesigner Backend (Example) **
+#### ERDesigner Backend
 ```bash
 cd ERDesigner/backend
 mvn clean install
 mvn spring-boot:run
 ```
-
-2. ** ERDesigner Frontend (Example) **
+#### ERDesigner Frontend
 ```bash
 cd ERDesigner/frontend
 npm install
 npm run dev
 ```
 
-## 📁 Project Structure
+---
 
-```
-FastLCDP/
-├── ERDesigner/              # ER Diagram Design Tool
-│   ├── backend/             # Spring Boot Backend
-│   └── frontend/            # Vue 3 Frontend
-├── docker/                  # Docker Configuration
-└── docs/                    # Documentation
-```
+## 🧑‍💻 Common Commands
+- Backend: `mvn clean compile`, `mvn test`, `mvn spring-boot:run`, `mvn clean package`
+- Frontend: `npm install`, `npm run dev`, `npm run build`, `npm run preview`
+- Docker: `docker build -t fastlcdp .`, `docker-compose up -d`, `docker-compose logs -f`
 
-## Contributing
+---
 
+## 🤝 Contributing
 1. Fork the project
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
+2. Create a feature branch (`git checkout -b feature/your-feature`)
+3. Commit your changes (`git commit -m 'feat: add your feature'`)
+4. Push to the branch (`git push origin feature/your-feature`)
 5. Open a Pull Request
 
-## License
+**Contribution Guidelines:**
+- Follow [personal-rules.md](rules/cursor/personal-rules.md) for code style and commit message conventions
+- Add unit tests for new features
+- Ensure code passes all checks before submitting PR
 
+---
+
+## 📄 License
 This project is licensed under the Apache License 2.0 - see the [LICENSE](https://github.com/james-shijiachen/fastLCDP/blob/main/LICENSE) file for details.
 
-## Contact
-
+## 📬 Contact
 - Project Homepage: [https://github.com/james-shijiachen/fastLCDP](https://github.com/james-shijiachen/fastLCDP)
 - Issue Reports: [https://github.com/james-shijiachen/fastLCDP/issues](https://github.com/james-shijiachen/fastLCDP/issues)
 - Email: [shijiachen@traninfo.com.cn](mailto:shijiachen@traninfo.com.cn)

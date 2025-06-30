@@ -1,0 +1,41 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# FastLCDP 项目开发规则（Cursor 专用）
+
+本规则文件为 FastLCDP 项目定制，帮助 AI 理解项目结构、技术栈和开发规范。
+
+## 项目结构
+- 主体目录：ERDesigner、ProcessEngineer、TaskManager
+- 每个子项目包含 backend（Java）和 frontend（Vue3+TS）
+- Docker 配置在 [docker/](mdc:docker)
+- 详细项目结构和规范见 [rules/cursor/personal-rules.md](mdc:rules/cursor/personal-rules.md)
+
+## 技术栈
+- 后端：Java 21, Spring Boot 3.5+, MyBatis Plus, Undertow, Log4j2, Spring Security, OpenAPI, JAXB, Lombok
+- 前端：Vue 3, TypeScript, Vite, Pinia, vue-i18n, Fabric.js
+- 数据库：MySQL, PostgreSQL, Oracle, SQL Server, H2
+- 容器化：Docker, Docker Compose
+
+## 主要开发规范
+- 代码风格、命名、注释、异常处理、日志、API 设计、数据库设计、测试、性能优化、安全、部署等详见 [rules/cursor/personal-rules.md](mdc:rules/cursor/personal-rules.md)
+- 推荐在 Cursor 编辑器中自动加载 `.cursorrules` 文件
+
+## 代码审查清单
+- 后端：风格、异常、日志、测试、性能、安全
+- 前端：类型、组件、状态、体验、性能、响应式
+
+## 常用命令
+- 后端：`mvn clean compile`、`mvn test`、`mvn spring-boot:run`
+- 前端：`npm install`、`npm run dev`、`npm run build`
+- Docker：`docker build`、`docker-compose up -d`
+
+## 参考文档
+- 详细规则与开发流程请查阅 [personal-rules.md](mdc:rules/cursor/personal-rules.md)
+- 规则使用说明见 [README.md](mdc:rules/cursor/README.md)
+
+---
+
+*本规则文件用于辅助 AI 理解和导航 FastLCDP 代码库，所有开发应遵循上述规范。*

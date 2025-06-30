@@ -1,0 +1,86 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# ERDesigner 后端开发规则与指南
+
+## 1. 项目定位
+- ERDesigner 后端负责 ER 图建模、XML/SQL 解析、数据库同步、RESTful API。
+
+## 2. 技术栈
+- Java 21、Spring Boot 3.5+、MyBatis Plus、Undertow、Log4j2、Swagger/OpenAPI
+- 数据库：MySQL、PostgreSQL、Oracle、SQL Server、H2
+
+## 3. 目录结构
+Maven项目，代码包cn.com.traninfo.fastlcdp.erdesigner
+
+ERDesigner/backend/
+├── pom.xml                # Maven项目配置
+├── README.md              # 项目说明
+├── README.zh.md           # 中文说明
+├── sqls/                  # 各数据库SQL生成脚本
+├── data/                  # 示例数据库XML
+├── logs/                  # 日志输出目录
+├── src/
+│   ├── main/
+│   │   ├── java/cn/com/traninfo/fastlcdp/erdesigner/
+│   │   │   ├── FastLcdpApplication.java  # 启动类
+│   │   │   ├── base/                     # 基础服务（EntityService负责统一的新增、删除、修改、load加载逻辑；SearchService负责多表查询逻辑；）
+│   │   │   ├── controller/               # RESTful API 控制器
+│   │   │   ├── service/                  # 业务服务
+│   │   │   ├── entity/                   # 数据表实体
+│   │   │   ├── model/                    # XML/ER模型定义
+│   │   │   ├── dialect/                  # 数据库方言SQL生成
+│   │   │   ├── mapper/                   # MyBatis Mapper
+│   │   │   ├── config/                   # Spring配置
+│   │   │   ├── util/                     # 工具类
+│   │   │   ├── enums/                    # 枚举类
+│   │   │   ├── dto/                      # 数据传输对象
+│   │   ├── resources/
+│   │   │   ├── application.yaml              # 主配置
+│   │   │   ├── application-docker.yaml       # Docker配置
+│   │   │   ├── application-prod.yaml         # 生产配置
+│   │   │   ├── log4j2.xml                    # log4j2日志配置
+│   │   │   ├── log4j2-docker.xml             # log4j2 Docker日志配置
+│   │   │   ├── database-schema.xsd           # XML Schema
+│   │   │   └── i18n/                         # 国际化资源
+│   │   │       ├── messages_zh_CN.properties
+│   │   │       ├── messages_en_US.properties
+│   │   │       └── messages.properties
+│   ├── test/                                # 测试代码
+│   │   ├── java/cn/com/traninfo/fastlcdp/erdesigner/
+│   │   │   ├── base/                        # 基础服务测试
+│   │   │   ├── controller/                  # RESTful API 控制器测试
+│   │   │   ├── service/                     # 业务服务测试
+│   │   │   ├── util/                        # 工具类测试
+│   │   │   ├── dialect/                     # 数据库方言SQL生成测试
+│   ├── resources/
+│   │   │   ├── application-test.yaml        # 测试配置
+```
+
+## 4. 开发规范
+- 分层清晰，禁止业务混杂
+- RESTful API，接口路径 /ERDesigner/api/
+- 统一响应结构，异常用 @ControllerAdvice
+- 重要接口需 Swagger 注释，参数/响应类型明确定义
+- SQL 生成、XML 解析、数据库同步需分层解耦
+- 配置外部化，支持多环境
+
+## 5. ER 建模与数据表规范
+- 实体、关系、字段、索引、主外键、范式、注释等遵循 [../db-design-guide.mdc](mdc:../db-design-guide.mdc)
+- 支持实体继承、关系类型、字段约束
+- XML/JSON 格式需有 schema 校验
+
+## 6. 测试
+- 单元测试用 JUnit5 + Mockito，集成测试用 SpringBootTest
+- 重要业务需测试覆盖
+
+## 7. 最佳实践
+- 代码格式化、接口/类型/注释齐全
+- 性能优化、数据库连接池、分页、批量操作
+- 结构变更用迁移脚本，版本可追溯
+
+## 8. 参考
+- [FastLCDP 全局规则](mdc:../fastlcdp-guide.mdc)
+- [Spring Boot 官方文档](mdc:https:/spring.io/projects/spring-boot)

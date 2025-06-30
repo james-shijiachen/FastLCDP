@@ -91,3 +91,7 @@ build/
 # Temporary files
 tmp/
 temp/
+
+# Cursor
+.cursorrules
+.cursor/

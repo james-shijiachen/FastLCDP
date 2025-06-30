@@ -1,0 +1,160 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# ER XML 配置规则与指南
+
+## 1. 基本结构
+- 根元素 `<database>`，包含数据库名、版本、字符集、注释等属性
+- `<tables>` 下可定义多个 `<table>`，每个表包含字段、索引、关系等
+
+```xml
+<database name="db_name" version="1.0" charset="utf8" comment="数据库注释">
+    <tables>
+        <table name="user" comment="用户表">
+            <fields>...</fields>
+            <indexes>...</indexes>
+            <relations>...</relations>
+        </table>
+    </tables>
+</database>
+```
+
+## 2. 字段定义 `<field>`
+- 属性：name, type, length, precision, scale, nullable, primaryKey, autoIncrement, unique, defaultValue, comment
+- 类型支持：STRING, INTEGER, LONG, DECIMAL, BOOLEAN, DATETIME, DATE, TIME, TEXT, JSON, BLOB, UUID
+- 例：
+```xml
+<field name="username" type="STRING" length="50" nullable="false" unique="true" comment="用户名"/>
+```
+
+## 3. 索引定义 `<index>`
+- 属性：name, type (PRIMARY/UNIQUE/NORMAL/FULLTEXT/SPATIAL), comment
+- 子元素 `<columns>`，可指定多列及排序
+- 例：
+```xml
+<index name="uk_username" type="UNIQUE">
+    <columns>
+        <column name="username"/>
+    </columns>
+</index>
+```
+
+## 4. 关系定义 `<relation>`
+- 属性：name, column, referenceTable, referenceColumn, onDelete, onUpdate, comment
+- 例：
+```xml
+<relation name="fk_order_user" column="user_id" referenceTable="user" referenceColumn="id" onDelete="RESTRICT" onUpdate="CASCADE"/>
+```
+
+## 5. 表继承
+- 子表通过 `extends` 属性继承父表字段、索引、关系
+- 例：
+```xml
+<table name="child" extends="parent" comment="继承示例">
+    <fields>...</fields>
+</table>
+```
+
+## 6. XSD Schema 校验
+- 推荐在 XML 头部引用 XSD：
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<database ...
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../database-schema.xsd">
+    ...
+</database>
+```
+- IDE 支持自动补全与校验，字段/索引/关系类型需严格遵循 XSD
+
+## 8. 示例片段
+```xml
+<database name="simple_db" version="1.0">
+    <tables>
+        <table name="user" comment="用户表">
+            <fields>
+                <field name="id" type="LONG" primaryKey="AUTO_INCREMENT" comment="用户ID"/>
+                <field name="username" type="STRING" length="50" nullable="false" unique="true" comment="用户名"/>
+            </fields>
+            <indexes>
+                <index name="uk_username" type="UNIQUE">
+                    <columns>
+                        <column name="username"/>
+                    </columns>
+                </index>
+            </indexes>
+        </table>
+    </tables>
+</database>
+```
+
+## 9. 参考
+- [database-schema.xsd](mdc:../../ERDesigner/backend/src/main/resources/database-schema.xsd)
+- [ERDesigner 示例 XML](mdc:../../ERDesigner/backend/data/simple_db.xml)
+- [ERDesigner 后端 README](mdc:../../ERDesigner/backend/README.md)
+
+## 10. 主要枚举类型及含义
+
+### 字段数据类型（type）
+- INTEGER：整型（int/bigint）
+- LONG：长整型
+- DECIMAL：高精度小数
+- BOOLEAN：布尔值（true/false）
+- CHAR：定长字符串
+- STRING：变长字符串
+- TEXT：长文本
+- BLOB：二进制大对象
+- DATETIME：日期时间
+- JSON：JSON对象
+
+### 主键类型（primaryKey）
+- NONE：非主键
+- SINGLE：单字段主键
+- COMPOSITE：复合主键
+- AUTO_INCREMENT：自增主键
+- UUID：UUID主键
+- SEQUENCE：序列主键（如Oracle/PostgreSQL）
+
+### 索引类型（index type）
+- PRIMARY：主键索引
+- UNIQUE：唯一索引
+- NORMAL：普通索引
+- FULLTEXT：全文索引
+- SPATIAL：空间索引
+
+### 表类型（table type）
+- ENTITY：实体表（物理表）
+- ABSTRACT：抽象表（仅用于继承，不生成物理表）
+
+### 字符集（charset）
+- utf8：UTF-8编码
+- utf8mb4：支持4字节UTF-8编码（如emoji）
+- latin1：西欧字符集
+- gbk：简体中文字符集
+- binary：二进制字符集
+
+### 排序规则（collation）
+- utf8_general_ci：UTF-8通用不区分大小写
+- utf8mb4_general_ci：utf8mb4通用不区分大小写
+- latin1_swedish_ci：latin1瑞典语不区分大小写
+- gbk_chinese_ci：GBK中文不区分大小写
+- binary：二进制排序
+
+### 存储引擎（engine）
+- InnoDB：支持事务、行级锁、外键
+- MyISAM：高性能但不支持事务
+- Memory：内存表，重启丢失
+- Archive：归档存储，适合日志
+
+### 索引列排序顺序（order）
+- ASC：升序
+- DESC：降序
+
+### 关系引用动作（onDelete/onUpdate）
+- RESTRICT：限制，拒绝操作
+- CASCADE：级联操作
+- SET NULL：置空
+- NO ACTION：无操作
+- SET DEFAULT：置为默认值

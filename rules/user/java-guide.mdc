@@ -1,0 +1,48 @@
+---
+description: 
+globs: *.java
+alwaysApply: false
+---
+# Java 开发规范与指南
+
+## 1. 包结构与分层
+- 推荐结构：controller、service、entity、model、mapper、config、util、enums
+- 每层职责清晰，禁止业务逻辑混杂
+
+## 2. 命名规范
+- 包名全小写，类名 PascalCase，方法/变量 camelCase，常量 UPPER_SNAKE_CASE
+- Controller 以 Controller 结尾，Service 以 Service 结尾
+
+## 3. 注释与文档
+- 类、方法、复杂逻辑必须有 Javadoc 注释
+- 公开 API 必须有 Swagger/OpenAPI 注释
+
+## 4. 异常与日志
+- 统一异常处理，使用 @ControllerAdvice
+- 日志用 SLF4J，敏感信息脱敏，日志分级合理
+
+## 5. 依赖与配置
+- 依赖管理用 Maven，版本锁定
+- 配置外部化，支持多环境（dev/prod/test/docker）
+
+## 6. 代码风格
+- 遵循阿里 Java 开发手册/Google Java Style Guide
+- 代码格式化、空格、缩进、换行统一
+
+## 7. 测试
+- 单元测试用 JUnit5 + Mockito，集成测试用 SpringBootTest
+- 重要业务必须有测试覆盖
+
+## 8. 框架最佳实践
+- Spring Boot：用 @Service/@RestController/@Configuration 等注解
+- MyBatis Plus：用 BaseMapper，禁止写死 SQL
+- 安全：用 Spring Security，权限细粒度控制
+- 国际化：用 Spring MessageSource，资源文件分语言
+
+## 9. 性能与安全
+- 数据库连接池、缓存、分页、批量操作
+- 防 SQL 注入、XSS，输入校验，接口限流
+
+## 10. 参考
+- [Spring Boot 官方文档](mdc:https:/spring.io/projects/spring-boot)
+- [阿里巴巴 Java 开发手册](mdc:https:/github.com/alibaba/p3c)
