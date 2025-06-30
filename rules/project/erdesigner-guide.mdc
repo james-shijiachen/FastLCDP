@@ -1,0 +1,60 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# ERDesigner 项目开发规则与指南
+
+## 1. 项目定位
+- ERDesigner 是 FastLCDP 的 ER 图设计与数据库建模核心模块，支持可视化建模、AI 辅助、SQL 生成、数据库同步。
+
+## 2. 技术栈
+- 后端：Java 21、Spring Boot 3.5+、MyBatis Plus、Undertow、Log4j2、Swagger/OpenAPI
+- 前端：Vue 3、TypeScript、Vite、Pinia、vue-i18n、Fabric.js
+- 数据库：MySQL、PostgreSQL、Oracle、SQL Server、H2
+
+## 3. 目录结构
+```
+ERDesigner/
+├── backend/   # Java Spring Boot 后端
+└── frontend/  # Vue3 + TS 前端
+```
+
+## 4. 后端开发规范
+- 分层：controller、service、entity、model、mapper、config、util、enums
+- RESTful API，接口路径 /ERDesigner/api/
+- 统一响应结构，异常用 @ControllerAdvice
+- 单元测试用 JUnit5 + Mockito，集成测试用 SpringBootTest
+- 重要业务需测试覆盖，接口需 Swagger 注释
+- SQL 生成、XML 解析、数据库同步需分层解耦
+
+## 5. 前端开发规范
+- 目录：components/、stores/、types/、utils/、i18n/
+- 组件单一职责，组合式 API，类型声明齐全
+- 状态管理用 Pinia，数据流清晰
+- 画布操作用 Fabric.js，ER 实体/关系建模类型集中在 types/
+- 国际化用 vue-i18n，文案抽离
+- 单元测试推荐 Vitest/Jest
+
+## 6. ER 建模与数据表规范
+- 实体、关系、字段、索引、主外键、范式、注释等遵循 [db-design-guide.mdc](../db-design-guide.mdc)
+- 支持实体继承、关系类型、字段约束
+- XML/JSON 格式需有 schema 校验
+
+## 7. API 设计规范
+- 遵循 [restful-guide.mdc](../restful-guide.mdc)
+- 统一响应、错误码、分页、权限、国际化
+
+## 8. UI 设计规范
+- 遵循 [ui-design-guide.mdc](../ui-design-guide.mdc)
+- 画布交互、实体/关系编辑、主题色彩、响应式
+
+## 9. 最佳实践
+- 代码格式化、eslint/prettier、接口/类型/注释齐全
+- 组件懒加载、性能优化、可用性测试
+- 结构变更用迁移脚本，版本可追溯
+
+## 10. 参考
+- [FastLCDP 全局规则](../fastlcdp-guide.mdc)
+- [Spring Boot 官方文档](https://spring.io/projects/spring-boot)
+- [Vue3 官方文档](https://vuejs.org/)
