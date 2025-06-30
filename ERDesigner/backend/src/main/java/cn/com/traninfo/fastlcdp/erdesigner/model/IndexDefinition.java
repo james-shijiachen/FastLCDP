@@ -47,6 +47,7 @@ public class IndexDefinition {
     /**
      * 索引字段列表
      */
+    @XmlElementWrapper(name = "columns")
     @XmlElement(name = "column")
     private List<IndexColumnDefinition> columns = new ArrayList<>();
 

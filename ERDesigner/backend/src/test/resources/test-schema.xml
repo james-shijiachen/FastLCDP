@@ -14,14 +14,14 @@
         
             <indexes>
                 <index name="idx_username" type="NORMAL">
-            <column name="username"/>
-        </index>
-        <index name="idx_email" type="NORMAL">
-            <column name="email"/>
-        </index>
-        <index name="idx_status" type="NORMAL">
-            <column name="status"/>
-        </index>
+                    <column name="username"/>
+                </index>
+                <index name="idx_email" type="NORMAL">
+                    <column name="email"/>
+                </index>
+                <index name="idx_status" type="NORMAL">
+                    <column name="status"/>
+                </index>
             </indexes>
         </table>
     
@@ -41,11 +41,14 @@
         
             <indexes>
                 <index name="idx_user_id" type="UNIQUE">
-            <column name="user_id"/>
-        </index>
-        <index name="idx_phone" type="NORMAL">
-            <column name="phone"/>
-        </index>
+                    <column name="user_id"/>
+                </index>
+                <index name="idx_phone" type="NORMAL">
+                    <column name="phone"/>
+                </index>
+                <index name="idx_address" type="NORMAL">
+                    <column name="address"/>
+                </index>
             </indexes>
         
             <relations>
@@ -68,17 +71,17 @@
         
             <indexes>
                 <index name="idx_user_id" type="NORMAL">
-            <column name="user_id"/>
-        </index>
-        <index name="idx_status" type="NORMAL">
-            <column name="status"/>
-        </index>
-        <index name="idx_created_at" type="NORMAL">
-            <column name="created_at"/>
-        </index>
-        <index name="idx_title" type="FULLTEXT">
-            <column name="title"/>
-        </index>
+                    <column name="user_id"/>
+                </index>
+                <index name="idx_status" type="NORMAL">
+                    <column name="status"/>
+                </index>
+                <index name="idx_created_at" type="NORMAL">
+                    <column name="created_at"/>
+                </index>
+                <index name="idx_title" type="FULLTEXT">
+                    <column name="title"/>
+                </index>
             </indexes>
         
             <relations>

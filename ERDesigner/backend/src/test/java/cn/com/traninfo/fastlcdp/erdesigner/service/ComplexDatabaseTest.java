@@ -229,7 +229,7 @@ public class ComplexDatabaseTest {
                 .findFirst()
                 .orElse(null);
         assertNotNull(uniqueUsernameIndex, "应该有唯一索引uk_username");
-        assertEquals("UNIQUE", uniqueUsernameIndex.getType());
+        assertEquals("UNIQUE", uniqueUsernameIndex.getType().name());
         
         // 测试前缀索引
         TableDefinition organizationBaseTable = tableMap.get("organization_base");

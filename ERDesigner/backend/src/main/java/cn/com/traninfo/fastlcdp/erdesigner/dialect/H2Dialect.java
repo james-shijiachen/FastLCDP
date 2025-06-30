@@ -57,10 +57,10 @@ public class H2Dialect extends AbstractDatabaseDialect {
                 break;
                 
             case "DECIMAL":
-                int precision = field.getPrecision() != null ? field.getPrecision() : 
+                int precision = field.getPrecision() != null ? field.getPrecision() :
                                (field.getLength() != null ? field.getLength() : 10);
                 int scale = field.getScale() != null ? field.getScale() : 0;
-                fieldType.append("DECIMAL(").append(precision).append(",").append(scale).append(")");
+                fieldType.append("NUMERIC(").append(precision).append(",").append(scale).append(")");
                 break;
                 
             case "BOOLEAN":
