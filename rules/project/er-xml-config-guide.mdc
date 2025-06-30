@@ -1,6 +1,6 @@
 ---
 description: 
-globs: 
+globs: ERDesigner/**/*.xml
 alwaysApply: false
 ---
 # ER XML 配置规则与指南

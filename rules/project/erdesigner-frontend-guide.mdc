@@ -1,6 +1,6 @@
 ---
 description: 
-globs: 
+globs: ERDesigner/frontend/**
 alwaysApply: false
 ---
 # ERDesigner 前端开发规则与指南
