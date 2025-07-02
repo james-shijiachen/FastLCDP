@@ -1,16 +1,16 @@
 <template>
-  <div class="modal-overlay" @click="handleOverlayClick">
-    <div class="modal" @click.stop>
-      <div class="modal-header">
-        <h3>{{ isEdit ? $t('entity.edit') : $t('entity.new') }}</h3>
-        <button @click="$emit('close')" class="close-btn">×</button>
+  <div class="modal-overlay" @click="handleOverlayClick" data-uid="EntityEditModal-overlay">
+    <div class="modal" @click.stop data-uid="EntityEditModal-modal">
+      <div class="modal-header" data-uid="EntityEditModal-header">
+        <h3 data-uid="EntityEditModal-title">{{ isEdit ? $t('entity.edit') : $t('entity.new') }}</h3>
+        <button @click="$emit('close')" class="close-btn" data-uid="EntityEditModal-btn-close">×</button>
       </div>
       
-      <div class="modal-content">
-        <div class="form-row">
-          <div class="form-group">
+      <div class="modal-content" data-uid="EntityEditModal-content">
+        <div class="form-row" data-uid="EntityEditModal-form-row">
+          <div class="form-group" data-uid="EntityEditModal-form-group-db">
             <label>{{ $t('database.name') }}</label>
-            <select v-model="formData.databaseId" :disabled="isEdit">
+            <select v-model="formData.databaseId" :disabled="isEdit" data-uid="EntityEditModal-select-db">
               <option value="">{{ $t('entity.selectDatabase') }}</option>
               <option v-for="db in databases" :key="db.id" :value="db.id">
                 {{ db.name }}
@@ -18,42 +18,44 @@
             </select>
           </div>
           
-          <div class="form-group">
+          <div class="form-group" data-uid="EntityEditModal-form-group-type">
             <label>{{ $t('entity.type') }}</label>
-            <div class="radio-group">
+            <div class="radio-group" data-uid="EntityEditModal-radio-group-type">
               <label class="radio-label">
-                <input type="radio" v-model="formData.entityType" value="table" />
+                <input type="radio" v-model="formData.entityType" value="table" data-uid="EntityEditModal-radio-table" />
                 {{ $t('entity.table') }}
               </label>
               <label class="radio-label">
-                <input type="radio" v-model="formData.entityType" value="abstract" />
+                <input type="radio" v-model="formData.entityType" value="abstract" data-uid="EntityEditModal-radio-abstract" />
                 {{ $t('entity.abstract') }}
               </label>
             </div>
           </div>
         </div>
         
-        <div class="form-group">
+        <div class="form-group" data-uid="EntityEditModal-form-group-name">
           <label>{{ $t('entity.name') }} *:</label>
           <input 
             v-model="formData.name" 
             :placeholder="$t('entity.namePlaceholder')"
             @keyup.enter="handleSave"
+            data-uid="EntityEditModal-input-name"
           />
         </div>
         
-        <div class="form-group">
+        <div class="form-group" data-uid="EntityEditModal-form-group-comment">
           <label>{{ $t('entity.comment') }}:</label>
           <textarea 
             v-model="formData.comment" 
             :placeholder="$t('entity.commentPlaceholder')" 
             rows="3"
+            data-uid="EntityEditModal-input-comment"
           ></textarea>
         </div>
         
-        <div class="form-group" v-if="formData.databaseId && availableParents.length > 0">
+        <div class="form-group" v-if="formData.databaseId && availableParents.length > 0" data-uid="EntityEditModal-form-group-inherit">
           <label>{{ $t('entity.inheritance') }}:</label>
-          <select v-model="formData.parentEntityId">
+          <select v-model="formData.parentEntityId" data-uid="EntityEditModal-select-inherit">
             <option value="">{{ $t('entity.noInheritance') }}</option>
             <option v-for="parent in availableParents" :key="parent.id" :value="parent.id">
               {{ parent.name }}
@@ -62,30 +64,31 @@
           <small class="form-hint">{{ $t('entity.inheritanceNote') }}</small>
         </div>
         
-        <div class="fields-section">
-          <div class="section-header">
+        <div class="fields-section" data-uid="EntityEditModal-fields-section">
+          <div class="section-header" data-uid="EntityEditModal-section-header">
             <h4>{{ $t('entity.fieldDefinition') }}</h4>
-            <button type="button" @click="addField" class="btn btn-sm btn-primary">
+            <button type="button" @click="addField" class="btn btn-sm btn-primary" data-uid="EntityEditModal-btn-add-field">
               <span class="icon">+</span>
               {{ $t('entity.addField') }}
             </button>
           </div>
           
-          <div class="fields-list">
+          <div class="fields-list" data-uid="EntityEditModal-fields-list">
             <div 
               v-for="(field, index) in formData.fields" 
               :key="field.id" 
               class="field-item"
+              :data-uid="`EntityEditModal-field-item-${index}`"
             >
-              <div class="field-row">
-                <div class="field-basic">
-                  <div class="form-group">
+              <div class="field-row" data-uid="EntityEditModal-field-row">
+                <div class="field-basic" data-uid="EntityEditModal-field-basic">
+                  <div class="form-group" data-uid="EntityEditModal-field-group-name">
                     <label>{{ $t('entity.fieldName') }}:</label>
-                    <input v-model="field.name" :placeholder="$t('entity.fieldName')" />
+                    <input v-model="field.name" :placeholder="$t('entity.fieldName')" data-uid="EntityEditModal-field-input-name" />
                   </div>
-                  <div class="form-group">
+                  <div class="form-group" data-uid="EntityEditModal-field-group-type">
                     <label>{{ $t('entity.dataType') }}:</label>
-                    <select v-model="field.type">
+                    <select v-model="field.type" data-uid="EntityEditModal-field-select-type">
                       <option value="INT">INT</option>
                       <option value="BIGINT">BIGINT</option>
                       <option value="VARCHAR(50)">VARCHAR(50)</option>
@@ -100,38 +103,38 @@
                   </div>
                 </div>
                 
-                <div class="field-options">
+                <div class="field-options" data-uid="EntityEditModal-field-options">
                   <label class="checkbox-label">
-                    <input type="checkbox" v-model="field.isPrimaryKey" />
+                    <input type="checkbox" v-model="field.isPrimaryKey" data-uid="EntityEditModal-field-checkbox-pk" />
                     <span>主键</span>
                   </label>
                   <label class="checkbox-label">
-                    <input type="checkbox" v-model="field.isRequired" />
+                    <input type="checkbox" v-model="field.isRequired" data-uid="EntityEditModal-field-checkbox-required" />
                     <span>必填</span>
                   </label>
                   <label class="checkbox-label">
-                    <input type="checkbox" v-model="field.isUnique" />
+                    <input type="checkbox" v-model="field.isUnique" data-uid="EntityEditModal-field-checkbox-unique" />
                     <span>唯一</span>
                   </label>
                 </div>
                 
-                <div class="field-actions">
-                  <button @click="removeField(index)" class="remove-btn">删除</button>
+                <div class="field-actions" data-uid="EntityEditModal-field-actions">
+                  <button @click="removeField(index)" class="remove-btn" data-uid="EntityEditModal-btn-remove-field">删除</button>
                 </div>
               </div>
               
-              <div class="form-group">
+              <div class="form-group" data-uid="EntityEditModal-field-group-comment">
                 <label>注释:</label>
-                <input v-model="field.comment" placeholder="字段注释" />
+                <input v-model="field.comment" placeholder="字段注释" data-uid="EntityEditModal-field-input-comment" />
               </div>
             </div>
           </div>
         </div>
       </div>
       
-      <div class="modal-footer">
-        <button @click="$emit('close')" class="btn btn-secondary">{{ $t('common.cancel') }}</button>
-        <button @click="handleSave" class="btn btn-primary" :disabled="!isValid">
+      <div class="modal-footer" data-uid="EntityEditModal-footer">
+        <button @click="$emit('close')" class="btn btn-secondary" data-uid="EntityEditModal-btn-cancel">{{ $t('common.cancel') }}</button>
+        <button @click="handleSave" class="btn btn-primary" :disabled="!isValid" data-uid="EntityEditModal-btn-save">
           {{ isEdit ? $t('common.save') : $t('common.create') }}
         </button>
       </div>

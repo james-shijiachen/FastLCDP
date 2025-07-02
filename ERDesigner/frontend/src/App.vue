@@ -1,81 +1,81 @@
 <template>
-  <div class="app-container" :class="{ 'dark-theme': isDarkTheme }">
+  <div class="app-container" :class="{ 'dark-theme': isDarkTheme }" data-uid="App-root">
     <!-- 顶部工具栏 -->
-    <header class="top-toolbar">
-      <div class="toolbar-left">
+    <header class="top-toolbar" data-uid="App-header">
+      <div class="toolbar-left" data-uid="App-toolbar-left">
         <!-- 移动端菜单按钮 -->
         <button 
           class="mobile-menu-btn toolbar-btn" 
           @click="toggleSidebar" 
           v-if="isMobile"
           :title="$t('toolbar.menu')"
+          data-uid="App-mobile-menu-btn"
         >
           <span class="icon">☰</span>
         </button>
         
-        <div class="logo">
+        <div class="logo" data-uid="App-logo">
           <span class="logo-icon">📊</span>
           <span class="logo-text" :class="{ 'logo-text-mobile': isMobile }">{{ $t('app.title') }}</span>
         </div>
         
-        <div class="language-switcher">
-          <select v-model="currentLocale" @change="changeLanguage">
+        <div class="language-switcher" data-uid="App-language-switcher">
+          <select v-model="currentLocale" @change="changeLanguage" data-uid="App-language-select">
             <option value="en">{{ $t('language.english') }}</option>
             <option value="zh">{{ $t('language.chinese') }}</option>
           </select>
         </div>
         
-        <div class="toolbar-group">
-          <button class="toolbar-btn" @click="newDiagram" :title="$t('toolbar.new')">
+        <div class="toolbar-group" data-uid="App-toolbar-group-1">
+          <button class="toolbar-btn" @click="newDiagram" :title="$t('toolbar.new')" data-uid="App-btn-new">
             <span class="icon">📄</span>
           </button>
-          <button class="toolbar-btn" @click="saveDiagram" :title="$t('toolbar.save')">
+          <button class="toolbar-btn" @click="saveDiagram" :title="$t('toolbar.save')" data-uid="App-btn-save">
             <span class="icon">💾</span>
           </button>
-          <button class="toolbar-btn" @click="exportDiagram" :title="$t('toolbar.export')">
+          <button class="toolbar-btn" @click="exportDiagram" :title="$t('toolbar.export')" data-uid="App-btn-export">
             <span class="icon">📤</span>
           </button>
         </div>
         
-        <div class="toolbar-separator"></div>
+        <div class="toolbar-separator" data-uid="App-toolbar-separator-1"></div>
         
-        <div class="toolbar-group">
-          <button class="toolbar-btn" @click="undo" :title="$t('toolbar.undo')">
+        <div class="toolbar-group" data-uid="App-toolbar-group-2">
+          <button class="toolbar-btn" @click="undo" :title="$t('toolbar.undo')" data-uid="App-btn-undo">
             <span class="icon">↶</span>
           </button>
-          <button class="toolbar-btn" @click="redo" :title="$t('toolbar.redo')">
+          <button class="toolbar-btn" @click="redo" :title="$t('toolbar.redo')" data-uid="App-btn-redo">
             <span class="icon">↷</span>
           </button>
         </div>
         
-        <div class="toolbar-separator"></div>
+        <div class="toolbar-separator" data-uid="App-toolbar-separator-2"></div>
         
-        <div class="toolbar-group">
-          <button class="toolbar-btn" @click="zoomIn" :title="$t('toolbar.zoomIn')">
+        <div class="toolbar-group" data-uid="App-toolbar-group-3">
+          <button class="toolbar-btn" @click="zoomIn" :title="$t('toolbar.zoomIn')" data-uid="App-btn-zoom-in">
             <span class="icon">+</span>
           </button>
           <span class="zoom-level">{{ Math.round(zoomLevel * 100) }}%</span>
-          <button class="toolbar-btn" @click="zoomOut" :title="$t('toolbar.zoomOut')">
+          <button class="toolbar-btn" @click="zoomOut" :title="$t('toolbar.zoomOut')" data-uid="App-btn-zoom-out">
             <span class="icon">−</span>
           </button>
-          <button class="toolbar-btn" @click="resetZoom" :title="$t('toolbar.fitWindow')">
+          <button class="toolbar-btn" @click="resetZoom" :title="$t('toolbar.fitWindow')" data-uid="App-btn-fit-window">
             <span class="icon">□</span>
           </button>
-          <button class="toolbar-btn" @click="toggleTheme" :title="isDarkTheme ? $t('toolbar.toggleThemeLight') : $t('toolbar.toggleThemeDark')">
+          <button class="toolbar-btn" @click="toggleTheme" :title="isDarkTheme ? $t('toolbar.toggleThemeLight') : $t('toolbar.toggleThemeDark')" data-uid="App-btn-toggle-theme">
             <span class="icon">{{ isDarkTheme ? '○' : '●' }}</span>
           </button>
-          <button class="toolbar-btn" @click="toggleGrid" :title="$t('toolbar.grid')">
+          <button class="toolbar-btn" @click="toggleGrid" :title="$t('toolbar.grid')" data-uid="App-btn-toggle-grid">
             <span class="icon">#</span>
           </button>
-          <button class="toolbar-btn" @click="toggleFullscreen" :title="$t('toolbar.fullscreen')">
+          <button class="toolbar-btn" @click="toggleFullscreen" :title="$t('toolbar.fullscreen')" data-uid="App-btn-fullscreen">
             <span class="icon">⛶</span>
           </button>
         </div>
-
       </div>
     </header>
     
-    <div class="main-layout">
+    <div class="main-layout" data-uid="App-main-layout">
       <!-- 左侧数据库树面板 -->
       <aside 
         class="database-panel" 
@@ -84,11 +84,12 @@
           'database-panel-overlay': isMobile && sidebarVisible
         }"
         :aria-label="$t('panel.databaseStructure')"
+        data-uid="App-database-panel"
       >
         <!-- 移动端关闭按钮 -->
-        <div v-if="isMobile" class="mobile-panel-header">
+        <div v-if="isMobile" class="mobile-panel-header" data-uid="App-mobile-panel-header">
           <h3>{{ $t('panel.databaseStructure') }}</h3>
-          <button class="close-btn" @click="closeSidebar">
+          <button class="close-btn" @click="closeSidebar" data-uid="App-btn-close-sidebar">
             <span class="icon">✕</span>
           </button>
         </div>
@@ -111,10 +112,11 @@
         v-if="isMobile && sidebarVisible" 
         class="sidebar-overlay"
         @click="closeSidebar"
+        data-uid="App-sidebar-overlay"
       ></div>
       
       <!-- 中央画布区域 -->
-      <main class="canvas-container">
+      <main class="canvas-container" data-uid="App-canvas-container">
         <ERCanvas 
           ref="canvasRef"
           :zoom-level="zoomLevel"
@@ -136,17 +138,18 @@
           class="context-menu"
           :style="{ left: contextMenuX + 'px', top: contextMenuY + 'px' }"
           @click.stop
+          data-uid="App-context-menu"
         >
-          <div class="context-menu-item" @click="addEntityAtPosition">
+          <div class="context-menu-item" @click="addEntityAtPosition" data-uid="App-context-menu-add-entity">
             <span class="icon">📦</span>
             {{ $t('contextMenu.addEntity') }}
           </div>
           <div class="context-menu-separator"></div>
-          <div class="context-menu-item" @click="paste" :disabled="!canPaste">
+          <div class="context-menu-item" @click="paste" :disabled="!canPaste" data-uid="App-context-menu-paste">
             <span class="icon">📋</span>
             {{ $t('contextMenu.paste') }}
           </div>
-          <div class="context-menu-item" @click="selectAll">
+          <div class="context-menu-item" @click="selectAll" data-uid="App-context-menu-select-all">
             <span class="icon">⊞</span>
             {{ $t('contextMenu.selectAll') }}
           </div>
@@ -158,44 +161,45 @@
           class="context-menu"
           :style="{ left: contextMenuX + 'px', top: contextMenuY + 'px' }"
           @click.stop
+          data-uid="App-entity-context-menu"
         >
-          <div class="context-menu-item" @click="editEntity">
+          <div class="context-menu-item" @click="editEntity" data-uid="App-entity-context-menu-edit">
             <span class="icon">✏️</span>
             {{ $t('contextMenu.edit') }}
           </div>
-          <div class="context-menu-item" @click="copyEntity">
+          <div class="context-menu-item" @click="copyEntity" data-uid="App-entity-context-menu-copy">
             <span class="icon">📄</span>
             {{ $t('contextMenu.copy') }}
           </div>
-          <div class="context-menu-item" @click="deleteSelectedEntities">
+          <div class="context-menu-item" @click="deleteSelectedEntities" data-uid="App-entity-context-menu-delete">
             <span class="icon">🗑️</span>
             {{ $t('contextMenu.delete') }}
           </div>
           <div class="context-menu-separator"></div>
-          <div class="context-menu-item" @click="bringToFront">
+          <div class="context-menu-item" @click="bringToFront" data-uid="App-entity-context-menu-bring-front">
             <span class="icon">⬆️</span>
             {{ $t('contextMenu.bringToFront') }}
           </div>
-          <div class="context-menu-item" @click="sendToBack">
+          <div class="context-menu-item" @click="sendToBack" data-uid="App-entity-context-menu-send-back">
             <span class="icon">⬇️</span>
             {{ $t('contextMenu.sendToBack') }}
           </div>
         </div>
         
         <!-- 关系创建提示 -->
-        <div v-if="selectedEntities.length === 2" class="relation-hint">
+        <div v-if="selectedEntities.length === 2" class="relation-hint" data-uid="App-relation-hint">
           <div class="hint-content">
             <span>{{ $t('relation.hint') }} {{ selectedEntities.length }} {{ $t('panel.entities') }}</span>
-            <button @click="createRelation" class="create-relation-btn">{{ $t('relation.createRelation') }}</button>
+            <button @click="createRelation" class="create-relation-btn" data-uid="App-btn-create-relation">{{ $t('relation.createRelation') }}</button>
           </div>
         </div>
       </main>
       
       <!-- 右侧属性面板 -->
-      <aside v-if="showPropertyPanel" class="property-panel">
+      <aside v-if="showPropertyPanel" class="property-panel" data-uid="App-property-panel">
         <div class="panel-header">
           <h3>{{ $t('panel.properties') }}</h3>
-          <button @click="closePropertyPanel" class="close-btn">×</button>
+          <button @click="closePropertyPanel" class="close-btn" data-uid="App-btn-close-property-panel">×</button>
         </div>
         
         <div v-if="selectedEntities.length === 1" class="entity-properties">
@@ -1582,7 +1586,7 @@ function handleKeyDown(event: KeyboardEvent) {
 .app-container:not(.dark-theme) .language-switcher select:focus {
   border-color: #3b82f6;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .app-container:not(.dark-theme) .language-switcher select option {

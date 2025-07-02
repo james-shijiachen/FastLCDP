@@ -1,13 +1,13 @@
 <template>
-  <div class="modal-overlay" @click="handleOverlayClick">
-    <div class="modal-content" @click.stop>
-      <div class="modal-header">
-        <h3>{{ isEdit ? $t('database.editDatabase') : $t('database.newDatabase') }}</h3>
-        <button class="close-btn" @click="$emit('close')">×</button>
+  <div class="modal-overlay" @click="handleOverlayClick" data-uid="DatabaseEditModal-overlay">
+    <div class="db-modal-content" @click.stop data-uid="DatabaseEditModal-content">
+      <div class="db-modal-header" data-uid="DatabaseEditModal-header">
+        <h3 class="db-modal-title" data-uid="DatabaseEditModal-title">{{ isEdit ? $t('database.editDatabase') : $t('database.newDatabase') }}</h3>
+        <button class="db-modal-close-btn" @click="$emit('close')" data-uid="DatabaseEditModal-btn-close">×</button>
       </div>
       
-      <div class="modal-body">
-        <div class="form-group">
+      <div class="db-modal-body" data-uid="DatabaseEditModal-body">
+        <div class="db-modal-form-group form-group" data-uid="DatabaseEditModal-form-group-name">
           <label for="database-name">{{ $t('database.name') }} *</label>
           <input 
             id="database-name"
@@ -15,27 +15,29 @@
             type="text" 
             :placeholder="$t('database.namePlaceholder')"
             :class="{ 'error': errors.name }"
+            data-uid="DatabaseEditModal-input-name"
           />
-          <span v-if="errors.name" class="error-message">{{ errors.name }}</span>
+          <span v-if="errors.name" class="error-message" data-uid="DatabaseEditModal-error-name">{{ errors.name }}</span>
         </div>
         
-        <div class="form-group">
+        <div class="db-modal-form-group form-group" data-uid="DatabaseEditModal-form-group-desc">
           <label for="database-description">{{ $t('database.description') }}</label>
           <textarea 
             id="database-description"
             v-model="formData.description" 
             :placeholder="$t('database.descriptionPlaceholder')"
             rows="3"
+            data-uid="DatabaseEditModal-input-desc"
           ></textarea>
         </div>
       </div>
       
-      <div class="modal-footer">
-          <button class="btn btn-secondary" @click="$emit('close')">{{ $t('common.cancel') }}</button>
-          <button class="btn btn-primary" @click="handleSave" :disabled="!isValid">
-            {{ isEdit ? $t('common.save') : $t('common.create') }}
-          </button>
-        </div>
+      <div class="db-modal-footer" data-uid="DatabaseEditModal-footer">
+        <button class="btn btn-secondary" @click="$emit('close')" data-uid="DatabaseEditModal-btn-cancel">{{ $t('common.cancel') }}</button>
+        <button class="btn btn-primary" @click="handleSave" :disabled="!isValid" data-uid="DatabaseEditModal-btn-save">
+          {{ isEdit ? $t('common.save') : $t('common.create') }}
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -135,12 +137,63 @@ watch(() => props.database, (newDatabase) => {
 </script>
 
 <style scoped>
-/* DatabaseEditModal 特有样式 */
-.modal-content {
+/* DatabaseEditModal 专属样式，前缀 db-modal-，避免全局冲突 */
+.db-modal-content {
   max-width: 500px;
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  width: 90%;
+  max-height: 85vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
-.form-group textarea {
+.db-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.db-modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.db-modal-close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.db-modal-close-btn:hover {
+  color: #666;
+  background: #f5f5f5;
+  border-radius: 50%;
+}
+
+.db-modal-body {
+  margin-bottom: 16px;
+}
+
+.db-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.db-modal-form-group textarea {
   resize: vertical;
   min-height: 60px;
 }

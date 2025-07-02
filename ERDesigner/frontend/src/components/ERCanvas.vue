@@ -12,6 +12,7 @@
     @touchmove.prevent="handleTouchMove"
     @touchend.prevent="handleTouchEnd"
     tabindex="0"
+    data-uid="ERCanvas-root"
   >
     <svg
       ref="svgCanvas"
@@ -25,6 +26,7 @@
       @touchstart="handleSvgTouchStart"
       @touchmove="handleSvgTouchMove"
       @touchend="handleSvgTouchEnd"
+      data-uid="ERCanvas-svg"
     >
       <!-- 网格背景 -->
       <defs v-if="showGrid">

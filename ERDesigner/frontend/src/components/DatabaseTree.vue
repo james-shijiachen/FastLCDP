@@ -1,30 +1,32 @@
 <template>
-  <div class="database-tree">
-    <div class="tree-header">
-      <h3>{{ $t('database.structure') }}</h3>
-      <button class="btn btn-primary btn-sm" @click="$emit('create-database')" :title="$t('database.newDatabase')">
+  <div class="database-tree" data-uid="DatabaseTree-root">
+    <div class="tree-header" data-uid="DatabaseTree-header">
+      <h3 data-uid="DatabaseTree-title">{{ $t('database.structure') }}</h3>
+      <button class="btn btn-primary btn-sm" @click="$emit('create-database')" :title="$t('database.newDatabase')" data-uid="DatabaseTree-btn-create-db">
         <span class="icon">+</span>
         {{ $t('database.newDatabase') }}
       </button>
     </div>
     
-    <div class="tree-content">
-      <div v-if="treeData.length === 0" class="empty-state">
+    <div class="tree-content" data-uid="DatabaseTree-content">
+      <div v-if="treeData.length === 0" class="empty-state" data-uid="DatabaseTree-empty">
         <div class="empty-icon">📊</div>
         <p>{{ $t('database.noDatabase') }}</p>
         <p class="empty-hint">{{ $t('database.createFirst') }}</p>
       </div>
       
-      <div v-else class="tree-nodes">
+      <div v-else class="tree-nodes" data-uid="DatabaseTree-nodes">
         <div
           v-for="database in treeData"
           :key="database.id"
           class="tree-node database-node"
+          data-uid="DatabaseTree-node-db-{{database.id}}"
         >
           <div
             class="node-content"
             @click="toggleDatabase(database.id)"
             @contextmenu.prevent="showDatabaseContextMenu($event, database)"
+            data-uid="DatabaseTree-node-db-content-{{database.id}}"
           >
             <span class="expand-icon" :class="{ expanded: expandedDatabases.has(database.id) }">
               <svg width="12" height="12" viewBox="0 0 12 12">
@@ -43,7 +45,7 @@
             <span class="entity-count">({{ getEntityCount(database.id) }})</span>
           </div>
           
-          <div v-if="expandedDatabases.has(database.id)" class="child-nodes">
+          <div v-if="expandedDatabases.has(database.id)" class="child-nodes" data-uid="DatabaseTree-node-db-children-{{database.id}}">
             <div
               v-for="entity in database.children"
               :key="entity.id"
@@ -54,8 +56,9 @@
               }"
               @click="selectEntity(entity)"
               @contextmenu.prevent="showEntityContextMenu($event, entity)"
+              data-uid="DatabaseTree-node-entity-{{entity.id}}"
             >
-              <div class="node-content">
+              <div class="node-content" data-uid="DatabaseTree-node-entity-content-{{entity.id}}">
                 <span class="node-icon entity-icon">
                   <svg v-if="entity.entityType === 'abstract'" width="16" height="16" viewBox="0 0 16 16">
                     <rect x="2" y="4" width="12" height="8" stroke="currentColor" stroke-width="1" fill="none" stroke-dasharray="2,2"/>
@@ -71,7 +74,7 @@
               </div>
             </div>
             
-            <div class="add-entity-node" @click="$emit('create-entity', database.id)">
+            <div class="add-entity-node" @click="$emit('create-entity', database.id)" data-uid="DatabaseTree-add-entity-{{database.id}}">
               <span class="node-icon add-icon">+</span>
               <span class="node-label">{{ $t('database.addEntity') }}</span>
             </div>
@@ -86,6 +89,7 @@
       class="context-menu"
       :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }"
       @click.stop
+      data-uid="DatabaseTree-context-menu"
     >
       <div v-if="contextMenu.type === 'database'" class="menu-items">
         <div class="menu-item" @click="editDatabase">

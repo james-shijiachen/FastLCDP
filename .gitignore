@@ -95,3 +95,9 @@ temp/
 # Cursor
 .cursorrules
 .cursor/
+
+#TaskMaster
+.taskmaster/
+
+
+
