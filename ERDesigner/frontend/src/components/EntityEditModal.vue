@@ -1,12 +1,10 @@
 <template>
   <div class="modal-overlay" @click="handleOverlayClick" data-uid="EntityEditModal-overlay">
-    <div class="modal" @click.stop data-uid="EntityEditModal-modal">
-      <div class="modal-header" data-uid="EntityEditModal-header">
+    <div class="entity-modal-content" @click.stop data-uid="EntityEditModal-modal">
+      <div class="db-modal-header" data-uid="DatabaseEditModal-header">
         <h3 data-uid="EntityEditModal-title">{{ isEdit ? $t('entity.edit') : $t('entity.new') }}</h3>
-        <button @click="$emit('close')" class="close-btn" data-uid="EntityEditModal-btn-close">×</button>
-      </div>
-      
-      <div class="modal-content" data-uid="EntityEditModal-content">
+        <button @click="$emit('close')" class="db-modal-close-btn" data-uid="EntityEditModal-btn-close">×</button>
+        </div>
         <div class="form-row" data-uid="EntityEditModal-form-row">
           <div class="form-group" data-uid="EntityEditModal-form-group-db">
             <label>{{ $t('database.name') }}</label>
@@ -130,14 +128,12 @@
             </div>
           </div>
         </div>
-      </div>
-      
-      <div class="modal-footer" data-uid="EntityEditModal-footer">
-        <button @click="$emit('close')" class="btn btn-secondary" data-uid="EntityEditModal-btn-cancel">{{ $t('common.cancel') }}</button>
-        <button @click="handleSave" class="btn btn-primary" :disabled="!isValid" data-uid="EntityEditModal-btn-save">
-          {{ isEdit ? $t('common.save') : $t('common.create') }}
-        </button>
-      </div>
+        <div class="db-modal-footer" data-uid="DatabaseEditModal-footer">
+          <button @click="$emit('close')" class="btn btn-secondary" data-uid="EntityEditModal-btn-cancel">{{ $t('common.cancel') }}</button>
+          <button @click="handleSave" class="btn btn-primary" :disabled="!isValid" data-uid="EntityEditModal-btn-save">
+            {{ isEdit ? $t('common.save') : $t('common.create') }}
+          </button>
+        </div>
     </div>
   </div>
 </template>
@@ -262,45 +258,3 @@ function handleOverlayClick() {
   emit('close')
 }
 </script>
-
-<style scoped>
-/* EntityEditModal 特有样式 */
-.modal {
-  max-width: 600px;
-  max-height: 80vh;
-}
-
-.form-hint {
-  display: block;
-  margin-top: 4px;
-  font-size: 12px;
-  color: #586069;
-  font-style: italic;
-}
-
-.checkbox-label input[type="checkbox"] {
-  width: auto;
-  margin: 0;
-}
-
-@media (max-width: 768px) {
-  .modal {
-    width: 95%;
-    max-height: 90vh;
-  }
-  
-  .field-row {
-    flex-direction: column;
-    gap: 12px;
-  }
-  
-  .field-basic {
-    flex-direction: column;
-  }
-  
-  .field-options {
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-}
-</style>

@@ -17,7 +17,7 @@
         <div class="logo" data-uid="App-logo">
           <span class="logo-icon">📊</span>
           <span class="logo-text" :class="{ 'logo-text-mobile': isMobile }">{{ $t('app.title') }}</span>
-        </div>
+  </div>
         
         <div class="language-switcher" data-uid="App-language-switcher">
           <select v-model="currentLocale" @change="changeLanguage" data-uid="App-language-select">
@@ -433,6 +433,7 @@ function loadTheme() {
 function changeLanguage() {
   locale.value = currentLocale.value
   localStorage.setItem('locale', currentLocale.value)
+  document.title = $t('app.title')
 }
 
 function loadLocale() {
@@ -1831,21 +1832,12 @@ function handleKeyDown(event: KeyboardEvent) {
   border-color: #404040;
 }
 
-.dark-theme .btn-primary {
-  background: #0366d6;
-  color: #ffffff;
-  border-color: #0366d6;
-}
-
 .dark-theme .btn:hover {
   background: #505050;
   border-color: #505050;
 }
 
-.dark-theme .btn-primary:hover {
-  background: #0256c7;
-  border-color: #0256c7;
-}
+
 
 .dark-theme .empty-state {
   color: #cccccc;
@@ -1995,11 +1987,6 @@ function handleKeyDown(event: KeyboardEvent) {
   color: #e1e4e8 !important;
 }
 
-.dark-theme .modal-footer {
-  background: #2d3748 !important;
-  border-top: 1px solid #4a5568 !important;
-}
-
 .dark-theme .close-btn {
   color: #a0aec0 !important;
   background: transparent !important;
@@ -2051,33 +2038,5 @@ function handleKeyDown(event: KeyboardEvent) {
 .dark-theme .btn-secondary:hover {
   background: #2d3748 !important;
   border-color: #2d3748 !important;
-}
-
-.dark-theme .btn-primary {
-  background: #4299e1 !important;
-  color: #ffffff !important;
-  border-color: #4299e1 !important;
-}
-
-.dark-theme .btn-primary:hover:not(:disabled) {
-  background: #3182ce !important;
-  border-color: #3182ce !important;
-}
-
-.dark-theme .btn-primary:disabled {
-  background: #4a5568 !important;
-  border-color: #4a5568 !important;
-  opacity: 0.6 !important;
-}
-
-.dark-theme .btn-danger {
-  background: #e53e3e !important;
-  color: #ffffff !important;
-  border-color: #e53e3e !important;
-}
-
-.dark-theme .btn-danger:hover {
-  background: #c53030 !important;
-  border-color: #c53030 !important;
 }
 </style>

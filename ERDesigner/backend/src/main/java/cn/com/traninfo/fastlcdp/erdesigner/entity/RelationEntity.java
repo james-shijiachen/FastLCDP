@@ -11,32 +11,30 @@ import lombok.Data;
  */
 @Data
 @TableName("relation")
-public class RelationEntity {
-    
-    @TableId(type = IdType.ASSIGN_ID)
-    private Long id;
-    
-    @TableField("name")
-    private String name;
-    
-    @TableField("type")
-    private String type;
-    
-    @TableField("reference_table")
-    private String referenceTable;
-    
-    @TableField("reference_field")
-    private String referenceField;
-    
-    @TableField("on_delete")
-    private String onDelete;
-    
-    @TableField("on_update")
-    private String onUpdate;
-    
-    @TableField("comment")
-    private String comment;
-    
+public class RelationEntity extends BaseEntity {
+
     @TableField("table_id")
     private Long tableId;
+
+    @TableField("name")
+    private String name;
+
+    @TableField("type")
+    private String type;
+
+    @TableField("reference_table")
+    private String referenceTable;
+
+    @TableField("reference_field")
+    private String referenceField;
+
+    @TableField("on_delete")
+    private String onDelete;
+
+    @TableField("on_update")
+    private String onUpdate;
+
+    @TableField("comment")
+    private String comment;
+
 }

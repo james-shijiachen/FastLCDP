@@ -1,16 +1,14 @@
 package cn.com.traninfo.fastlcdp.erdesigner.config;
 
-import cn.com.traninfo.fastlcdp.erdesigner.util.MessageUtils;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
-import io.swagger.v3.oas.models.servers.Server;
-import org.springframework.beans.factory.annotation.Autowired;
+import io.swagger.v3.oas.models.tags.Tag;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import cn.com.traninfo.fastlcdp.erdesigner.util.MessageUtils;
 
 /**
  * Swagger Configuration Class
@@ -23,21 +21,20 @@ public class SwaggerConfig {
     
     @Bean
     public OpenAPI customOpenAPI() {
+        String tagName = messageUtils.getMessage("api.database.management.tag.name");
+        String tagDesc = messageUtils.getMessage("api.database.management.tag.description");
         return new OpenAPI()
+                .addTagsItem(new Tag().name(tagName).description(tagDesc))
                 .info(new Info()
                         .title(messageUtils.getMessage("config.fastlcdp.api.doc"))
                         .description(messageUtils.getMessage("config.api.description"))
                         .version("1.0.0")
                         .contact(new Contact()
-                                .name("FastLCDP Team")
-                                .email("shijiachen@traninfo.com.cn")
-                                .url("https://github.com/traninfo/fastlcdp"))
+                                .name(messageUtils.getMessage("config.api.contact.name"))
+                                .email(messageUtils.getMessage("config.api.contact.email"))
+                                .url(messageUtils.getMessage("config.api.contact.url")))
                         .license(new License()
-                                .name("Apache 2.0")
-                                .url("https://www.apache.org/licenses/LICENSE-2.0")))
-                .servers(List.of(
-                        new Server().url("http://localhost:8080").description(messageUtils.getMessage("config.dev.environment")),
-                        new Server().url("https://api.traninfo.com.cn").description(messageUtils.getMessage("config.prod.environment"))
-                ));
+                                .name(messageUtils.getMessage("config.api.license.name"))
+                                .url(messageUtils.getMessage("config.api.license.url"))));
     }
 }

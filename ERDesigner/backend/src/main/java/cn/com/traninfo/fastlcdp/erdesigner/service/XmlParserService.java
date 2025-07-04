@@ -2,21 +2,15 @@ package cn.com.traninfo.fastlcdp.erdesigner.service;
 
 import cn.com.traninfo.fastlcdp.erdesigner.enums.PrimaryKeyTypeEnum;
 import cn.com.traninfo.fastlcdp.erdesigner.model.*;
-import cn.com.traninfo.fastlcdp.erdesigner.util.MessageUtils;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Unmarshaller;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
 import java.io.File;
 import java.io.InputStream;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.ArrayList;
+import java.util.*;
 
 /**
  * XML解析服务
@@ -27,14 +21,11 @@ import java.util.ArrayList;
 public class XmlParserService {
     
     private final JAXBContext jaxbContext;
-    private final MessageUtils messageUtils;
-    
-    @Autowired
-    public XmlParserService(MessageUtils messageUtils) throws JAXBException {
-        this.messageUtils = messageUtils;
-        this.jaxbContext = JAXBContext.newInstance(DatabaseSchema.class, TableDefinition.class);
+
+    public XmlParserService() throws JAXBException {
+        jaxbContext = JAXBContext.newInstance(DatabaseSchema.class, TableDefinition.class);
     }
-    
+
     /**
      * 从文件解析数据库模式
      * 
@@ -43,7 +34,7 @@ public class XmlParserService {
      * @throws JAXBException 解析异常
      */
     public DatabaseSchema parseFromFile(File xmlFile) throws JAXBException {
-        log.info(messageUtils.getMessage("xml.parse.start", xmlFile.getAbsolutePath()));
+        log.info("Start parsing XML file: {}", xmlFile.getAbsolutePath());
         
         Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
         DatabaseSchema schema = (DatabaseSchema) unmarshaller.unmarshal(xmlFile);
@@ -54,7 +45,7 @@ public class XmlParserService {
         // 处理主键类型
         processPrimaryKeyTypes(schema);
         
-        log.info(messageUtils.getMessage("xml.parse.success", schema.getTables().size()));
+        log.info("XML parsing completed, found {} table definitions", schema.getTables().size());
         return schema;
     }
     
@@ -66,7 +57,7 @@ public class XmlParserService {
      * @throws JAXBException 解析异常
      */
     public DatabaseSchema parseFromStream(InputStream inputStream) throws JAXBException {
-        log.info("开始从输入流解析XML");
+        log.info("Start parsing XML from the input stream");
         
         Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
         DatabaseSchema schema = (DatabaseSchema) unmarshaller.unmarshal(inputStream);
@@ -77,7 +68,7 @@ public class XmlParserService {
         // 处理主键类型
         processPrimaryKeyTypes(schema);
         
-        log.info("XML解析完成，共解析到 {} 个表定义", schema.getTables().size());
+        log.info("XML parsing is completed, and a total of {} table definitions are parsed.", schema.getTables().size());
         return schema;
     }
     
@@ -112,7 +103,7 @@ public class XmlParserService {
      */
     private void processTableInheritance(TableDefinition table, Map<String, TableDefinition> tableMap, List<String> processedTables) {
         if (processedTables.contains(table.getName())) {
-            log.warn(messageUtils.getMessage("inheritance.circular", table.getName()));
+            log.warn("Circular inheritance detected for table: {}", table.getName());
             return;
         }
         
@@ -122,7 +113,7 @@ public class XmlParserService {
         if (parentTableName != null && !parentTableName.isEmpty()) {
             TableDefinition parentTable = tableMap.get(parentTableName);
             if (parentTable == null) {
-                log.warn(messageUtils.getMessage("inheritance.parent.not.found", parentTableName, table.getName()));
+                log.warn("Parent table '{}' not found for child table '{}'", parentTableName, table.getName());
                 return;
             }
             
@@ -176,7 +167,7 @@ public class XmlParserService {
             
             table.setRelations(new ArrayList<>(relationMap.values()));
             
-            log.debug(messageUtils.getMessage("inheritance.success", table.getName(), parentTableName));
+            log.debug("Inheritance processed: child table '{}', parent table '{}'", table.getName(), parentTableName);
         }
     }
     

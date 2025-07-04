@@ -11,32 +11,30 @@ import lombok.Data;
  */
 @Data
 @TableName("field")
-public class FieldEntity {
-    
-    @TableId(type = IdType.ASSIGN_ID)
-    private Long id;
-    
-    @TableField("name")
-    private String name;
-    
-    @TableField("type")
-    private String type;
-    
-    @TableField("length")
-    private Integer length;
-    
-    @TableField("scale")
-    private Integer scale;
-    
-    @TableField("nullable")
-    private Boolean nullable;
-    
-    @TableField("default_value")
-    private String defaultValue;
-    
-    @TableField("comment")
-    private String comment;
-    
+public class FieldEntity extends BaseEntity {
+
     @TableField("table_id")
     private Long tableId;
+
+    @TableField("name")
+    private String name;
+
+    @TableField("type")
+    private String type;
+
+    @TableField("length")
+    private Integer length;
+
+    @TableField("scale")
+    private Integer scale;
+
+    @TableField("nullable")
+    private Boolean nullable;
+
+    @TableField("default_value")
+    private String defaultValue;
+
+    @TableField("comment")
+    private String comment;
+
 }

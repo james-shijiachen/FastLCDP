@@ -144,18 +144,6 @@ input:focus, textarea:focus {
   z-index: 1000;
 }
 
-.modal {
-  background: white;
-  border-radius: 8px;
-  padding: 24px;
-  max-width: 600px;
-  width: 90%;
-  max-height: 85vh;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-}
-
 .modal-header {
   display: flex;
   justify-content: space-between;
@@ -191,12 +179,6 @@ input:focus, textarea:focus {
 
 /* 响应式样式 */
 @media (max-width: 768px) {
-  .modal {
-    width: 95%;
-    max-width: none;
-    margin: 10px;
-    padding: 16px;
-  }
   
   .modal-header {
     margin-bottom: 16px;
@@ -216,16 +198,6 @@ input:focus, textarea:focus {
     padding: 12px;
     font-size: 16px;
     min-height: 44px;
-  }
-}
-
-@media (max-width: 480px) {
-  .modal {
-    width: 100%;
-    height: 100%;
-    max-height: 100vh;
-    border-radius: 0;
-    margin: 0;
   }
 }
 
@@ -387,17 +359,6 @@ input:focus, textarea:focus {
   z-index: 1000;
 }
 
-.modal {
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  width: 90%;
-  max-width: 600px;
-  max-height: 90vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
 
 .modal-content {
   background: #fff;
@@ -430,16 +391,6 @@ input:focus, textarea:focus {
   padding: 24px;
   flex: 1;
   overflow-y: auto;
-}
-
-.modal-footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
-  padding: 20px 24px;
-  border-top: 1px solid #e1e4e8;
-  background: #f6f8fa;
 }
 
 .close-btn {
@@ -878,6 +829,28 @@ input:focus, textarea:focus {
   color: #e1e4e8;
 }
 
+.dark-theme .btn-primary {
+  background: #4299e1 !important;
+  color: #ffffff !important;
+  border-color: #4299e1 !important;
+}
+
+.dark-theme .btn-primary:hover:not(:disabled) {
+  background: #3182ce !important;
+  border-color: #3182ce !important;
+}
+
+.dark-theme .btn-primary:disabled {
+  background: #4a5568 !important;
+  border-color: #4a5568 !important;
+  opacity: 0.6 !important;
+}
+
+.dark-theme .btn-primary:hover {
+  background: #0256c7;
+  border-color: #0256c7;
+}
+
 /* 暗色主题 - 树形组件 */
 .dark-theme .tree-header {
   background: #1e1e1e;
@@ -1158,13 +1131,6 @@ input:focus, textarea:focus {
   font-weight: 500;
 }
 
-.dark-theme .modal {
-  background: #1e1e1e;
-  color: #ffffff;
-  border: 1px solid #333333;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-}
-
 .dark-theme .modal-title {
   color: #ffffff;
   font-weight: 500;
@@ -1235,4 +1201,484 @@ input:focus, textarea:focus {
 .dark-theme .spinner {
   border-color: #333333;
   border-top-color: #bb86fc;
+}
+
+/* ====== 以下为组件样式全局合并 ====== */
+
+.db-modal-content {
+  max-width: 500px;
+  background: #fff;
+  color: #23232a;
+  border-radius: 8px;
+  padding: 24px;
+  width: 90%;
+  max-height: 85vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.45);
+}
+.dark-theme .db-modal-content {
+  background: #18181c;
+  color: #fff;
+}
+.entity-modal-content {
+  max-width: 650px;
+  background: #fff;
+  color: #23232a;
+  border-radius: 8px;
+  padding: 24px;
+  width: 90%;
+  max-height: 85vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.45);
+}
+.dark-theme .entity-modal-content {
+  background: #18181c;
+  color: #fff;
+}
+.db-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.db-modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+}
+.db-modal-close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #bbb;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.db-modal-close-btn:hover {
+  color: #fff;
+  background: #23232a;
+  border-radius: 50%;
+}
+.db-modal-body {
+  margin-bottom: 16px;
+}
+.db-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+.db-modal-form-group textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+.db-modal-content input,
+.db-modal-content textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #333a4d;
+  border-radius: 6px;
+  font-size: 14px;
+  background: #23232a;
+  color: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+.db-modal-content input:focus,
+.db-modal-content textarea:focus {
+  outline: none;
+  border-color: #4299e1;
+  box-shadow: 0 0 0 2px #4299e133;
+}
+.db-modal-content input.error {
+  border-color: #d73a49;
+}
+.db-modal-content label {
+  color: #e1e4e8;
+}
+.db-modal-content .error-message {
+  color: #d73a49;
+}
+.db-modal-content .btn-primary:hover:not(:disabled) {
+  background: #e0e0e0;
+  color: #23232a;
+  border-color: #e0e0e0;
+}
+
+/* DatabaseTree.vue 样式 */
+.database-tree {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #e1e4e8;
+  border-radius: 6px;
+}
+.btn-sm {
+  padding: 4px 8px;
+  font-size: 11px;
+}
+.database-node .node-content:hover {
+  background: #f6f8fa;
+}
+.entity-node .node-content:hover {
+  background: #e1f5fe;
+}
+.entity-node.selected .node-content {
+  background: #0366d6;
+  color: #fff;
+}
+.entity-node.abstract .node-content {
+  font-style: italic;
+  opacity: 0.8;
+}
+.database-icon {
+  color: #0366d6;
+}
+.entity-icon {
+  color: #28a745;
+}
+.add-icon {
+  color: #6f42c1;
+  font-weight: bold;
+}
+.entity-type-badge {
+  font-size: 10px;
+  background: #f1f3f4;
+  color: #5f6368;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: 6px;
+}
+.add-entity-node {
+  margin-top: 4px;
+}
+.add-entity-node .node-content {
+  color: #6f42c1;
+  font-size: 13px;
+  opacity: 0.8;
+}
+.add-entity-node .node-content:hover {
+  background: #f3f0ff;
+  opacity: 1;
+}
+.menu-item.danger {
+  color: #d73a49;
+}
+.menu-item.danger:hover {
+  background: #ffeef0;
+}
+[data-uid="DatabaseTree-btn-create-db"]:hover:not(:disabled) {
+  background: #e0e0e0;
+  color: #23232a;
+  border-color: #e0e0e0;
+}
+[data-uid^="DatabaseTree-node-db-content-"]:hover {
+  color: #23232a;
+}
+[data-uid^="DatabaseTree-add-entity-"] {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  padding: 4px 8px;
+  cursor: pointer;
+  line-height: 1.6;
+}
+[data-uid^="DatabaseTree-add-entity-"] .node-icon.add-icon {
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 1em;
+  line-height: 1;
+}
+[data-uid^="DatabaseTree-add-entity-"] .node-label {
+  font-size: 14px;
+  display: inline-block;
+}
+
+/* EntityEditModal.vue 样式 */
+.EntityEditModal-modal {
+  max-width: 600px;
+  border-radius: 8px;
+  padding: 24px;
+  width: 90%;
+  max-height: 85vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.45);
+  background: #fff;
+  color: #23232a;
+}
+.dark-theme [data-uid="EntityEditModal-modal"] {
+  background: #18181c;
+  color: #fff;
+}
+.dark-theme [data-uid="EntityEditModal-modal"] input,
+.dark-theme [data-uid="EntityEditModal-modal"] textarea,
+.dark-theme [data-uid="EntityEditModal-modal"] select {
+  background: #23232a;
+  color: #fff;
+  border: 1px solid #333a4d;
+}
+.dark-theme [data-uid="EntityEditModal-modal"] input:focus,
+.dark-theme [data-uid="EntityEditModal-modal"] textarea:focus,
+.dark-theme [data-uid="EntityEditModal-modal"] select:focus {
+  border-color: #4299e1;
+  box-shadow: 0 0 0 2px #4299e133;
+}
+.dark-theme [data-uid="EntityEditModal-modal"] label {
+  color: #e1e4e8;
+}
+.dark-theme [data-uid="EntityEditModal-modal"] .error-message {
+  color: #d73a49;
+}
+.dark-theme [data-uid="EntityEditModal-modal"] .btn-primary:hover:not(:disabled) {
+  background: #e0e0e0;
+  color: #23232a;
+  border-color: #e0e0e0;
+}
+.form-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #586069;
+  font-style: italic;
+}
+.checkbox-label input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+@media (max-width: 768px) {
+  .field-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .field-basic {
+    flex-direction: column;
+  }
+  .field-options {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+[data-uid="EntityEditModal-title"] {
+  color: #23232a;
+}
+.dark-theme [data-uid="EntityEditModal-title"] {
+  color: #fff !important;
+}
+[data-uid="EntityEditModal-content"] {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
+}
+[data-uid="EntityEditModal-btn-close"] {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #bbb;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, color 0.2s;
+}
+[data-uid="EntityEditModal-btn-close"]:hover {
+  color: #fff;
+  background: #23232a;
+  border-radius: 50%;
+}
+
+/* ERCanvas.vue 样式 */
+.canvas-container {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  background: #f6f8fa;
+}
+.canvas-svg {
+  width: 100%;
+  height: 100%;
+  cursor: default;
+}
+.entity {
+  cursor: move;
+  transition: all 0.1s ease;
+}
+.entity.selected .entity-rect {
+  filter: drop-shadow(0 0 8px rgba(3, 102, 214, 0.3));
+}
+.entity.multi-selected .entity-rect {
+  stroke-dasharray: 5,5;
+}
+.entity-rect {
+  transition: all 0.2s ease;
+}
+.entity-header {
+  stroke-width: 2;
+}
+.entity-header-fill {
+  stroke-width: 0;
+}
+.entity-name {
+  user-select: none;
+  pointer-events: none;
+}
+.field {
+  transition: all 0.1s ease;
+}
+.field:hover .field-bg {
+  fill: rgba(3, 102, 214, 0.05);
+}
+.field-name,
+.field-type,
+.key-icon {
+  user-select: none;
+  pointer-events: none;
+}
+.selection-handles .handle {
+  cursor: pointer;
+  stroke: #fff;
+  stroke-width: 1;
+  transition: all 0.2s ease;
+}
+.selection-handles .handle:hover {
+  r: 5;
+  fill: #0256cc;
+}
+.selection-handles .nw-resize {
+  cursor: nw-resize;
+}
+.selection-handles .ne-resize {
+  cursor: ne-resize;
+}
+.selection-handles .sw-resize {
+  cursor: sw-resize;
+}
+.selection-handles .se-resize {
+  cursor: se-resize;
+}
+.selection-box {
+  pointer-events: none;
+}
+.relation {
+  pointer-events: none;
+}
+.relation-label {
+  font-size: 12px;
+  fill: #666;
+  user-select: none;
+  pointer-events: none;
+}
+@media (max-width: 768px) {
+  .canvas-container {
+    touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .entity {
+    cursor: pointer;
+  }
+  .entity-rect {
+    stroke-width: 2;
+  }
+  .entity.selected .entity-rect {
+    stroke-width: 3;
+    filter: drop-shadow(0 0 12px rgba(3, 102, 214, 0.4));
+  }
+  .field {
+    min-height: 24px;
+  }
+  .field-name,
+  .field-type {
+    font-size: 13px;
+  }
+  .entity-name {
+    font-size: 15px;
+  }
+}
+@media (max-width: 480px) {
+  .entity-rect {
+    stroke-width: 2;
+  }
+  .entity.selected .entity-rect {
+    stroke-width: 4;
+  }
+  .field {
+    min-height: 26px;
+  }
+  .field-name,
+  .field-type {
+    font-size: 14px;
+  }
+  .entity-name {
+    font-size: 16px;
+  }
+  .relation-label {
+    font-size: 13px;
+  }
+}
+.canvas-svg {
+  transform-origin: 0 0;
+  transform: scale(var(--zoom-level, 1));
+}
+
+/* RelationEditModal.vue 样式 */
+
+.entities-info {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 32px;
+  padding: 20px;
+  background: #f6f8fa;
+  border-radius: 8px;
+}
+.relation-arrow {
+  display: flex;
+  align-items: center;
+  position: relative;
+  min-width: 60px;
+}
+.arrow-line {
+  width: 40px;
+  height: 2px;
+  background: #586069;
+}
+.arrow-head {
+  width: 0;
+  height: 0;
+  border-left: 8px solid #586069;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+}
+
+@media (max-width: 768px) {
+  .entities-info {
+    flex-direction: column;
+    gap: 16px;
+  }
+  .relation-arrow {
+    transform: rotate(90deg);
+  }
+  .relation-types {
+    grid-template-columns: 1fr;
+  }
 }

@@ -11,26 +11,24 @@ import lombok.Data;
  */
 @Data
 @TableName("index")
-public class IndexEntity {
-    
-    @TableId(type = IdType.ASSIGN_ID)
-    private Long id;
-    
-    @TableField("name")
-    private String name;
-    
-    @TableField("type")
-    private String type;
-    
-    @TableField("method")
-    private String method;
-    
-    @TableField("unique_index")
-    private Boolean uniqueIndex;
-    
-    @TableField("comment")
-    private String comment;
-    
+public class IndexEntity extends BaseEntity {
+
     @TableField("table_id")
     private Long tableId;
+
+    @TableField("name")
+    private String name;
+
+    @TableField("type")
+    private String type;
+
+    @TableField("method")
+    private String method;
+
+    @TableField("unique_index")
+    private Boolean uniqueIndex;
+
+    @TableField("comment")
+    private String comment;
+
 }

@@ -5,7 +5,6 @@ import cn.com.traninfo.fastlcdp.erdesigner.entity.MetadataEntity;
 import cn.com.traninfo.fastlcdp.erdesigner.service.MetadataService;
 import cn.com.traninfo.fastlcdp.erdesigner.service.SqlGeneratorService;
 import cn.com.traninfo.fastlcdp.erdesigner.service.TableGeneratorService;
-import cn.com.traninfo.fastlcdp.erdesigner.util.MessageUtils;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import cn.com.traninfo.fastlcdp.erdesigner.util.MessageUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -196,13 +196,13 @@ public class TableGeneratorController {
             // 验证文件
             if (file.isEmpty()) {
                 response.put("success", false);
-                response.put("message", "请选择XML文件");
+                response.put("message", messageUtils.getMessage("file.empty"));
                 return ResponseEntity.badRequest().body(response);
             }
             
             if (!file.getOriginalFilename().toLowerCase().endsWith(".xml")) {
                 response.put("success", false);
-                response.put("message", "请上传XML格式的文件");
+                response.put("message", messageUtils.getMessage("file.invalid.format"));
                 return ResponseEntity.badRequest().body(response);
             }
             
@@ -231,7 +231,7 @@ public class TableGeneratorController {
             response.put("message", messageUtils.getMessage("file.process.failed") + ": " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         } catch (Exception e) {
-            log.error(messageUtils.getMessage("保存元数据失败"), e);
+            log.error("保存元数据失败", e);
             response.put("success", false);
             response.put("message", "保存失败: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
@@ -334,13 +334,13 @@ public class TableGeneratorController {
             // 验证文件
             if (file.isEmpty()) {
                 response.put("success", false);
-                response.put("message", "请选择XML文件");
+                response.put("message", messageUtils.getMessage("file.empty"));
                 return ResponseEntity.badRequest().body(response);
             }
             
             if (!file.getOriginalFilename().toLowerCase().endsWith(".xml")) {
                 response.put("success", false);
-                response.put("message", "请上传XML格式的文件");
+                response.put("message", messageUtils.getMessage("file.invalid.format"));
                 return ResponseEntity.badRequest().body(response);
             }
             
@@ -366,9 +366,9 @@ public class TableGeneratorController {
             }
             
         } catch (IOException e) {
-            log.error("文件处理失败", e);
+            log.error(messageUtils.getMessage("file.process.failed"), e);
             response.put("success", false);
-            response.put("message", "文件处理失败: " + e.getMessage());
+            response.put("message", messageUtils.getMessage("file.process.failed") + ": " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         } catch (Exception e) {
             log.error("SQL生成失败", e);

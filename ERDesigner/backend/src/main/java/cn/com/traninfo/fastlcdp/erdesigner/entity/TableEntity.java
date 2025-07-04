@@ -11,10 +11,13 @@ import lombok.Data;
  */
 @Data
 @TableName("table")
-public class TableEntity {
+public class TableEntity extends BaseEntity {
 
-    @TableId(type = IdType.ASSIGN_ID)
-    private Long id;
+    @TableField("database_id")
+    private Long databaseId;
+
+    @TableField("extends_table")
+    private Long extendsTableId;
 
     @TableField("name")
     private String name;
@@ -22,19 +25,13 @@ public class TableEntity {
     @TableField("type")
     private String type;
 
-    @TableField("comment")
-    private String comment;
-
-    @TableField("extends_table")
-    private Long extendsTableId;
-
     @TableField("engine")
     private String engine;
 
     @TableField("charset")
     private String charset;
 
-    @TableField("database_id")
-    private Long databaseId;
+    @TableField("comment")
+    private String comment;
 
 }

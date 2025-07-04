@@ -10,11 +10,8 @@ import java.time.LocalDateTime;
  */
 @Data
 @TableName("metadata")
-public class MetadataEntity {
-    
-    @TableId(type = IdType.ASSIGN_ID)
-    private Long id;
-    
+public class MetadataEntity extends BaseEntity {
+
     @TableField("schema_name")
     private String schemaName;
     
@@ -62,18 +59,12 @@ public class MetadataEntity {
     
     @TableField("xml_content")
     private String xmlContent;
-    
-    @TableField(value = "created_time", fill = FieldFill.INSERT)
-    private LocalDateTime createdTime;
-    
-    @TableField(value = "updated_time", fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updatedTime;
-    
+
     // 构造函数
     public MetadataEntity() {
-        this.createdTime = LocalDateTime.now();
+        this.setCreatedTime(LocalDateTime.now());
     }
-    
+
     public MetadataEntity(String schemaName, String tableName) {
         this();
         this.schemaName = schemaName;

@@ -79,11 +79,8 @@
           </div>
         </div>
       </div>
-      
-      <div class="modal-footer">
         <button @click="$emit('close')" class="btn-secondary">取消</button>
         <button @click="handleSave" class="btn-primary" :disabled="!canSave">创建关系</button>
-      </div>
     </div>
   </div>
 </template>
@@ -176,62 +173,3 @@ function handleOverlayClick() {
   emit('close')
 }
 </script>
-
-<style scoped>
-/* RelationEditModal 特有样式 */
-.modal {
-  max-width: 800px;
-  max-height: 80vh;
-}
-
-.entities-info {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  margin-bottom: 32px;
-  padding: 20px;
-  background: #f6f8fa;
-  border-radius: 8px;
-}
-
-.relation-arrow {
-  display: flex;
-  align-items: center;
-  position: relative;
-  min-width: 60px;
-}
-
-.arrow-line {
-  width: 40px;
-  height: 2px;
-  background: #586069;
-}
-
-.arrow-head {
-  width: 0;
-  height: 0;
-  border-left: 8px solid #586069;
-  border-top: 4px solid transparent;
-  border-bottom: 4px solid transparent;
-}
-
-@media (max-width: 768px) {
-  .modal {
-    width: 95%;
-    max-height: 90vh;
-  }
-  
-  .entities-info {
-    flex-direction: column;
-    gap: 16px;
-  }
-  
-  .relation-arrow {
-    transform: rotate(90deg);
-  }
-  
-  .relation-types {
-    grid-template-columns: 1fr;
-  }
-}
-</style>
