@@ -23,6 +23,7 @@
 - **Frontend**: Vue 3, TypeScript, Vite, Pinia, vue-i18n, Fabric.js
 - **Database**: MySQL, PostgreSQL, Oracle, SQL Server, H2
 - **Containerization**: Docker, Docker Compose
+- **AI Platform**: Claude-3.7 Sonnet, Gemini 2.5 Pro, GPT-4, DeepSeek V3, Qwen 2.5-Max
 
 ---
 

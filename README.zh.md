@@ -23,6 +23,7 @@
 - **前端**：Vue 3、TypeScript、Vite、Pinia、vue-i18n、Fabric.js
 - **数据库**：MySQL、PostgreSQL、Oracle、SQL Server、H2
 - **容器化**：Docker、Docker Compose
+- **AI平台**: Claude-3.7 Sonnet, Gemini 2.5 Pro, GPT-4, DeepSeek V3, Qwen 2.5-Max
 
 ---
 
