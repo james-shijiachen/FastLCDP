@@ -336,12 +336,10 @@ function handleSave() {
   display: flex;
   gap: 12px;
 }
-
 .field-basic .form-group {
   flex: 1;
   margin-bottom: 0;
 }
-
 .remove-btn {
   background: #d73a49;
   color: #fff;

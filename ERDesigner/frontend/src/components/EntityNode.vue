@@ -22,14 +22,9 @@
       :width="entity.width"
       height="30"
       :fill="entity.backgroundColor || '#f6f8fa'"
-      :stroke="entity.borderColor || '#24292e'"
+      :stroke="selected ? '#0366d6' : (entity.borderColor || '#24292e')"
       stroke-width="1"
       rx="4"/>
-    <rect class="entity-header-fill"
-      :width="entity.width"
-      height="26"
-      :fill="entity.backgroundColor || '#f6f8fa'"
-      stroke="none"/>
     <!-- 实体名称 -->
     <text class="entity-name"
       :x="entity.width / 2"
@@ -112,6 +107,20 @@ defineEmits([
 </script>
 
 <style scoped>
+.entity {
+  border: 2px solid #010101;
+  cursor: move;
+  transition: all 0.1s ease;
+}
+.entity-header {
+  padding: 2px 4px;
+  font-weight: bold;
+}
+.dark-theme .entity-header {
+  background: #2c2c2c;
+  border-bottom: 1px solid #444444;
+  color: #ffffff;
+}
 .field-type {
   font-size: 11px;
   color: #586069;
@@ -128,10 +137,6 @@ defineEmits([
 }
 
 @media (max-width: var(--mobile-breakpoint)) {
-  .entity {
-    cursor: move;
-    transition: all 0.1s ease;
-  }
   .entity.selected .entity-rect {
     filter: drop-shadow(0 0 8px rgba(3, 102, 214, 0.3));
   }

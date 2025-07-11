@@ -753,32 +753,8 @@ onMounted(() => {
   transform-origin: 0 0;
   transform: scale(var(--zoom-level, 1));
 }
-.entity-header {
-  background: #f6f8fa;
-  padding: 2px 4px;
-  font-weight: bold;
-  border-bottom: 1px solid #e1e4e8;
-  stroke-width: 2;
-}
-.entity-header-fill {
-  background: #f6f8fa;
-  padding: 2px 4px;
-  font-weight: bold;
-  border-bottom: 1px solid #e1e4e8;
-  stroke-width: 0;
-}
 .selection-box {
   pointer-events: none;
-}
-.dark-theme .entity-header {
-  background: #2c2c2c;
-  border-bottom: 1px solid #444444;
-  color: #ffffff;
-}
-.dark-theme .entity-header-fill {
-  background: #2c2c2c;
-  border-bottom: 1px solid #444444;
-  color: #ffffff;
 }
 @media (max-width: var(--mobile-breakpoint)) {
   .canvas-svg {

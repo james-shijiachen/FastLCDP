@@ -48,9 +48,9 @@
       <main class="canvas-container">
         <DSCanvas 
           ref="canvasRef"
-          :zoom-level="zoomLevel"
-          :show-grid="showGrid"
-          :selected-entities="selectedEntities"
+          :zoomLevel="zoomLevel"
+          :showGrid="showGrid"
+          :selectedEntities="selectedEntities"
           @entityClick="handleEntityClick"
           @entityDoubleClick="handleEntityDoubleClick"
           @entityRightClick="handleEntityRightClick"
@@ -161,7 +161,6 @@ const canvasRef = ref<InstanceType<typeof DSCanvas> | null>(null)
 const showEntityModal = ref(false)
 const showRelationModal = ref(false)
 const showDatasourceModal = ref(false)
-const showPropertyPanel = ref(false)
 const showContextMenu = ref(false)
 const showEntityContextMenu = ref(false)
 const editingEntity = ref<Entity | null>(null)
@@ -193,8 +192,6 @@ function handleEntityClick(entity: Entity, event: MouseEvent) {
     // 单选
     selectedEntities.value = [entity]
   }
-  showPropertyPanel.value = selectedEntities.value.length > 0
-  console.log('showPropertyPanel', showPropertyPanel.value, 'selectedEntities', selectedEntities.value)
   hideContextMenus()
 }
 
@@ -212,7 +209,6 @@ function handleEntityDoubleClick(entity: Entity) {
 function handleCanvasClick(event: MouseEvent) {
   if (!event.ctrlKey && !event.metaKey) {
     selectedEntities.value = []
-    showPropertyPanel.value = false
   }
   console.log('handleCanvasClick', event)
   hideContextMenus()
@@ -245,7 +241,6 @@ function handleEntityRightClick(entity: Entity, event: MouseEvent) {
 // 选择变化
 function handleSelectionChange(entities: Entity[]) {
   selectedEntities.value = entities
-  showPropertyPanel.value = entities.length > 0
 }
 
 // 缩放变化
@@ -253,12 +248,11 @@ function handleZoomChange(level: number) {
   zoomLevel.value = level
 }
 
-// 工具栏操作
+// 新建图表
 function newDiagram() {
   if (confirm($t('messages.newDiagramConfirm'))) {
     store.clearDiagram()
     selectedEntities.value = []
-    showPropertyPanel.value = false
   }
 }
 
@@ -450,7 +444,6 @@ function deleteSelectedEntities() {
       store.deleteEntity(entity.id)
     })
     selectedEntities.value = []
-    showPropertyPanel.value = false
   }
   hideContextMenus()
 }
@@ -458,7 +451,6 @@ function deleteSelectedEntities() {
 // 全选
 function selectAll() {
   selectedEntities.value = [...store.entities]
-  showPropertyPanel.value = true
   hideContextMenus()
 }
 
@@ -571,8 +563,6 @@ function handleSelectEntityFromTree(entityId: string) {
   const entity = store.entities.find(e => e.id === entityId)
   if (entity) {
     selectedEntities.value = [entity]
-    showPropertyPanel.value = true
-    // 可以添加画布聚焦到实体的逻辑
   }
 }
 
@@ -673,7 +663,6 @@ function handleKeyDown(event: KeyboardEvent) {
     deleteSelectedEntities()
   } else if (event.key === 'Escape') {
     selectedEntities.value = []
-    showPropertyPanel.value = false
     hideContextMenus()
   } else if (event.ctrlKey && event.key === 'a') {
     event.preventDefault()
