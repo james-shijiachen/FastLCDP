@@ -15,6 +15,7 @@
       :is-dark-theme="isDarkTheme"
       :current-locale="currentLocale"
       :zoom-level="zoomLevel"
+      :sidebar-visible="sidebarVisible"
       @toggleSidebar="toggleSidebar"
       @newDiagram="newDiagram"
       @saveDiagram="saveDiagram"
@@ -635,7 +636,7 @@ function startSidebarInnerResize(e: MouseEvent) {
   const startHeight = sidebarBottomHeight.value
   function onMouseMove(ev: MouseEvent) {
     const delta = ev.clientY - startY
-    const newHeight = Math.max(100, Math.min(400, startHeight - delta))
+    const newHeight = Math.max(200, Math.min(600, startHeight - delta))
     sidebarBottomHeight.value = newHeight
   }
   function onMouseUp() {
@@ -693,13 +694,16 @@ function handleKeyDown(event: KeyboardEvent) {
 }
 /* 主布局 */
 .main-layout {
-  flex: 1;
+  flex: 1 1 0;
+  min-height: 0;
   height: 100%;
   display: flex;
 }
 /* 画布容器 */
 .canvas-container {
   flex: 1;
+  height: 100%;
+  min-height: 0;
   display: flex;
   background: #f6f8fa;
   overflow: hidden;
@@ -712,6 +716,7 @@ function handleKeyDown(event: KeyboardEvent) {
   min-width: 280px;
   max-width: 500px;
   height: 100%;
+  min-height: 0;
   background: #fff;
   border-left: 1px solid #e4e7ed;
   z-index: 1000;
@@ -726,16 +731,24 @@ function handleKeyDown(event: KeyboardEvent) {
 /* 右侧数据库树面板（分割线） */
 .sidebar-divider {
   width: 100%;
-  height: 2px;
+  height: 3px;
   cursor: ns-resize;
-  background: #e4e7ed;
   z-index: 2;
+  background: transparent;
+  transition: background 0.2s;
+  border-top: 1px solid #e1e4e8;
+}
+.dark-theme .sidebar-divider {
+  border-top: 1px solid #404040;
+  background: #2a2a2a;
+}
+.sidebar-divider:hover {
+  background: #e1e4e8;
 }
 /* 右侧数据库树面板（底部） */
 .sidebar-bottom {
   width: 100%;
-  min-height: 100px;
-  max-height: 400px;
+  min-height: var(--sidebar-bottom-height);
   background: #f8fafc;
   box-shadow: 0 -2px 8px rgba(0,0,0,0.04);
   transition: height 0.1s;

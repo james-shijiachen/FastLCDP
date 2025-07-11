@@ -6,14 +6,6 @@
       </svg>
     </button>
     <div class="toolbar" ref="toolbarRef">
-      <!-- 侧边栏显示/隐藏 -->
-      <button @click="toggleSidebar" :title="$t('toolbar.toggleSidebar')" :aria-label="$t('toolbar.toggleSidebar')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="3" width="4" height="18"/>
-          <rect x="9" y="3" width="12" height="18" rx="2"/>
-        </svg>
-      </button>
-      <div class="toolbar-separator"></div>
       <!-- 新建图表 -->
       <button @click="newDiagram" :title="$t('toolbar.newDiagram')" :aria-label="$t('toolbar.newDiagram')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -72,11 +64,11 @@
         </svg>
       </button>
       <!-- 百分比显示/设置 -->
-      <button class="zoom-percentage" @click="setZoom(zoomLevel)" :title="$t('toolbar.setZoom')" :aria-label="$t('toolbar.setZoom')">
+      <button class="zoom-percentage" @click="setZoom(zoomLevel ?? 1)" :title="$t('toolbar.setZoom')" :aria-label="$t('toolbar.setZoom')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <text x="4" y="18" font-size="14">%</text>
         </svg>
-        <span class="zoom-text">{{ Math.round(zoomLevel * 100) }}%</span>
+        <span class="zoom-text">{{ Math.round((zoomLevel ?? 1) * 100) }}%</span>
       </button>
       <!-- 缩小 -->
       <button @click="zoomOut" :title="$t('toolbar.zoomOut')" :aria-label="$t('toolbar.zoomOut')">
@@ -170,6 +162,17 @@
           <polyline points="4 15 4 20 9 20"/>
         </svg>
       </button>
+      <!-- 侧边栏显示/隐藏 -->
+      <button @click="toggleSidebar" :title="$t('toolbar.toggleSidebar')" :aria-label="$t('toolbar.toggleSidebar')" style="margin-left: auto;">
+        <svg v-if="sidebarVisible" width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="3" width="18" height="18" rx="2" fill="#ccc"/>
+          <rect x="17" y="3" width="4" height="18" rx="1" fill="#888"/>
+        </svg>
+        <svg v-else width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="3" width="18" height="18" rx="2" fill="#ccc"/>
+          <rect x="3" y="3" width="4" height="18" rx="1" fill="#888"/>
+        </svg>
+      </button>
     </div>
     <button class="scroll-btn right" @click="scrollRight" v-show="showRightScroll" :aria-label="$t('toolbar.scrollRight')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter">
@@ -180,13 +183,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, defineProps, defineEmits, onMounted, nextTick, onBeforeUnmount, watch } from 'vue'
+import { ref, defineProps, defineEmits, onMounted, nextTick, onBeforeUnmount, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 const emit = defineEmits([
   'toggleSidebar',
   'newDiagram',
   'saveDiagram',
   'exportDiagram',
+  'addEntity',
   'undo',
   'redo',
   'zoomIn',
@@ -195,18 +199,18 @@ const emit = defineEmits([
   'resetZoom',
   'toggleGrid',
   'toggleFullscreen',
-  'addEntity',
-  'colorEntity',
-  'colorRelation',
   'copyEntity',
-  'pasteEntity',
   'deleteEntity',
   'importDiagram',
-  'colorEntityBorder'
+  'colorEntityBorder',
+  'colorEntity',
+  'colorRelation',
+  'pasteEntity'
 ])
-defineProps<{
-  zoomLevel: number
-}>()
+const props = defineProps({
+  sidebarVisible: Boolean,
+  zoomLevel: Number
+})
 const { t: $t } = useI18n()
 function toggleSidebar() { emit('toggleSidebar') }
 function newDiagram() { emit('newDiagram') }
@@ -387,7 +391,6 @@ watch(toolbarRef, updateScrollBtns)
   color: #409eff;
   background: none;
 }
-
 
 /* 768px以下移动端样式 */
 @media (max-width: var(--mobile-breakpoint)) {

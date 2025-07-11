@@ -14,6 +14,7 @@
             v-model="formData.name" 
             type="text" 
             :placeholder="$t('datasource.namePlaceholder')"
+            @keyup.enter="handleSave"
             :class="{ 'error': errors.name }"
           />
           <span v-if="errors.name" class="error-message">{{ $t(errors.name) }}</span>
@@ -97,14 +98,12 @@ function handleSave() {
   if (!isValid.value) {
     return
   }
-  
   const datasource: Datasource = {
     id: props.datasource?.id || Date.now().toString(),
     name: formData.value.name.trim(),
     description: formData.value.description.trim(),
     createdTime: props.datasource?.createdTime || new Date()
   }
-  
   emit('save', datasource)
 }
 
@@ -128,3 +127,25 @@ watch(() => props.datasource, (newDatasource) => {
   }
 }, { immediate: true })
 </script>
+<style scoped>
+.modal-content {
+  width: 550px;
+  min-width: 320px;
+  height: 350px;
+  box-sizing: border-box;
+}
+.form-group {
+  display: flex;
+  flex-direction: column; /* 如果label在上方，column即可 */
+  gap: 6px;
+  margin-bottom: 18px;
+}
+.form-group label {
+  white-space: nowrap;
+}
+.form-group input, .form-group textarea {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+</style>

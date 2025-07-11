@@ -5,6 +5,7 @@
         <h3>{{ isEdit ? $t('entity.edit') : $t('entity.new') }}</h3>
         <button @click="$emit('close')" class="close-btn">×</button>
       </div>
+      <div class="modal-body">
         <div class="form-row">
           <div class="form-group">
             <label>{{ $t('datasource.name') }}</label>
@@ -125,12 +126,13 @@
             </div>
           </div>
         </div>
-        <div class="modal-footer">
-          <button @click="$emit('close')" class="btn btn-secondary">{{ $t('common.cancel') }}</button>
-          <button @click="handleSave" class="btn btn-primary" :disabled="!isValid">
-            {{ isEdit ? $t('common.save') : $t('common.create') }}
-          </button>
-        </div>
+      </div>
+      <div class="modal-footer">
+        <button @click="$emit('close')" class="btn btn-secondary">{{ $t('common.cancel') }}</button>
+        <button @click="handleSave" class="btn btn-primary" :disabled="!isValid">
+          {{ isEdit ? $t('common.save') : $t('common.create') }}
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -257,6 +259,22 @@ function handleSave() {
 </script>
 
 <style scoped>
+.modal-content {
+  width: 600px;
+  min-width: 400px;
+  max-height: 60vh;
+  display: flex !important;
+  flex-direction: column !important;
+}
+.modal-header,
+.modal-footer {
+  flex-shrink: 0;
+}
+.modal-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  min-height: 0; /* 兼容性写法，防止flex子项溢出 */
+}
 .field-row {
   display: flex;
   align-items: center;
@@ -268,6 +286,44 @@ function handleSave() {
 .field-row:last-child {
   border-bottom: none;
 }
+.field-item {
+  background: #f6f8fa;
+  border: 1px solid #e1e4e8;
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.dark-theme .field-item {
+  background: #1e1e1e;
+  border-color: #333333;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+.field-actions {
+  display: flex;
+  align-items: flex-start;
+}
+/* 字段相关样式 */
+.fields-section {
+  margin-top: 24px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.section-header h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #24292e;
+}
+.dark-theme .section-header h4 {
+  color: #ffffff;
+  font-weight: 500;
+}
 
 .field-options {
   display: flex;
@@ -275,7 +331,6 @@ function handleSave() {
   gap: 8px;
   min-width: 80px;
 }
-
 .field-basic {
   flex: 1;
   display: flex;
@@ -285,6 +340,29 @@ function handleSave() {
 .field-basic .form-group {
   flex: 1;
   margin-bottom: 0;
+}
+
+.remove-btn {
+  background: #d73a49;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.remove-btn:hover {
+  background: #cb2431;
+}
+.dark-theme .remove-btn {
+  background: #cf6679;
+  color: #000000;
+}
+.dark-theme .remove-btn:hover {
+  background: #e91e63;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 @media (max-width: var(--mobile-breakpoint)) {
@@ -300,5 +378,4 @@ function handleSave() {
     flex-wrap: wrap;
   }
 }
-
 </style>

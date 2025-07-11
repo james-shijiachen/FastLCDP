@@ -115,6 +115,42 @@ function onDrop(e: DragEvent) {
 .tree-node {
   margin-bottom: 2px;
 }
+
+/* 图标 */
+.entity-icon {
+  color: #28a745;
+}
+.node-icon {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 6px;
+  color: #586069;
+}
+.expand-icon {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 4px;
+  transition: transform 0.2s;
+  color: #586069;
+}
+.expand-icon.expanded {
+  transform: rotate(90deg);
+}
+.dark-theme .expand-icon,
+.dark-theme .node-icon {
+  color: #bb86fc;
+}
+.dark-theme .entity-icon {
+  color: #66bb6a;
+}
+
+
 .node-content {
   display: flex;
   align-items: center;
@@ -141,11 +177,30 @@ function onDrop(e: DragEvent) {
 }
 .add-btn {
   margin-left: 8px;
+  background: #0366d6;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 18px;
   cursor: pointer;
+  transition: background-color 0.2s;
   display: flex;
   align-items: center;
-  transition: background 0.15s;
-  font-size: 18px;
+  gap: 4px;
+}
+.add-btn:hover {
+  background: #0256cc;
+}
+.dark-theme .add-btn {
+  background: #bb86fc;
+  color: #000000;
+  font-weight: 500;
+}
+.dark-theme .add-btn:hover {
+  background: #d0bcff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 .child-count {
   margin-left: 6px;

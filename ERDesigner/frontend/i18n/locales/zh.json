@@ -6,7 +6,7 @@
   },
   "datasource": {
     "structure": "数据结构",
-    "newDatasource": "新建",
+    "newDatasource": "新建数据源",
     "noDatasource": "暂无数据源",
     "createFirst": "请先创建一个数据源",
     "editDatasource": "编辑数据源",

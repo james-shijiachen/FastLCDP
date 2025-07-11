@@ -6,7 +6,7 @@
   },
   "datasource": {
     "structure": "Structure",
-    "newDatasource": "New",
+    "newDatasource": "New Datasource",
     "noDatasource": "No Datasource",
     "createFirst": "Please create a datasource first",
     "editDatasource": "Edit Datasource",
