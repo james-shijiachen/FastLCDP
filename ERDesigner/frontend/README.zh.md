@@ -11,7 +11,7 @@
 
 ## 项目概述
 
-ERDesigner前端是一个基于Vue 3和TypeScript的现代化ER图设计工具，支持实体关系建模、可视化编辑和多种导出格式。它为数据库设计师和开发者提供了直观的界面来可视化地创建和管理数据库模式。
+DSDesigner前端是一个基于Vue 3和TypeScript的现代化数据源图设计工具，支持实体关系建模、可视化编辑和多种导出格式。它为数据库设计师和开发者提供了直观的界面来可视化地创建和管理数据库模式。
 
 ## ✨ 特性
 
@@ -36,7 +36,7 @@ ERDesigner前端是一个基于Vue 3和TypeScript的现代化ER图设计工具�
 ```bash
 # 克隆项目
 git clone https://github.com/james-shijiachen/FastLCDP.git
-cd FastLCDP/ERDesigner/frontend
+cd FastLCDP/DSDesigner/frontend
 
 # 安装依赖
 npm install
@@ -63,11 +63,11 @@ npm run preview
 FastLCDP-Frontend/
 ├── src/
 │   ├── components/          # Vue组件
-│   │   ├── ERCanvas.vue    # ER图画布组件
+│   │   ├── DSCanvas.vue    # 数据源图画布组件
 │   │   ├── EntityPanel.vue # 实体面板组件
 │   │   └── ...
 │   ├── stores/             # Pinia状态管理
-│   │   └── erDiagram.ts    # ER图状态管理
+│   │   └── dsDiagram.ts    # 数据源图状态管理
 │   ├── types/              # TypeScript类型定义
 │   │   ├── entity.ts       # 实体类型
 │   │   └── ...

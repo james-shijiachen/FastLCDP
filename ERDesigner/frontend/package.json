@@ -8,6 +8,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "element-plus": "^2.10.3",
     "fabric": "^6.7.0",
     "pinia": "^2.1.7",
     "vue": "^3.4.0",

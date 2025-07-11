@@ -1,272 +1,123 @@
 <template>
-  <div class="app-container" :class="{ 'dark-theme': isDarkTheme }" data-uid="App-root">
-    <!-- 顶部工具栏 -->
-    <header class="top-toolbar" data-uid="App-header">
-      <div class="toolbar-left" data-uid="App-toolbar-left">
-        <!-- 移动端菜单按钮 -->
-        <button 
-          class="mobile-menu-btn toolbar-btn" 
-          @click="toggleSidebar" 
-          v-if="isMobile"
-          :title="$t('toolbar.menu')"
-          data-uid="App-mobile-menu-btn"
-        >
-          <span class="icon">☰</span>
-        </button>
-        
-        <div class="logo" data-uid="App-logo">
-          <span class="logo-icon">📊</span>
-          <span class="logo-text" :class="{ 'logo-text-mobile': isMobile }">{{ $t('app.title') }}</span>
-  </div>
-        
-        <div class="language-switcher" data-uid="App-language-switcher">
-          <select v-model="currentLocale" @change="changeLanguage" data-uid="App-language-select">
-            <option value="en">{{ $t('language.english') }}</option>
-            <option value="zh">{{ $t('language.chinese') }}</option>
-          </select>
-        </div>
-        
-        <div class="toolbar-group" data-uid="App-toolbar-group-1">
-          <button class="toolbar-btn" @click="newDiagram" :title="$t('toolbar.new')" data-uid="App-btn-new">
-            <span class="icon">📄</span>
-          </button>
-          <button class="toolbar-btn" @click="saveDiagram" :title="$t('toolbar.save')" data-uid="App-btn-save">
-            <span class="icon">💾</span>
-          </button>
-          <button class="toolbar-btn" @click="exportDiagram" :title="$t('toolbar.export')" data-uid="App-btn-export">
-            <span class="icon">📤</span>
-          </button>
-        </div>
-        
-        <div class="toolbar-separator" data-uid="App-toolbar-separator-1"></div>
-        
-        <div class="toolbar-group" data-uid="App-toolbar-group-2">
-          <button class="toolbar-btn" @click="undo" :title="$t('toolbar.undo')" data-uid="App-btn-undo">
-            <span class="icon">↶</span>
-          </button>
-          <button class="toolbar-btn" @click="redo" :title="$t('toolbar.redo')" data-uid="App-btn-redo">
-            <span class="icon">↷</span>
-          </button>
-        </div>
-        
-        <div class="toolbar-separator" data-uid="App-toolbar-separator-2"></div>
-        
-        <div class="toolbar-group" data-uid="App-toolbar-group-3">
-          <button class="toolbar-btn" @click="zoomIn" :title="$t('toolbar.zoomIn')" data-uid="App-btn-zoom-in">
-            <span class="icon">+</span>
-          </button>
-          <span class="zoom-level">{{ Math.round(zoomLevel * 100) }}%</span>
-          <button class="toolbar-btn" @click="zoomOut" :title="$t('toolbar.zoomOut')" data-uid="App-btn-zoom-out">
-            <span class="icon">−</span>
-          </button>
-          <button class="toolbar-btn" @click="resetZoom" :title="$t('toolbar.fitWindow')" data-uid="App-btn-fit-window">
-            <span class="icon">□</span>
-          </button>
-          <button class="toolbar-btn" @click="toggleTheme" :title="isDarkTheme ? $t('toolbar.toggleThemeLight') : $t('toolbar.toggleThemeDark')" data-uid="App-btn-toggle-theme">
-            <span class="icon">{{ isDarkTheme ? '○' : '●' }}</span>
-          </button>
-          <button class="toolbar-btn" @click="toggleGrid" :title="$t('toolbar.grid')" data-uid="App-btn-toggle-grid">
-            <span class="icon">#</span>
-          </button>
-          <button class="toolbar-btn" @click="toggleFullscreen" :title="$t('toolbar.fullscreen')" data-uid="App-btn-fullscreen">
-            <span class="icon">⛶</span>
-          </button>
-        </div>
-      </div>
-    </header>
-    
-    <div class="main-layout" data-uid="App-main-layout">
-      <!-- 左侧数据库树面板 -->
-      <aside 
-        class="database-panel" 
-        :class="{ 
-          'database-panel-hidden': isMobile && !sidebarVisible,
-          'database-panel-overlay': isMobile && sidebarVisible
-        }"
-        :aria-label="$t('panel.databaseStructure')"
-        data-uid="App-database-panel"
-      >
-        <!-- 移动端关闭按钮 -->
-        <div v-if="isMobile" class="mobile-panel-header" data-uid="App-mobile-panel-header">
-          <h3>{{ $t('panel.databaseStructure') }}</h3>
-          <button class="close-btn" @click="closeSidebar" data-uid="App-btn-close-sidebar">
-            <span class="icon">✕</span>
-          </button>
-        </div>
-        
-        <DatabaseTree
-          :tree-data="store.treeData"
-          :selected-entity-id="selectedEntities[0]?.id"
-          @create-database="showDatabaseModal = true"
-          @edit-database="handleEditDatabase"
-          @delete-database="handleDeleteDatabase"
-          @create-entity="handleCreateEntity"
-          @edit-entity="handleEditEntity"
-          @delete-entity="handleDeleteEntity"
-          @select-entity="handleSelectEntityFromTree"
-        />
-      </aside>
-      
+  <div class="app-container" :class="{ 'dark-theme': isDarkTheme }">
+    <!-- 顶部导航栏 -->
+    <AppHeader
+      :is-mobile="isMobile"
+      :is-dark-theme="isDarkTheme"
+      :current-locale="currentLocale"
+      @toggleSidebar="toggleSidebar"
+      @changeLanguage="changeLanguage"
+      @toggleTheme="toggleTheme"
+    />
+    <!-- 工具栏 -->
+    <Toolbar
+      :is-mobile="isMobile"
+      :is-dark-theme="isDarkTheme"
+      :current-locale="currentLocale"
+      :zoom-level="zoomLevel"
+      @toggleSidebar="toggleSidebar"
+      @newDiagram="newDiagram"
+      @saveDiagram="saveDiagram"
+      @exportDiagram="exportDiagram"
+      @addEntity="addEntityAtPosition"
+      @undo="undo"
+      @redo="redo"
+      @zoomIn="zoomIn"
+      @zoomOut="zoomOut"
+      @setZoom="handleZoomChange"
+      @resetZoom="resetZoom"
+      @toggleGrid="toggleGrid"
+      @toggleFullscreen="toggleFullscreen"
+      @copyEntity="copyEntity"
+      @pasteEntity="paste"
+      @deleteEntity="deleteSelectedEntities"
+      @importDiagram="importDiagram"
+      @colorEntityBorder="colorEntityBorder"
+    />
+
+    <!-- 主布局 -->
+    <div class="main-layout">
       <!-- 移动端遮罩层 -->
       <div 
         v-if="isMobile && sidebarVisible" 
         class="sidebar-overlay"
-        @click="closeSidebar"
-        data-uid="App-sidebar-overlay"
-      ></div>
-      
+        @click="closeSidebar">
+      </div>
       <!-- 中央画布区域 -->
-      <main class="canvas-container" data-uid="App-canvas-container">
-        <ERCanvas 
+      <main class="canvas-container">
+        <DSCanvas 
           ref="canvasRef"
           :zoom-level="zoomLevel"
           :show-grid="showGrid"
           :selected-entities="selectedEntities"
-          @entity-click="handleEntityClick"
-          @entity-double-click="handleEntityDoubleClick"
-          @entity-right-click="handleEntityRightClick"
-          @canvas-click="handleCanvasClick"
-          @canvas-right-click="handleCanvasRightClick"
-          @selection-change="handleSelectionChange"
-          @zoom-change="handleZoomChange"
+          @entityClick="handleEntityClick"
+          @entityDoubleClick="handleEntityDoubleClick"
+          @entityRightClick="handleEntityRightClick"
+          @canvasClick="handleCanvasClick"
+          @canvasRightClick="handleCanvasRightClick"
+          @selectionChange="handleSelectionChange"
+          @zoomChange="handleZoomChange"
           :style="{ '--zoom-level': zoomLevel }"
         />
-        
         <!-- 右键菜单 -->
-        <div 
-          v-if="showContextMenu" 
-          class="context-menu"
-          :style="{ left: contextMenuX + 'px', top: contextMenuY + 'px' }"
+        <ContextMenu
+          :show="showContextMenu || showEntityContextMenu"
+          :x="contextMenuX"
+          :y="contextMenuY"
+          :canPaste="canPaste"
+          :type="showEntityContextMenu ? 'entity' : 'canvas'"
+          @addEntity="addEntityAtPosition"
+          @paste="paste"
+          @selectAll="selectAll"
+          @editEntity="editEntity"
+          @copyEntity="copyEntity"
+          @deleteEntity="deleteSelectedEntities"
+          @bringToFront="bringToFront"
+          @sendToBack="sendToBack"
           @click.stop
-          data-uid="App-context-menu"
-        >
-          <div class="context-menu-item" @click="addEntityAtPosition" data-uid="App-context-menu-add-entity">
-            <span class="icon">📦</span>
-            {{ $t('contextMenu.addEntity') }}
-          </div>
-          <div class="context-menu-separator"></div>
-          <div class="context-menu-item" @click="paste" :disabled="!canPaste" data-uid="App-context-menu-paste">
-            <span class="icon">📋</span>
-            {{ $t('contextMenu.paste') }}
-          </div>
-          <div class="context-menu-item" @click="selectAll" data-uid="App-context-menu-select-all">
-            <span class="icon">⊞</span>
-            {{ $t('contextMenu.selectAll') }}
-          </div>
-        </div>
-        
-        <!-- 实体右键菜单 -->
-        <div 
-          v-if="showEntityContextMenu" 
-          class="context-menu"
-          :style="{ left: contextMenuX + 'px', top: contextMenuY + 'px' }"
-          @click.stop
-          data-uid="App-entity-context-menu"
-        >
-          <div class="context-menu-item" @click="editEntity" data-uid="App-entity-context-menu-edit">
-            <span class="icon">✏️</span>
-            {{ $t('contextMenu.edit') }}
-          </div>
-          <div class="context-menu-item" @click="copyEntity" data-uid="App-entity-context-menu-copy">
-            <span class="icon">📄</span>
-            {{ $t('contextMenu.copy') }}
-          </div>
-          <div class="context-menu-item" @click="deleteSelectedEntities" data-uid="App-entity-context-menu-delete">
-            <span class="icon">🗑️</span>
-            {{ $t('contextMenu.delete') }}
-          </div>
-          <div class="context-menu-separator"></div>
-          <div class="context-menu-item" @click="bringToFront" data-uid="App-entity-context-menu-bring-front">
-            <span class="icon">⬆️</span>
-            {{ $t('contextMenu.bringToFront') }}
-          </div>
-          <div class="context-menu-item" @click="sendToBack" data-uid="App-entity-context-menu-send-back">
-            <span class="icon">⬇️</span>
-            {{ $t('contextMenu.sendToBack') }}
-          </div>
-        </div>
-        
+        />
         <!-- 关系创建提示 -->
-        <div v-if="selectedEntities.length === 2" class="relation-hint" data-uid="App-relation-hint">
+        <div v-if="selectedEntities.length === 2" class="relation-hint">
           <div class="hint-content">
             <span>{{ $t('relation.hint') }} {{ selectedEntities.length }} {{ $t('panel.entities') }}</span>
-            <button @click="createRelation" class="create-relation-btn" data-uid="App-btn-create-relation">{{ $t('relation.createRelation') }}</button>
+            <button @click="createRelation" class="create-relation-btn">{{ $t('relation.createRelation') }}</button>
           </div>
         </div>
       </main>
-      
-      <!-- 右侧属性面板 -->
-      <aside v-if="showPropertyPanel" class="property-panel" data-uid="App-property-panel">
-        <div class="panel-header">
-          <h3>{{ $t('panel.properties') }}</h3>
-          <button @click="closePropertyPanel" class="close-btn" data-uid="App-btn-close-property-panel">×</button>
+      <!-- 右侧数据库树面板（上下布局） -->
+      <div v-if="sidebarVisible" class="sidebar-vertical" :style="{ width: sidebarWidth + 'px' }">
+        <div class="resize-handle" @mousedown="startSidebarResize"></div>
+        <div class="sidebar-top" :style="{ height: `calc(100% - ${sidebarBottomHeight}px)` }">
+          <DatasourceTree
+            :treeData="store.treeData"
+            :selectedEntityId="selectedEntities[0]?.id"
+            :hidden="!sidebarVisible"
+            :is-mobile="isMobile"
+            @createDatasource="showDatasourceModal = true"
+            @editDatasource="handleEditDatasource"
+            @deleteDatasource="handleDeleteDatasource"
+            @createEntity="handleCreateEntity"
+            @editEntity="handleEditEntity"
+            @deleteEntity="handleDeleteEntity"
+            @selectEntity="handleSelectEntityFromTree"
+          />
         </div>
-        
-        <div v-if="selectedEntities.length === 1" class="entity-properties">
-          <div class="property-section">
-            <h4>{{ $t('panel.basicInfo') }}</h4>
-            <div class="form-group">
-              <label>{{ $t('entity.name') }}:</label>
-              <input v-model="selectedEntities[0].name" @input="updateEntity" />
-            </div>
-            <div class="form-group">
-              <label>{{ $t('entity.comment') }}:</label>
-              <textarea v-model="selectedEntities[0].comment" @input="updateEntity" rows="2"></textarea>
-            </div>
-          </div>
-          
-          <div class="property-section">
-            <h4>{{ $t('panel.fields') }} ({{ selectedEntities[0].fields.length }})</h4>
-            <div class="fields-list">
-              <div v-for="field in selectedEntities[0].fields" :key="field.id" class="field-row">
-                <div class="field-info">
-                  <div class="field-name">
-                    <span v-if="field.isPrimaryKey" class="key-icon">🔑</span>
-                    {{ field.name }}
-                  </div>
-                  <div class="field-type">{{ field.type }}</div>
-                </div>
-                <button @click="editField(field)" class="edit-field-btn">✏️</button>
-              </div>
-            </div>
-            <button @click="addField" class="add-field-btn">+ {{ $t('field.add') }}</button>
-          </div>
-          
-          <div class="property-section">
-            <h4>{{ $t('panel.style') }}</h4>
-            <div class="form-group">
-              <label>{{ $t('panel.backgroundColor') }}:</label>
-              <input type="color" v-model="selectedEntities[0].backgroundColor" @input="updateEntity" />
-            </div>
-            <div class="form-group">
-              <label>{{ $t('panel.borderColor') }}:</label>
-              <input type="color" v-model="selectedEntities[0].borderColor" @input="updateEntity" />
-            </div>
-          </div>
+        <div class="sidebar-divider" @mousedown="startSidebarInnerResize"></div>
+        <div class="sidebar-bottom" :style="{ height: sidebarBottomHeight + 'px' }">
+          <ChatBox v-if="sidebarVisible" />
         </div>
-        
-        <div v-else-if="selectedEntities.length > 1" class="multi-selection">
-          <h4>{{ $t('panel.multiSelection') }} ({{ selectedEntities.length }} {{ $t('panel.entities') }})</h4>
-          <button @click="alignLeft" class="align-btn">{{ $t('alignment.alignLeft') }}</button>
-          <button @click="alignCenter" class="align-btn">{{ $t('alignment.alignCenter') }}</button>
-          <button @click="alignRight" class="align-btn">{{ $t('alignment.alignRight') }}</button>
-          <button @click="distributeHorizontally" class="align-btn">{{ $t('alignment.distributeHorizontally') }}</button>
-          <button @click="distributeVertically" class="align-btn">{{ $t('alignment.distributeVertically') }}</button>
-        </div>
-      </aside>
+      </div>
     </div>
-    
     <!-- 实体编辑模态框 -->
     <EntityEditModal 
       v-if="showEntityModal"
       :entity="editingEntity"
-      :databases="store.databases"
-      :available-parents="store.entities.filter(e => e.databaseId === (editingEntity?.databaseId || store.databases[0]?.id))"
-      :default-database-id="store.databases[0]?.id"
+      :datasources="store.datasources"
+      :available-parents="store.entities.filter(e => e.datasourceId === (editingEntity?.datasourceId || store.datasources[0]?.id))"
+      :default-datasource-id="store.datasources[0]?.id"
       @save="handleEntitySave"
       @close="closeEntityModal"
     />
-    
     <!-- 关系编辑模态框 -->
     <RelationEditModal 
       v-if="showRelationModal"
@@ -274,13 +125,12 @@
       @save="handleRelationSave"
       @close="closeRelationModal"
     />
-    
     <!-- 数据库编辑模态框 -->
-    <DatabaseEditModal 
-      v-if="showDatabaseModal"
-      :database="editingDatabase"
-      @save="handleDatabaseSave"
-      @close="closeDatabaseModal"
+    <DatasourceEditModal 
+      v-if="showDatasourceModal"
+      :datasource="editingDatasource"
+      @save="handleDatasourceSave"
+      @close="closeDatasourceModal"
     />
   </div>
 </template>
@@ -288,35 +138,33 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useERDiagramStore } from './stores/erDiagram'
-import ERCanvas from './components/ERCanvas.vue'
-import EntityEditModal from './components/EntityEditModal.vue'
-import RelationEditModal from './components/RelationEditModal.vue'
-import DatabaseTree from './components/DatabaseTree.vue'
-import DatabaseEditModal from './components/DatabaseEditModal.vue'
-import type { Entity, Field, Database } from './types/entity'
+import { useDSDiagramStore } from './stores/dsDiagram'
+import { DSCanvas, EntityEditModal, RelationEditModal, DatasourceTree, DatasourceEditModal, 
+  Toolbar, AppHeader, ContextMenu} from './components'
+import ChatBox from './components/ChatBox.vue'
+import type { Entity, Field, Datasource } from './types/entity'
 
-const store = useERDiagramStore()
+const store = useDSDiagramStore()
 const { locale, t: $t } = useI18n()
 const currentLocale = ref(locale.value)
 
 // 响应式状态
 const windowWidth = ref(window.innerWidth)
 const isMobile = computed(() => windowWidth.value <= 768)
-// const isTablet = computed(() => windowWidth.value <= 1024 && windowWidth.value > 768)
+const isTablet = computed(() => windowWidth.value <= 1024 && windowWidth.value > 768)
 const sidebarVisible = ref(!isMobile.value)
 const isDarkTheme = ref(false)
 
 // 响应式数据
-const canvasRef = ref<InstanceType<typeof ERCanvas> | null>(null)
+const canvasRef = ref<InstanceType<typeof DSCanvas> | null>(null)
 const showEntityModal = ref(false)
 const showRelationModal = ref(false)
-const showDatabaseModal = ref(false)
+const showDatasourceModal = ref(false)
 const showPropertyPanel = ref(false)
 const showContextMenu = ref(false)
 const showEntityContextMenu = ref(false)
 const editingEntity = ref<Entity | null>(null)
-const editingDatabase = ref<Database | null>(null)
+const editingDatasource = ref<Datasource | null>(null)
 const selectedEntities = ref<Entity[]>([])
 const contextMenuX = ref(0)
 const contextMenuY = ref(0)
@@ -324,11 +172,13 @@ const zoomLevel = ref(1)
 const showGrid = ref(true)
 const canPaste = ref(false)
 const copiedEntities = ref<Entity[]>([])
+const sidebarWidth = ref(240) //右侧数据库树面板宽度
+const sidebarBottomHeight = ref(220) // 底部聊天框初始高度
 
 // 计算属性
-// const isMultiSelect = computed(() => selectedEntities.value.length > 1)
+const isMultiSelect = computed(() => selectedEntities.value.length > 1)
 
-// 事件处理
+// 实体点击
 function handleEntityClick(entity: Entity, event: MouseEvent) {
   if (event.altKey) {
     // Alt+点击进行多选
@@ -342,24 +192,32 @@ function handleEntityClick(entity: Entity, event: MouseEvent) {
     // 单选
     selectedEntities.value = [entity]
   }
-  
   showPropertyPanel.value = selectedEntities.value.length > 0
+  console.log('showPropertyPanel', showPropertyPanel.value, 'selectedEntities', selectedEntities.value)
   hideContextMenus()
 }
 
+function colorEntityBorder() {
+  console.log('染色实体外框')
+}
+
+// 实体双击
 function handleEntityDoubleClick(entity: Entity) {
   editingEntity.value = entity
   showEntityModal.value = true
 }
 
+// 画布点击
 function handleCanvasClick(event: MouseEvent) {
   if (!event.ctrlKey && !event.metaKey) {
     selectedEntities.value = []
     showPropertyPanel.value = false
   }
+  console.log('handleCanvasClick', event)
   hideContextMenus()
 }
 
+// 画布右键菜单
 function handleCanvasRightClick(event: MouseEvent) {
   event.preventDefault()
   contextMenuX.value = event.clientX
@@ -368,6 +226,7 @@ function handleCanvasRightClick(event: MouseEvent) {
   showEntityContextMenu.value = false
 }
 
+// 实体右键菜单
 function handleEntityRightClick(entity: Entity, event: MouseEvent) {
   event.preventDefault()
   event.stopPropagation()
@@ -382,11 +241,13 @@ function handleEntityRightClick(entity: Entity, event: MouseEvent) {
   showContextMenu.value = false
 }
 
+// 选择变化
 function handleSelectionChange(entities: Entity[]) {
   selectedEntities.value = entities
   showPropertyPanel.value = entities.length > 0
 }
 
+// 缩放变化
 function handleZoomChange(level: number) {
   zoomLevel.value = level
 }
@@ -400,42 +261,78 @@ function newDiagram() {
   }
 }
 
+// 导入图表
+function importDiagram() {
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = '.json,application/json'
+  input.onchange = (e: any) => {
+    const file = e.target.files[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      try {
+        const data = JSON.parse(event.target?.result as string)
+        if (data.entities && data.relations) {
+          store.loadDiagram(data)
+          alert($t('messages.importSuccess'))
+        } else {
+          alert($t('messages.importInvalid'))
+        }
+      } catch {
+        alert($t('messages.importInvalid'))
+      }
+    }
+    reader.readAsText(file)
+  }
+  input.click()
+}
+
+// 保存图表
 function saveDiagram() {
   // 实现保存逻辑
   console.log('保存图表')
   alert($t('messages.diagramSaved'))
 }
 
+// 导出图表
 function exportDiagram() {
   // 实现导出逻辑
   console.log('导出图表')
 }
 
+// 撤销
 function undo() {
   store.undo()
 }
 
+// 重做
 function redo() {
   store.redo()
 }
 
+// 切换主题
 function toggleTheme() {
   isDarkTheme.value = !isDarkTheme.value
   // 保存主题设置到本地存储
   localStorage.setItem('theme', isDarkTheme.value ? 'dark' : 'light')
 }
 
+// 加载主题
 function loadTheme() {
   const savedTheme = localStorage.getItem('theme')
   isDarkTheme.value = savedTheme === 'dark'
 }
 
-function changeLanguage() {
-  locale.value = currentLocale.value
-  localStorage.setItem('locale', currentLocale.value)
+// 切换语言
+function changeLanguage(newLocale: string) {
+  currentLocale.value = newLocale
+  locale.value = newLocale
+  localStorage.setItem('locale', newLocale)
   document.title = $t('app.title')
 }
 
+// 加载语言
 function loadLocale() {
   const savedLocale = localStorage.getItem('locale')
   if (savedLocale) {
@@ -444,22 +341,27 @@ function loadLocale() {
   }
 }
 
+// 放大
 function zoomIn() {
   canvasRef.value?.zoomIn()
 }
 
+// 缩小
 function zoomOut() {
   canvasRef.value?.zoomOut()
 }
 
+// 重置缩放
 function resetZoom() {
   canvasRef.value?.resetZoom()
 }
 
+// 切换网格
 function toggleGrid() {
   showGrid.value = !showGrid.value
 }
 
+// 切换全屏
 function toggleFullscreen() {
   if (!document.fullscreenElement) {
     document.documentElement.requestFullscreen()
@@ -468,6 +370,7 @@ function toggleFullscreen() {
   }
 }
 
+// 添加实体
 function addEntityAtPosition() {
   const entity: Entity = {
     id: Date.now().toString(),
@@ -480,7 +383,7 @@ function addEntityAtPosition() {
     height: 60, // 最小高度，将由ERCanvas自动计算更新
     backgroundColor: '#ffffff',
     borderColor: '#000000',
-    databaseId: store.databases[0]?.id || '',
+    datasourceId: store.datasources[0]?.id || '',
     entityType: 'entity'
   }
   
@@ -488,6 +391,7 @@ function addEntityAtPosition() {
   hideContextMenus()
 }
 
+// 编辑实体
 function editEntity() {
   if (selectedEntities.value.length === 1) {
     editingEntity.value = selectedEntities.value[0]
@@ -496,6 +400,7 @@ function editEntity() {
   hideContextMenus()
 }
 
+// 复制实体
 function copyEntity() {
   if (selectedEntities.value.length > 0) {
     // 深拷贝选中的实体
@@ -508,6 +413,7 @@ function copyEntity() {
   hideContextMenus()
 }
 
+// 粘贴实体
 function paste() {
   if (copiedEntities.value.length > 0) {
     const offsetX = 20
@@ -536,6 +442,7 @@ function paste() {
   hideContextMenus()
 }
 
+// 删除选中的实体
 function deleteSelectedEntities() {
   if (selectedEntities.value.length > 0 && confirm($t('messages.deleteEntitiesConfirm'))) {
     selectedEntities.value.forEach(entity => {
@@ -547,55 +454,18 @@ function deleteSelectedEntities() {
   hideContextMenus()
 }
 
+// 全选
 function selectAll() {
   selectedEntities.value = [...store.entities]
   showPropertyPanel.value = true
   hideContextMenus()
 }
 
+// 创建关系
 function createRelation() {
   if (selectedEntities.value.length === 2) {
     showRelationModal.value = true
   }
-}
-
-// 对齐操作
-function alignLeft() {
-  if (selectedEntities.value.length > 1) {
-    const minX = Math.min(...selectedEntities.value.map(e => e.x))
-    selectedEntities.value.forEach(entity => {
-      entity.x = minX
-      store.updateEntity(entity)
-    })
-  }
-}
-
-function alignCenter() {
-  if (selectedEntities.value.length > 1) {
-    const centerX = selectedEntities.value.reduce((sum, e) => sum + e.x + e.width / 2, 0) / selectedEntities.value.length
-    selectedEntities.value.forEach(entity => {
-      entity.x = centerX - entity.width / 2
-      store.updateEntity(entity)
-    })
-  }
-}
-
-function alignRight() {
-  if (selectedEntities.value.length > 1) {
-    const maxX = Math.max(...selectedEntities.value.map(e => e.x + e.width))
-    selectedEntities.value.forEach(entity => {
-      entity.x = maxX - entity.width
-      store.updateEntity(entity)
-    })
-  }
-}
-
-function distributeHorizontally() {
-  // 实现水平分布
-}
-
-function distributeVertically() {
-  // 实现垂直分布
 }
 
 // 其他操作
@@ -612,11 +482,6 @@ function hideContextMenus() {
   showEntityContextMenu.value = false
 }
 
-function closePropertyPanel() {
-  showPropertyPanel.value = false
-  selectedEntities.value = []
-}
-
 function closeEntityModal() {
   showEntityModal.value = false
   editingEntity.value = null
@@ -626,68 +491,65 @@ function closeRelationModal() {
   showRelationModal.value = false
 }
 
-function updateEntity() {
-  if (selectedEntities.value.length === 1) {
-    store.updateEntity(selectedEntities.value[0])
-  }
-}
-
-function addField() {
-  if (selectedEntities.value.length === 1) {
-    const entity = selectedEntities.value[0]
-    const newField: Field = {
-      id: Date.now().toString(),
-      name: $t('field.new'),
-      type: 'VARCHAR(50)',
-      comment: '',
-      isPrimaryKey: false,
-      isRequired: false,
-      isUnique: false
-    }
-    entity.fields.push(newField)
-    updateEntity()
-  }
-}
-
-function editField(_field: Field) {
-  // 实现字段编辑
-}
-
+// 保存实体
 function handleEntitySave(entity: Entity) {
-  if (editingEntity.value) {
+  if (editingEntity.value && editingEntity.value.id) {
     store.updateEntity(entity)
   } else {
+    // 新增实体，parentEntityId 需保留
     store.addEntity(entity)
   }
   closeEntityModal()
+  // 新增后刷新树结构（如有必要）
+  if (typeof store.loadDatasources === 'function') {
+    store.loadDatasources()
+  }
 }
 
+// 保存关系
 function handleRelationSave(relation: any) {
-  store.addRelation(relation)
+  store.addRelationship(relation)
   closeRelationModal()
 }
 
-// 数据库相关操作
-function handleEditDatabase(databaseId: string) {
-  const database = store.databases.find(db => db.id === databaseId)
-  if (database) {
-    editingDatabase.value = database
-    showDatabaseModal.value = true
+// 编辑数据源
+function handleEditDatasource(datasourceId: string) {
+  const datasource = store.datasources.find(ds => ds.id === datasourceId)
+  if (datasource) {
+    editingDatasource.value = datasource
+    showDatasourceModal.value = true
   }
 }
 
-function handleDeleteDatabase(databaseId: string) {
-  if (confirm($t('messages.deleteDatabaseConfirm'))) {
-    store.deleteDatabase(databaseId)
+// 删除数据源
+function handleDeleteDatasource(datasourceId: string) {
+  if (confirm($t('messages.deleteDatasourceConfirm'))) {
+    store.deleteDatasource(datasourceId)
   }
 }
 
-function handleCreateEntity(_databaseId: string) {
-  editingEntity.value = null
+// 创建实体
+function handleCreateEntity(datasourceId: string, parentEntityId?: string) {
+  // 新增实体时，弹窗应带上 datasourceId 和 parentEntityId
+  editingEntity.value = {
+    id: '',
+    name: '',
+    comment: '',
+    datasourceId,
+    parentEntityId,
+    entityType: 'entity',
+    fields: [],
+    x: 100,
+    y: 100,
+    width: 200,
+    height: 60,
+    backgroundColor: '#ffffff',
+    borderColor: '#24292e'
+  }
   showEntityModal.value = true
-  // 设置默认数据库ID
 }
 
+// 编辑实体
 function handleEditEntity(entityId: string) {
   const entity = store.entities.find(e => e.id === entityId)
   if (entity) {
@@ -696,12 +558,14 @@ function handleEditEntity(entityId: string) {
   }
 }
 
+// 删除实体
 function handleDeleteEntity(entityId: string) {
   if (confirm($t('messages.deleteEntityConfirm'))) {
     store.deleteEntity(entityId)
   }
 }
 
+// 从树中选择实体
 function handleSelectEntityFromTree(entityId: string) {
   const entity = store.entities.find(e => e.id === entityId)
   if (entity) {
@@ -711,19 +575,21 @@ function handleSelectEntityFromTree(entityId: string) {
   }
 }
 
-function handleDatabaseSave(database: Database) {
-  if (editingDatabase.value) {
-    store.updateDatabase(database)
+// 保存数据库
+function handleDatasourceSave(datasource: Datasource) {
+  if (editingDatasource.value) {
+    store.updateDatasource(datasource)
   } else {
-    store.addDatabase(database)
+    store.addDatasource(datasource)
   }
-  showDatabaseModal.value = false
-  editingDatabase.value = null
+  showDatasourceModal.value = false
+  editingDatasource.value = null
 }
 
-function closeDatabaseModal() {
-  showDatabaseModal.value = false
-  editingDatabase.value = null
+// 关闭数据库编辑模态框
+function closeDatasourceModal() {
+  showDatasourceModal.value = false
+  editingDatasource.value = null
 }
 
 // 响应式方法
@@ -737,12 +603,47 @@ function handleResize() {
   }
 }
 
+// 切换侧边栏
 function toggleSidebar() {
   sidebarVisible.value = !sidebarVisible.value
 }
 
+// 关闭侧边栏
 function closeSidebar() {
   sidebarVisible.value = false
+}
+
+// 调整右侧面板宽度（拖拽调整）
+function startSidebarResize(e: MouseEvent) {
+  const startX = e.clientX
+  const startWidth = sidebarWidth.value
+  function onMouseMove(ev: MouseEvent) {
+    const newWidth = Math.max(160, Math.min(500, startWidth - (ev.clientX - startX)))
+    sidebarWidth.value = newWidth
+  }
+  function onMouseUp() {
+    window.removeEventListener('mousemove', onMouseMove)
+    window.removeEventListener('mouseup', onMouseUp)
+  }
+  window.addEventListener('mousemove', onMouseMove)
+  window.addEventListener('mouseup', onMouseUp)
+}
+
+// 调整右侧chatbox底部高度（拖拽调整）
+function startSidebarInnerResize(e: MouseEvent) {
+  const startY = e.clientY
+  const startHeight = sidebarBottomHeight.value
+  function onMouseMove(ev: MouseEvent) {
+    const delta = ev.clientY - startY
+    const newHeight = Math.max(100, Math.min(400, startHeight - delta))
+    sidebarBottomHeight.value = newHeight
+  }
+  function onMouseUp() {
+    window.removeEventListener('mousemove', onMouseMove)
+    window.removeEventListener('mouseup', onMouseUp)
+  }
+  window.addEventListener('mousemove', onMouseMove)
+  window.addEventListener('mouseup', onMouseUp)
 }
 
 // 生命周期
@@ -750,23 +651,22 @@ onMounted(() => {
   document.addEventListener('click', hideContextMenus)
   document.addEventListener('keydown', handleKeyDown)
   window.addEventListener('resize', handleResize)
-  
   // 初始化侧边栏状态
   handleResize()
-  
   // 加载主题设置
   loadTheme()
-  
   // 加载语言设置
   loadLocale()
+  // 加载数据源
+  store.loadDatasources()
 })
-
 onUnmounted(() => {
   document.removeEventListener('click', hideContextMenus)
   document.removeEventListener('keydown', handleKeyDown)
   window.removeEventListener('resize', handleResize)
 })
 
+// 键盘事件
 function handleKeyDown(event: KeyboardEvent) {
   if (event.key === 'Delete' && selectedEntities.value.length > 0) {
     deleteSelectedEntities()
@@ -782,6 +682,7 @@ function handleKeyDown(event: KeyboardEvent) {
 </script>
 
 <style scoped>
+/* 主容器 */
 .app-container {
   width: 100vw;
   height: 100vh;
@@ -790,161 +691,57 @@ function handleKeyDown(event: KeyboardEvent) {
   background: #f5f5f5;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
-
-.top-toolbar {
-  height: 80px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20" fill="none"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="%23ffffff" stroke-width="0.5" opacity="0.1"/></pattern></defs><rect width="100" height="20" fill="url(%23grid)"/></svg>');
-  border-bottom: 3px solid #5a67d8;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 24px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  position: relative;
-  overflow: hidden;
-}
-
-.top-toolbar::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  animation: shimmer 3s infinite;
-}
-
-@keyframes shimmer {
-  0% { left: -100%; }
-  100% { left: 100%; }
-}
-
-.toolbar-left {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex: 1;
-  min-width: 0;
-}
-
-.toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-weight: 700;
-  color: #ffffff;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-  padding: 8px 16px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.logo-text {
-  font-size: 20px;
-  white-space: nowrap;
-  letter-spacing: 0.5px;
-}
-
-.logo-text-mobile {
-  display: none;
-}
-
-.logo-icon {
-  font-size: 24px;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-}
-
-.toolbar-group {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.toolbar-btn {
-  width: 32px;
-  height: 32px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  background: transparent;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: #ffffff;
-  font-size: 14px;
-  transition: all 0.2s ease;
-}
-
-.mobile-menu-btn {
-  margin-right: 12px;
-  padding: 8px;
-  min-width: auto;
-}
-
-.mobile-menu-btn .icon {
-  font-size: 18px;
-  line-height: 1;
-}
-
-.toolbar-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.5);
-}
-
-.toolbar-separator {
-  width: 1px;
-  height: 20px;
-  background: rgba(255, 255, 255, 0.2);
-  margin: 0 8px;
-}
-
-.zoom-level {
-  font-size: 12px;
-  color: #ffffff;
-  min-width: 40px;
-  text-align: center;
-  font-weight: 400;
-  opacity: 0.8;
-}
-
+/* 主布局 */
 .main-layout {
   flex: 1;
+  height: 100%;
   display: flex;
+}
+/* 画布容器 */
+.canvas-container {
+  flex: 1;
+  display: flex;
+  background: #f6f8fa;
   overflow: hidden;
 }
-
-.database-panel {
-  width: var(--sidebar-width);
+/* 右侧数据库树面板（上下布局） */
+.sidebar-vertical {
+  display: flex;
+  flex-direction: column;
+  width: var(--sidebar-width, 280px);
+  min-width: 280px;
+  max-width: 500px;
+  height: 100%;
   background: #fff;
-  border-right: 1px solid #e1e4e8;
-  overflow-y: auto;
-  transition: transform 0.3s ease;
-}
-
-.database-panel-hidden {
-  transform: translateX(-100%);
-}
-
-.database-panel-overlay {
-  position: fixed;
-  top: var(--toolbar-height);
-  left: 0;
-  height: calc(100vh - var(--toolbar-height));
+  border-left: 1px solid #e4e7ed;
   z-index: 1000;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+  position: relative;
 }
-
+/* 右侧数据库树面板（顶部） */
+.sidebar-top {
+  width: 100%;
+  overflow: auto;
+  transition: height 0.1s;
+}
+/* 右侧数据库树面板（分割线） */
+.sidebar-divider {
+  width: 100%;
+  height: 2px;
+  cursor: ns-resize;
+  background: #e4e7ed;
+  z-index: 2;
+}
+/* 右侧数据库树面板（底部） */
+.sidebar-bottom {
+  width: 100%;
+  min-height: 100px;
+  max-height: 400px;
+  background: #f8fafc;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.04);
+  transition: height 0.1s;
+  overflow: auto;
+}
+/* 移动端遮罩层 */
 .sidebar-overlay {
   position: fixed;
   top: 0;
@@ -954,216 +751,22 @@ function handleKeyDown(event: KeyboardEvent) {
   background: rgba(0, 0, 0, 0.5);
   z-index: 999;
 }
-
-.mobile-panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px;
-  border-bottom: 1px solid #e1e4e8;
-  background: #f6f8fa;
-}
-
-.mobile-panel-header h3 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #24292e;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  transition: background-color 0.2s;
-}
-
-.close-btn:hover {
-  background: #e1e4e8;
-}
-
-.close-btn .icon {
-  font-size: 16px;
-  line-height: 1;
-  color: #586069;
-}
-
-.panel-header {
-  padding: 16px;
-  border-bottom: 1px solid #e1e4e8;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.panel-header h3 {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: #24292e;
-}
-
-.shape-category {
-  padding: 16px;
-  border-bottom: 1px solid #f6f8fa;
-}
-
-.shape-category h4 {
-  margin: 0 0 12px 0;
-  font-size: 12px;
-  font-weight: 600;
-  color: #586069;
-  text-transform: uppercase;
-}
-
-.shape-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-}
-
-.shape-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 12px 8px;
-  border: 1px solid #e1e4e8;
-  border-radius: 6px;
-  cursor: pointer;
-  background: #fff;
-  transition: all 0.2s;
-}
-
-.shape-item:hover {
-  border-color: #0366d6;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.shape-preview {
-  width: 60px;
-  height: 40px;
-  margin-bottom: 8px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-.entity-preview {
-  border: 1px solid #24292e;
-  border-radius: 4px;
-  background: #fff;
-  font-size: 8px;
-  padding: 2px;
-}
-
-.entity-header {
-  background: #f6f8fa;
-  padding: 2px 4px;
-  font-weight: bold;
-  border-bottom: 1px solid #e1e4e8;
-}
-
-.entity-field {
-  padding: 1px 4px;
-  font-size: 7px;
-}
-
-.relation-preview {
-  position: relative;
-}
-
-.relation-line {
-  width: 40px;
-  height: 2px;
-  background: #24292e;
-  position: relative;
-}
-
-.relation-line::after {
-  content: '';
+/* 调整右侧数据库树面板宽度（拖拽调整） */
+.resize-handle {
   position: absolute;
-  right: -4px;
-  top: -2px;
-  width: 0;
-  height: 0;
-  border-left: 6px solid #24292e;
-  border-top: 3px solid transparent;
-  border-bottom: 3px solid transparent;
+  left: 0;
+  top: 0;
+  width: 3px;
+  height: 100%;
+  cursor: ew-resize;
+  background: transparent;
+  z-index: 2;
+  transition: background 0.2s;
 }
-
-.basic-rect {
-  width: 40px;
-  height: 24px;
-  border: 1px solid #24292e;
-  background: #fff;
-}
-
-.basic-circle {
-  width: 32px;
-  height: 32px;
-  border: 1px solid #24292e;
-  border-radius: 50%;
-  background: #fff;
-}
-
-.shape-label {
-  font-size: 11px;
-  color: #586069;
-  text-align: center;
-}
-
-.canvas-container {
-  flex: 1;
-  position: relative;
-  background: #f6f8fa;
-}
-
-.property-panel {
-  width: 280px;
-  background: #fff;
-  border-left: 1px solid #e1e4e8;
-  overflow-y: auto;
-}
-
-.context-menu {
-  position: fixed;
-  background: #fff;
-  border: 1px solid #e1e4e8;
-  border-radius: 6px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  z-index: 1000;
-  min-width: 160px;
-  padding: 4px 0;
-}
-
-.context-menu-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  cursor: pointer;
-  font-size: 13px;
-  color: #24292e;
-}
-
-.context-menu-item:hover {
-  background: #f6f8fa;
-}
-
-.context-menu-item[disabled] {
-  color: #959da5;
-  cursor: not-allowed;
-}
-
-.context-menu-separator {
-  height: 1px;
+.resize-handle:hover {
   background: #e1e4e8;
-  margin: 4px 0;
 }
-
+/* 关系创建提示 */
 .relation-hint {
   position: absolute;
   top: 16px;
@@ -1176,14 +779,12 @@ function handleKeyDown(event: KeyboardEvent) {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 100;
 }
-
 .hint-content {
   display: flex;
   align-items: center;
   gap: 12px;
   font-size: 13px;
 }
-
 .create-relation-btn {
   background: #fff;
   color: #0366d6;
@@ -1193,850 +794,20 @@ function handleKeyDown(event: KeyboardEvent) {
   font-size: 12px;
   cursor: pointer;
 }
-
 .create-relation-btn:hover {
   background: #f6f8fa;
 }
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 18px;
-  color: #586069;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-}
-
-.close-btn:hover {
-  background: #f6f8fa;
-  color: #24292e;
-}
-
-.entity-properties {
-  padding: 16px;
-}
-
-.property-section {
-  margin-bottom: 24px;
-}
-
-.property-section h4 {
-  margin: 0 0 12px 0;
-  font-size: 13px;
-  font-weight: 600;
-  color: #24292e;
-}
-
-.form-group {
-  margin-bottom: 12px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 4px;
-  font-size: 12px;
-  font-weight: 500;
-  color: #586069;
-}
-
-.form-group input,
-.form-group textarea {
-  width: 100%;
-  padding: 6px 8px;
-  border: 1px solid #e1e4e8;
-  border-radius: 4px;
-  font-size: 13px;
-}
-
-.form-group input:focus,
-.form-group textarea:focus {
-  outline: none;
-  border-color: #0366d6;
-  box-shadow: 0 0 0 2px rgba(3, 102, 214, 0.2);
-}
-
-.fields-list {
-  max-height: 200px;
-  overflow-y: auto;
-  border: 1px solid #e1e4e8;
-  border-radius: 4px;
-}
-
-.field-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  border-bottom: 1px solid #f6f8fa;
-}
-
-.field-row:last-child {
-  border-bottom: none;
-}
-
-.field-info {
-  flex: 1;
-}
-
-.field-name {
-  font-size: 13px;
-  font-weight: 500;
-  color: #24292e;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.key-icon {
-  font-size: 10px;
-}
-
-.field-type {
-  font-size: 11px;
-  color: #586069;
-}
-
-.edit-field-btn {
-  background: none;
-  border: none;
-  color: #586069;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-}
-
-.edit-field-btn:hover {
-  background: #f6f8fa;
-  color: #24292e;
-}
-
-.add-field-btn {
-  width: 100%;
-  padding: 8px;
-  background: #f6f8fa;
-  border: 1px dashed #e1e4e8;
-  border-radius: 4px;
-  color: #586069;
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.add-field-btn:hover {
-  background: #e1e4e8;
-  border-color: #0366d6;
-  color: #0366d6;
-}
-
-.multi-selection {
-  padding: 16px;
-}
-
-.align-btn {
-  width: 100%;
-  margin-bottom: 8px;
-  padding: 8px;
-  background: #f6f8fa;
-  border: 1px solid #e1e4e8;
-  border-radius: 4px;
-  color: #24292e;
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.align-btn:hover {
-  background: #e1e4e8;
-  border-color: #0366d6;
-}
-
-/* 中等屏幕优化 */
-@media (max-width: 1024px) {
-  .toolbar-left {
-    gap: 12px;
-  }
-  
-  .toolbar-group {
-    gap: 3px;
-  }
-  
-  .toolbar-btn {
-    width: 34px;
-    height: 34px;
-  }
-  
-  .toolbar-separator {
-    margin: 0 8px;
-  }
-}
-
 /* 响应式样式 */
-@media (max-width: 768px) {
+@media (max-width: var(--mobile-breakpoint)) {
   .app-container {
     flex-direction: column;
   }
-  
-  .top-toolbar {
-    padding: 8px 12px;
-    height: auto;
-    min-height: var(--toolbar-height);
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  
-  .toolbar-left {
-    flex: 1;
-    min-width: 0;
-    gap: 8px;
-    overflow: hidden;
-  }
-  
-  .toolbar-right {
-    flex-shrink: 0;
-    display: flex;
-    gap: 4px;
-  }
-  
-  .logo {
-    padding: 6px 12px;
-  }
-  
-  .logo-text {
-    font-size: 16px;
-  }
-  
-  .logo-text-mobile {
-    display: none;
-  }
-  
-  .language-switcher {
-    margin-left: 8px;
-    margin-right: 8px;
-  }
-  
-  .language-switcher select {
-    padding: 4px 8px;
-    font-size: 12px;
-  }
-  
-  .toolbar-group {
-    gap: 2px;
-  }
-  
-  .toolbar-btn {
-    width: 32px;
-    height: 32px;
-    font-size: 14px;
-  }
-  
-  .zoom-level {
-    font-size: 11px;
-    min-width: 35px;
-  }
-  
-  .toolbar-separator {
-    height: 20px;
-    margin: 0 6px;
-  }
-  
   .main-layout {
     position: relative;
   }
-  
   .canvas-container {
     width: 100%;
     margin-left: 0;
   }
-  
-  .database-panel {
-    width: 280px;
-  }
-}
-
-@media (max-width: 480px) {
-  .top-toolbar {
-    padding: 6px 8px;
-    height: 60px;
-  }
-  
-  .toolbar-left {
-    gap: 4px;
-  }
-  
-  .toolbar-right {
-    gap: 2px;
-  }
-  
-  .logo {
-    padding: 4px 8px;
-  }
-  
-  .logo-text {
-    font-size: 14px;
-  }
-  
-  .logo-icon {
-    font-size: 18px;
-  }
-  
-  .language-switcher {
-    margin-left: 4px;
-    margin-right: 4px;
-  }
-  
-  .language-switcher select {
-    padding: 2px 6px;
-    font-size: 11px;
-  }
-  
-  .toolbar-group {
-    gap: 1px;
-  }
-  
-  .toolbar-btn {
-    width: 28px;
-    height: 28px;
-    font-size: 12px;
-  }
-  
-  .zoom-level {
-    font-size: 10px;
-    min-width: 30px;
-  }
-  
-  .toolbar-separator {
-    height: 16px;
-    margin: 0 4px;
-  }
-  
-  /* 在极小屏幕上隐藏一些不太重要的按钮 */
-  .toolbar-group:nth-child(4) .toolbar-btn:nth-child(3),
-  .toolbar-group:nth-child(4) .toolbar-btn:nth-child(4) {
-    display: none;
-  }
-  
-  .database-panel {
-    width: 260px;
-  }
-  
-  .mobile-panel-header {
-    padding: 12px;
-  }
-  
-  .mobile-panel-header h3 {
-    font-size: 14px;
-  }
-}
-
-/* 暗色主题样式 - Material Design 风格 */
-.dark-theme .top-toolbar {
-  background: #1e1e1e;
-  border-bottom: 1px solid #333333;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-}
-
-.dark-theme .logo {
-  background: #2c2c2c;
-  color: #ffffff;
-  border: 1px solid #444444;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.dark-theme .logo-text {
-  color: #ffffff;
-  font-weight: 500;
-}
-
-.dark-theme .logo-icon {
-  color: #bb86fc;
-}
-
-/* 浅色主题下的样式覆盖 */
-.app-container:not(.dark-theme) .toolbar-btn {
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  background: transparent;
-  color: #374151;
-}
-
-.app-container:not(.dark-theme) .toolbar-btn:hover {
-  background: rgba(0, 0, 0, 0.05);
-  border-color: rgba(0, 0, 0, 0.3);
-}
-
-.app-container:not(.dark-theme) .logo {
-  background: rgba(255, 255, 255, 0.9);
-  color: #374151;
-  border: 1px solid #d1d5db;
-  text-shadow: none;
-}
-
-.app-container:not(.dark-theme) .zoom-level {
-  color: #374151;
-  opacity: 0.7;
-}
-
-.app-container:not(.dark-theme) .toolbar-separator {
-  background: rgba(0, 0, 0, 0.15);
-}
-
-.app-container:not(.dark-theme) .language-switcher select {
-  background: #ffffff;
-  color: #374151;
-  border: 1px solid #d1d5db;
-}
-
-.app-container:not(.dark-theme) .language-switcher select:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.app-container:not(.dark-theme) .language-switcher select option {
-  background: #ffffff;
-  color: #374151;
-}
-
-.dark-theme .toolbar-btn {
-  background: transparent;
-  border: 1px solid #444444;
-  color: #ffffff;
-  transition: all 0.2s ease;
-}
-
-.dark-theme .toolbar-btn:hover {
-  background: #333333;
-  border-color: #bb86fc;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.dark-theme .toolbar-separator {
-  background: #444444;
-}
-
-.dark-theme .zoom-level {
-  color: #bb86fc;
-  opacity: 0.9;
-  font-weight: 500;
-}
-
-.dark-theme .database-panel {
-  background: #1e1e1e;
-  border-right: 1px solid #333333;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.4);
-}
-
-.dark-theme .mobile-panel-header {
-  background: #1e1e1e;
-  border-bottom: 1px solid #333333;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.dark-theme .mobile-panel-header h3 {
-  color: #ffffff;
-  font-weight: 500;
-}
-
-.dark-theme .close-btn:hover {
-  background: #333333;
-  transform: scale(1.1);
-  border-radius: 4px;
-}
-
-.dark-theme .close-btn .icon {
-  color: #bb86fc;
-}
-
-.dark-theme .panel-header {
-  border-bottom: 1px solid #333333;
-  background: #1e1e1e;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-.dark-theme .panel-header h3 {
-  color: #ffffff;
-  font-weight: 500;
-}
-
-/* 形状相关样式已移至 style.css 统一管理 */
-
-/* 语言切换器样式 */
-.language-switcher {
-  margin-left: auto;
-  margin-right: 16px;
-}
-
-.language-switcher select {
-  padding: 6px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-  font-size: 14px;
-  cursor: pointer;
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
-  font-weight: 500;
-}
-
-.language-switcher select:focus {
-  outline: none;
-  border-color: rgba(255, 255, 255, 0.5);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.language-switcher select option {
-  background: #667eea;
-  color: #ffffff;
-  padding: 8px;
-}
-
-.dark-theme .language-switcher select {
-  background: rgba(60, 60, 60, 0.9);
-  border: 1px solid #505050;
-  color: #ffffff;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-}
-
-/* 黑色主题下的属性面板样式 */
-.dark-theme .property-panel {
-  background: #1a1a1a;
-  border-left: 1px solid #404040;
-  color: #ffffff;
-}
-
-.dark-theme .property-panel .close-btn {
-  color: #ffffff;
-  background: none;
-  border: none;
-  font-size: 18px;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-}
-
-.dark-theme .property-panel .close-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.dark-theme .entity-properties {
-  color: #ffffff;
-}
-
-.dark-theme .property-section h4 {
-  color: #ffffff;
-  font-weight: 600;
-}
-
-.dark-theme .form-group label {
-  color: #cccccc;
-}
-
-.dark-theme .form-group input,
-.dark-theme .form-group textarea {
-  background: #2a2a2a;
-  border: 1px solid #505050;
-  color: #ffffff;
-}
-
-.dark-theme .form-group input:focus,
-.dark-theme .form-group textarea:focus {
-  border-color: #0366d6;
-  box-shadow: 0 0 0 2px rgba(3, 102, 214, 0.3);
-}
-
-.dark-theme .fields-list {
-  border: 1px solid #505050;
-  background: #2a2a2a;
-}
-
-.dark-theme .field-row {
-  border-bottom: 1px solid #404040;
-}
-
-.dark-theme .field-name {
-  color: #ffffff;
-}
-
-.dark-theme .field-type {
-  color: #cccccc;
-}
-
-.dark-theme .edit-field-btn {
-  color: #cccccc;
-}
-
-.dark-theme .edit-field-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-}
-
-.dark-theme .add-field-btn {
-  background: #2a2a2a;
-  border: 1px dashed #505050;
-  color: #cccccc;
-}
-
-.dark-theme .add-field-btn:hover {
-  background: #333333;
-  color: #ffffff;
-}
-
-.dark-theme .multi-selection h4 {
-  color: #ffffff;
-}
-
-.dark-theme .align-btn {
-  background: #2a2a2a;
-  border: 1px solid #505050;
-  color: #ffffff;
-  margin: 4px;
-  padding: 6px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.dark-theme .align-btn:hover {
-  background: #333333;
-  border-color: #707070;
-}
-
-/* 黑色主题下的数据库树样式 */
-.dark-theme .database-tree {
-  background: #1a1a1a !important;
-  border: 1px solid #404040;
-  color: #ffffff;
-}
-
-.dark-theme .tree-content {
-  background: #1a1a1a !important;
-}
-
-.dark-theme .tree-nodes {
-  background: transparent !important;
-}
-
-.dark-theme .tree-header {
-  background: #2a2a2a;
-  border-bottom: 1px solid #404040;
-}
-
-.dark-theme .tree-header h3 {
-  color: #ffffff;
-}
-
-.dark-theme .btn {
-  background: #404040;
-  color: #ffffff;
-  border-color: #404040;
-}
-
-.dark-theme .btn:hover {
-  background: #505050;
-  border-color: #505050;
-}
-
-
-
-.dark-theme .empty-state {
-  color: #cccccc;
-}
-
-.dark-theme .database-node .node-content:hover {
-  background: #333333 !important;
-  color: #ffffff !important;
-}
-
-.dark-theme .entity-node .node-content:hover {
-  background: #2d4a5a !important;
-  color: #ffffff !important;
-}
-
-.dark-theme .node-content {
-  background: transparent !important;
-  color: #ffffff !important;
-}
-
-.dark-theme .entity-node.selected .node-content {
-  background: #0366d6;
-  color: #ffffff;
-}
-
-.dark-theme .expand-icon {
-  color: #cccccc;
-}
-
-.dark-theme .node-icon {
-  color: #cccccc;
-}
-
-.dark-theme .database-icon {
-  color: #4fc3f7;
-}
-
-.dark-theme .entity-icon {
-  color: #66bb6a;
-}
-
-.dark-theme .add-icon {
-  color: #ba68c8;
-}
-
-.dark-theme .node-label {
-  color: #ffffff;
-}
-
-.dark-theme .entity-count {
-  color: #cccccc;
-}
-
-.dark-theme .entity-type-badge {
-  background: #404040;
-  color: #cccccc;
-}
-
-.dark-theme .child-nodes {
-  border-left: 1px solid #404040;
-}
-
-.dark-theme .add-entity-node .node-content {
-  color: #ba68c8 !important;
-  background: transparent !important;
-}
-
-.dark-theme .add-entity-node .node-content:hover {
-  background: #2a2a2a !important;
-  color: #ba68c8 !important;
-}
-
-.dark-theme .context-menu {
-  background: #2a2a2a;
-  border: 1px solid #404040;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-}
-
-.dark-theme .context-menu-item {
-  color: #ffffff;
-}
-
-.dark-theme .context-menu-item:hover {
-  background: #333333;
-}
-
-.dark-theme .context-menu-item[disabled] {
-  color: #777777;
-  cursor: not-allowed;
-}
-
-.dark-theme .context-menu-separator {
-  background: #404040;
-}
-
-.dark-theme .menu-item {
-  color: #ffffff;
-}
-
-.dark-theme .menu-item:hover {
-  background: #333333;
-}
-
-.dark-theme .menu-item.danger {
-  color: #ff6b6b;
-}
-
-.dark-theme .menu-item.danger:hover {
-  background: #3d1a1a;
-}
-
-.dark-theme .language-switcher select:focus {
-  border-color: #707070;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
-  background: rgba(70, 70, 70, 0.9);
-}
-
-.dark-theme .language-switcher select option {
-  background: #404040;
-  color: #ffffff;
-}
-
-/* 黑色主题下的模态框样式 */
-.dark-theme .modal-overlay {
-  background: rgba(0, 0, 0, 0.8) !important;
-}
-
-.dark-theme .modal,
-.dark-theme .modal-content {
-  background: #2d3748 !important;
-  color: #e1e4e8 !important;
-  border: 1px solid #4a5568 !important;
-}
-
-.dark-theme .modal-header {
-  background: #2d3748 !important;
-  border-bottom: 1px solid #4a5568 !important;
-}
-
-.dark-theme .modal-header h3,
-.dark-theme .modal-title {
-  color: #e1e4e8 !important;
-}
-
-.dark-theme .modal-body {
-  background: #2d3748 !important;
-  color: #e1e4e8 !important;
-}
-
-.dark-theme .close-btn {
-  color: #a0aec0 !important;
-  background: transparent !important;
-}
-
-.dark-theme .close-btn:hover {
-  color: #e1e4e8 !important;
-  background: #4a5568 !important;
-}
-
-.dark-theme .form-group label {
-  color: #e1e4e8 !important;
-}
-
-/* 更具体的选择器来覆盖scoped样式 */
-.dark-theme .form-group input,
-.dark-theme .form-group textarea,
-.dark-theme .form-group select,
-.dark-theme input,
-.dark-theme textarea,
-.dark-theme select {
-  background: #4a5568 !important;
-  color: #e1e4e8 !important;
-  border: 1px solid #718096 !important;
-}
-
-.dark-theme .form-group input:focus,
-.dark-theme .form-group textarea:focus,
-.dark-theme .form-group select:focus,
-.dark-theme input:focus,
-.dark-theme textarea:focus,
-.dark-theme select:focus {
-  border-color: #4299e1 !important;
-  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2) !important;
-}
-
-.dark-theme .form-group input.error {
-  border-color: #e53e3e !important;
-}
-
-.dark-theme .btn,
-.dark-theme .btn-secondary {
-  background: #4a5568 !important;
-  color: #e1e4e8 !important;
-  border-color: #4a5568 !important;
-}
-
-.dark-theme .btn:hover,
-.dark-theme .btn-secondary:hover {
-  background: #2d3748 !important;
-  border-color: #2d3748 !important;
 }
 </style>

@@ -25,8 +25,8 @@ public class FieldEntity extends BaseEntity {
     @TableField("length")
     private Integer length;
 
-    @TableField("scale")
-    private Integer scale;
+    @TableField("precision")
+    private Integer precision;
 
     @TableField("nullable")
     private Boolean nullable;

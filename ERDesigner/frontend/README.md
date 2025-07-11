@@ -11,7 +11,7 @@
 
 ## Overview
 
-ERDesigner Frontend is a modern ER diagram design tool based on Vue 3 and TypeScript, supporting entity-relationship modeling, visual editing, and multiple export formats. It provides an intuitive interface for database designers and developers to create and manage database schemas visually.
+DSDesigner Frontend is a modern Datasource diagram design tool based on Vue 3 and TypeScript, supporting entity-relationship modeling, visual editing, and multiple export formats. It provides an intuitive interface for database designers and developers to create and manage database schemas visually.
 
 ## ✨ Features
 
@@ -36,7 +36,7 @@ ERDesigner Frontend is a modern ER diagram design tool based on Vue 3 and TypeSc
 ```bash
 # Clone the project
 git clone https://github.com/james-shijiachen/FastLCDP.git
-cd FastLCDP/ERDesigner/frontend
+cd FastLCDP/DSDesigner/frontend
 
 # Install dependencies
 npm install
@@ -63,11 +63,11 @@ npm run preview
 FastLCDP-Frontend/
 ├── src/
 │   ├── components/          # Vue components
-│   │   ├── ERCanvas.vue    # ER diagram canvas component
+│   │   ├── DSCanvas.vue    # DS diagram canvas component
 │   │   ├── EntityPanel.vue # Entity panel component
 │   │   └── ...
 │   ├── stores/             # Pinia state management
-│   │   └── erDiagram.ts    # ER diagram state management
+│   │   └── dsDiagram.ts    # DS diagram state management
 │   ├── types/              # TypeScript type definitions
 │   │   ├── entity.ts       # Entity types
 │   │   └── ...

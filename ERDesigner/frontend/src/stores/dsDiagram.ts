@@ -1,24 +1,42 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Entity, Relation, Database, TreeNode } from '../types/entity'
+import type { Entity, Relationship, Datasource, TreeNode } from '../types/entity'
+// import api from '@/api'
 
-export const useERDiagramStore = defineStore('erDiagram', () => {
+export const useDSDiagramStore = defineStore('dsDiagram', () => {
   // 状态
-  const databases = ref<Database[]>([])
+  const datasources = ref<Datasource[]>([])
   const entities = ref<Entity[]>([])
-  const relations = ref<Relation[]>([])
+  const relationships = ref<Relationship[]>([])
   const selectedEntity = ref<Entity | null>(null)
-  const selectedRelation = ref<Relation | null>(null)
-  const selectedDatabase = ref<Database | null>(null)
+  const selectedRelationship = ref<Relationship | null>(null)
+  const selectedDatasource = ref<Datasource | null>(null)
   const isSelectMode = ref(true)
   const zoom = ref(1)
   const panX = ref(0)
   const panY = ref(0)
 
+  // 加载数据源（含兜底逻辑）
+  async function loadDatasources() {
+    // TODO: 替换为你的实际 API 调用
+    // const res = await api.get('/datasources')
+    // let list: Datasource[] = res.data
+    let list: Datasource[] = [] // mock: 实际应为 API 返回
+    if (!list || list.length === 0) {
+      list = [{
+        id: 'default',
+        name: 'default',
+        description: '',
+        createdTime: new Date()
+      }]
+    }
+    datasources.value = list
+  }
+
   // 计算属性
   const entityCount = computed(() => entities.value.length)
-  const relationCount = computed(() => relations.value.length)
-  const databaseCount = computed(() => databases.value.length)
+  const relationshipCount = computed(() => relationships.value.length)
+  const datasourceCount = computed(() => datasources.value.length)
   
   // 可见实体（只显示entity类型，不显示abstract类型）
   const visibleEntities = computed(() => 
@@ -28,59 +46,74 @@ export const useERDiagramStore = defineStore('erDiagram', () => {
   // 树形结构数据
   const treeData = computed(() => {
     const tree: TreeNode[] = []
-    
-    databases.value.forEach(database => {
-      const databaseNode: TreeNode = {
-        id: database.id,
-        label: database.name,
-        type: 'database',
+    const entityMap: Record<string, TreeNode> = {}
+    const datasourceMap: Record<string, TreeNode> = {}
+
+    // 1. 先建所有节点
+    entities.value.forEach(entity => {
+      entityMap[entity.id] = {
+        id: entity.id,
+        label: entity.name,
+        type: 'entity',
+        entityType: entity.entityType,
+        datasourceId: entity.datasourceId,
         children: []
       }
-      
-      // 获取该数据库下的所有实体
-      const databaseEntities = entities.value.filter(entity => entity.databaseId === database.id)
-      databaseEntities.forEach(entity => {
-        const entityNode: TreeNode = {
-          id: entity.id,
-          label: entity.name,
-          type: 'entity',
-          entityType: entity.entityType,
-          databaseId: database.id
-        }
-        databaseNode.children!.push(entityNode)
-      })
-      
-      tree.push(databaseNode)
     })
-    
+    datasources.value.forEach(ds => {
+      datasourceMap[ds.id] = {
+        id: ds.id,
+        label: ds.name,
+        type: 'datasource',
+        children: []
+      }
+    })
+
+    // 2. 先全部挂到 datasource
+    entities.value.forEach(entity => {
+      const node = entityMap[entity.id]
+      if (!entity.parentEntityId || !entityMap[entity.parentEntityId]) {
+        // 没有父节点，直接挂到数据源
+        datasourceMap[entity.datasourceId]?.children?.push(node)
+      }
+    })
+    // 3. 再挂子节点
+    entities.value.forEach(entity => {
+      if (entity.parentEntityId && entityMap[entity.parentEntityId]) {
+        entityMap[entity.parentEntityId].children!.push(entityMap[entity.id])
+      }
+    })
+
+    // 4. 汇总
+    Object.values(datasourceMap).forEach(dsNode => tree.push(dsNode))
     return tree
   })
 
   // 数据库操作
-  function addDatabase(database: Database) {
-    databases.value.push(database)
+  function addDatasource(datasource: Datasource) {
+    datasources.value.push(datasource)
   }
 
-  function updateDatabase(updatedDatabase: Database) {
-    const index = databases.value.findIndex(d => d.id === updatedDatabase.id)
+  function updateDatasource(updatedDatasource: Datasource) {
+    const index = datasources.value.findIndex(d => d.id === updatedDatasource.id)
     if (index !== -1) {
-      databases.value[index] = { ...updatedDatabase }
+      datasources.value[index] = { ...updatedDatasource }
     }
   }
 
-  function deleteDatabase(databaseId: string) {
+  function deleteDatasource(datasourceId: string) {
     // 删除数据库前先删除其下的所有实体
-    const databaseEntities = entities.value.filter(e => e.databaseId === databaseId)
-    databaseEntities.forEach(entity => deleteEntity(entity.id))
+    const datasourceEntities = entities.value.filter(e => e.datasourceId === datasourceId)
+    datasourceEntities.forEach(entity => deleteEntity(entity.id))
     
-    databases.value = databases.value.filter(d => d.id !== databaseId)
-    if (selectedDatabase.value?.id === databaseId) {
-      selectedDatabase.value = null
+    datasources.value = datasources.value.filter(d => d.id !== datasourceId)
+    if (selectedDatasource.value?.id === datasourceId) {
+      selectedDatasource.value = null
     }
   }
 
-  function getDatabaseById(id: string): Database | undefined {
-    return databases.value.find(d => d.id === id)
+  function getDatasourceById(id: string): Datasource | undefined {
+    return datasources.value.find(d => d.id === id)
   }
 
   // 实体操作
@@ -120,7 +153,7 @@ export const useERDiagramStore = defineStore('erDiagram', () => {
     
     entities.value = entities.value.filter(e => e.id !== entityId)
     // 同时删除相关的关系
-    relations.value = relations.value.filter(r => 
+    relationships.value = relationships.value.filter(r => 
       r.fromEntityId !== entityId && r.toEntityId !== entityId
     )
     if (selectedEntity.value?.id === entityId) {
@@ -159,47 +192,47 @@ export const useERDiagramStore = defineStore('erDiagram', () => {
   }
 
   // 获取可以作为父实体的实体列表（同一数据库下的实体）
-  function getAvailableParentEntities(databaseId: string, excludeEntityId?: string): Entity[] {
+  function getAvailableParentEntities(datasourceId: string, excludeEntityId?: string): Entity[] {
     return entities.value.filter(entity => 
-      entity.databaseId === databaseId && 
+      entity.datasourceId === datasourceId && 
       entity.id !== excludeEntityId &&
       entity.entityType === 'abstract' // 只有abstract类型的实体可以作为父实体
     )
   }
 
   // 关系操作
-  function addRelation(relation: Relation) {
-    relations.value.push(relation)
+  function addRelationship(relationship: Relationship) {
+    relationships.value.push(relationship)
   }
 
-  function updateRelation(updatedRelation: Relation) {
-    const index = relations.value.findIndex(r => r.id === updatedRelation.id)
+  function updateRelationship(updatedRelationship: Relationship) {
+    const index = relationships.value.findIndex(r => r.id === updatedRelationship.id)
     if (index !== -1) {
-      relations.value[index] = { ...updatedRelation }
+      relationships.value[index] = { ...updatedRelationship }
     }
   }
 
-  function deleteRelation(relationId: string) {
-    relations.value = relations.value.filter(r => r.id !== relationId)
-    if (selectedRelation.value?.id === relationId) {
-      selectedRelation.value = null
+  function deleteRelationship(relationshipId: string) {
+    relationships.value = relationships.value.filter(r => r.id !== relationshipId)
+    if (selectedRelationship.value?.id === relationshipId) {
+      selectedRelationship.value = null
     }
   }
 
   // 选择操作
   function selectEntity(entity: Entity) {
     selectedEntity.value = entity
-    selectedRelation.value = null
+    selectedRelationship.value = null
   }
 
-  function selectRelation(relation: Relation) {
-    selectedRelation.value = relation
+  function selectRelationship(relationship: Relationship) {
+    selectedRelationship.value = relationship
     selectedEntity.value = null
   }
 
   function clearSelection() {
     selectedEntity.value = null
-    selectedRelation.value = null
+    selectedRelationship.value = null
   }
 
   // 模式切换
@@ -228,34 +261,34 @@ export const useERDiagramStore = defineStore('erDiagram', () => {
   }
 
   // 数据操作
-  function loadDiagram(data: { entities: Entity[], relations: Relation[] }) {
+  function loadDiagram(data: { entities: Entity[], relationships: Relationship[] }) {
     entities.value = data.entities
-    relations.value = data.relations
+    relationships.value = data.relationships
     clearSelection()
   }
 
   function exportDiagram() {
     return {
       entities: entities.value,
-      relations: relations.value
+      relationships: relationships.value
     }
   }
 
   function clearDiagram() {
     entities.value = []
-    relations.value = []
+    relationships.value = []
     clearSelection()
     resetView()
   }
 
   // 撤销/重做功能
-  const history = ref<{ entities: Entity[], relations: Relation[] }[]>([])
+  const history = ref<{ entities: Entity[], relationships: Relationship[] }[]>([])
   const historyIndex = ref(-1)
 
   function saveToHistory() {
     const currentState = {
       entities: JSON.parse(JSON.stringify(entities.value)),
-      relations: JSON.parse(JSON.stringify(relations.value))
+      relationships: JSON.parse(JSON.stringify(relationships.value))
     }
     
     // 移除当前索引之后的历史记录
@@ -275,7 +308,7 @@ export const useERDiagramStore = defineStore('erDiagram', () => {
       historyIndex.value--
       const state = history.value[historyIndex.value]
       entities.value = JSON.parse(JSON.stringify(state.entities))
-      relations.value = JSON.parse(JSON.stringify(state.relations))
+      relationships.value = JSON.parse(JSON.stringify(state.relationships))
       clearSelection()
     }
   }
@@ -285,19 +318,19 @@ export const useERDiagramStore = defineStore('erDiagram', () => {
       historyIndex.value++
       const state = history.value[historyIndex.value]
       entities.value = JSON.parse(JSON.stringify(state.entities))
-      relations.value = JSON.parse(JSON.stringify(state.relations))
+      relationships.value = JSON.parse(JSON.stringify(state.relationships))
       clearSelection()
     }
   }
 
   return {
     // 状态
-    databases,
+    datasources,
     entities,
-    relations,
+    relationships,
     selectedEntity,
-    selectedRelation,
-    selectedDatabase,
+    selectedRelationship,
+    selectedDatasource,
     isSelectMode,
     zoom,
     panX,
@@ -305,16 +338,17 @@ export const useERDiagramStore = defineStore('erDiagram', () => {
     
     // 计算属性
     entityCount,
-    relationCount,
-    databaseCount,
+    relationshipCount,
+    datasourceCount,
     visibleEntities,
     treeData,
     
     // 数据库方法
-    addDatabase,
-    updateDatabase,
-    deleteDatabase,
-    getDatabaseById,
+    addDatasource,
+    updateDatasource,
+    deleteDatasource,
+    getDatasourceById,
+    loadDatasources,
     
     // 实体方法
     addEntity,
@@ -325,13 +359,13 @@ export const useERDiagramStore = defineStore('erDiagram', () => {
     getAvailableParentEntities,
     
     // 关系方法
-    addRelation,
-    updateRelation,
-    deleteRelation,
+    addRelationship,
+    updateRelationship,
+    deleteRelationship,
     
     // 选择方法
     selectEntity,
-    selectRelation,
+    selectRelationship,
     clearSelection,
     
     // 其他方法

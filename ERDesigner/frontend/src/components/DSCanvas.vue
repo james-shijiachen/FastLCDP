@@ -11,9 +11,7 @@
     @touchstart.prevent="handleTouchStart"
     @touchmove.prevent="handleTouchMove"
     @touchend.prevent="handleTouchEnd"
-    tabindex="0"
-    data-uid="ERCanvas-root"
-  >
+    tabindex="0">
     <svg
       ref="svgCanvas"
       class="canvas-svg"
@@ -25,9 +23,7 @@
       @mouseup="handleCanvasMouseUp"
       @touchstart="handleSvgTouchStart"
       @touchmove="handleSvgTouchMove"
-      @touchend="handleSvgTouchEnd"
-      data-uid="ERCanvas-svg"
-    >
+      @touchend="handleSvgTouchEnd">
       <!-- 网格背景 -->
       <defs v-if="showGrid">
         <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
@@ -38,23 +34,16 @@
       
       <!-- 关系连线 -->
       <g class="relations-layer">
-        <g v-for="relation in relations" :key="relation.id" class="relation">
-          <path
-            :d="getRelationPath(relation)"
-            stroke="#666"
-            stroke-width="2"
-            fill="none"
-            marker-end="url(#arrowhead)"
-          />
-          <text
-            :x="getRelationLabelPosition(relation).x"
-            :y="getRelationLabelPosition(relation).y"
-            text-anchor="middle"
-            class="relation-label"
-          >
-            {{ relation.name }}
-          </text>
-        </g>
+        <RelationLine
+          v-for="relationship in relationships"
+          :relation="relationship"
+          :key="relationship.id"
+          :relationship="relationship"
+          :path="getRelationPath(relationship)"
+          :label="relationship.name || ''"
+          :labelPosition="getRelationLabelPosition(relationship)"
+          marker-id="arrowhead"
+        />
       </g>
       
       <!-- 箭头标记 -->
@@ -67,131 +56,20 @@
       
       <!-- 实体 -->
       <g class="entities-layer">
-        <g 
-          v-for="entity in entities" 
+        <EntityNode
+          v-for="entity in entities"
           :key="entity.id"
-          class="entity"
-          :class="{ 
-            selected: isEntitySelected(entity),
-            'multi-selected': selectedEntities.length > 1 && isEntitySelected(entity)
-          }"
-          :transform="`translate(${entity.x}, ${entity.y})`"
-          @click="handleEntityClick(entity, $event)"
-          @dblclick="handleEntityDoubleClick(entity)"
-          @contextmenu.prevent="handleEntityRightClick(entity, $event)"
-          @mousedown="handleEntityMouseDown(entity, $event)"
-          @touchstart="handleEntityTouchStart(entity, $event)"
-          @touchmove="handleEntityTouchMove(entity, $event)"
-          @touchend="handleEntityTouchEnd(entity, $event)"
-        >
-          <!-- 实体主体 -->
-          <rect
-            :width="entity.width"
-            :height="entity.height"
-            :fill="entity.backgroundColor || '#ffffff'"
-            :stroke="isEntitySelected(entity) ? '#0366d6' : (entity.borderColor || '#24292e')"
-            :stroke-width="isEntitySelected(entity) ? 2 : 1"
-            rx="4"
-            class="entity-rect"
-          />
-          
-          <!-- 实体标题 -->
-          <rect
-            :width="entity.width"
-            height="30"
-            :fill="entity.backgroundColor || '#f6f8fa'"
-            :stroke="entity.borderColor || '#24292e'"
-            stroke-width="1"
-            rx="4"
-            class="entity-header"
-          />
-          <rect
-            :width="entity.width"
-            height="26"
-            :fill="entity.backgroundColor || '#f6f8fa'"
-            stroke="none"
-            class="entity-header-fill"
-          />
-          
-          <!-- 实体名称 -->
-          <text
-            :x="entity.width / 2"
-            y="20"
-            text-anchor="middle"
-            class="entity-name"
-            font-weight="bold"
-            font-size="14"
-            fill="#24292e"
-          >
-            {{ entity.name }}
-          </text>
-          
-          <!-- 表名和字段之间的分隔线 -->
-          <line
-            x1="0"
-            y1="30"
-            :x2="entity.width"
-            y2="30"
-            :stroke="entity.borderColor || '#24292e'"
-            stroke-width="1"
-            class="header-separator"
-          />
-          
-          <!-- 字段列表 -->
-          <g class="fields">
-            <g 
-              v-for="(field, index) in entity.fields" 
-              :key="field.id"
-              class="field"
-              :transform="`translate(0, ${30 + index * 20})`"
-            >
-              <!-- 字段背景 -->
-              <rect
-                :width="entity.width"
-                height="20"
-                fill="transparent"
-                class="field-bg"
-              />
-              
-              <!-- 主键图标 -->
-              <text
-                v-if="field.isPrimaryKey"
-                x="8"
-                y="14"
-                font-size="10"
-                fill="#f39c12"
-                class="key-icon"
-              >
-                🔑
-              </text>
-              
-              <!-- 字段名 -->
-              <text
-                :x="field.isPrimaryKey ? 25 : 8"
-                y="14"
-                font-size="12"
-                fill="#24292e"
-                class="field-name"
-              >
-                {{ field.name }}
-              </text>
-              
-              <!-- 字段类型 -->
-              <text
-                :x="entity.width - 8"
-                y="14"
-                text-anchor="end"
-                font-size="10"
-                fill="#586069"
-                class="field-type"
-              >
-                {{ field.type }}
-              </text>
-            </g>
-          </g>
-          
-          <!-- 实体框大小由计算自动确定，不可手动调整 -->
-        </g>
+          :entity="entity"
+          :selected="isEntitySelected(entity)"
+          :multiSelected="selectedEntities.length > 1 && isEntitySelected(entity)"
+          @click="(entity, event) => handleEntityClick(entity, event)"
+          @dblclick="handleEntityDoubleClick"
+          @contextmenu="handleEntityRightClick"
+          @mousedown="handleEntityMouseDown"
+          @touchstart="handleEntityTouchStart"
+          @touchmove="handleEntityTouchMove"
+          @touchend="handleEntityTouchEnd"
+        />
       </g>
       
       <!-- 选择框 -->
@@ -213,8 +91,10 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick, watchEffect } from 'vue'
-import { useERDiagramStore } from '../stores/erDiagram'
-import type { Entity, Relation } from '../types/entity'
+import { useDSDiagramStore } from '../stores/dsDiagram'
+import type { Entity, Relationship } from '../types/entity'
+import EntityNode from './EntityNode.vue'
+import RelationLine from './RelationLine.vue'
 
 interface Props {
   zoomLevel?: number
@@ -229,16 +109,16 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<{
-  'entity-click': [entity: Entity, event: MouseEvent]
-  'entity-double-click': [entity: Entity]
-  'entity-right-click': [entity: Entity, event: MouseEvent]
-  'canvas-click': [event: MouseEvent]
-  'canvas-right-click': [event: MouseEvent]
-  'selection-change': [entities: Entity[]]
-  'zoom-change': [level: number]
+  'entityClick': [entity: Entity, event: MouseEvent]
+  'entityDoubleClick': [entity: Entity]
+  'entityRightClick': [entity: Entity, event: MouseEvent]
+  'canvasClick': [event: MouseEvent]
+  'canvasRightClick': [event: MouseEvent]
+  'selectionChange': [entities: Entity[]]
+  'zoomChange': [level: number]
 }>()
 
-const store = useERDiagramStore()
+const store = useDSDiagramStore()
 
 // 响应式数据
 const canvasContainer = ref<HTMLDivElement>()
@@ -275,7 +155,7 @@ const selectionBox = ref({
 
 // 计算属性
 const entities = computed(() => store.entities)
-const relations = computed(() => store.relations)
+const relationships = computed(() => store.relationships)
 
 // 方法
 function isEntitySelected(entity: Entity): boolean {
@@ -289,27 +169,27 @@ function handleCanvasClick(event: MouseEvent) {
   
   // 如果不是点击实体，则触发canvas-click事件
   if (!isEntityClick) {
-    emit('canvas-click', event)
+    emit('canvasClick', event)
   }
 }
 
 function handleCanvasRightClick(event: MouseEvent) {
-  emit('canvas-right-click', event)
+  emit('canvasRightClick', event)
 }
 
 function handleEntityClick(entity: Entity, event: MouseEvent) {
   event.stopPropagation()
-  emit('entity-click', entity, event)
+  emit('entityClick', entity, event)
 }
 
 function handleEntityDoubleClick(entity: Entity) {
-  emit('entity-double-click', entity)
+  emit('entityDoubleClick', entity)
 }
 
 function handleEntityRightClick(entity: Entity, event: MouseEvent) {
   event.stopPropagation()
   // 触发实体右键菜单事件
-  emit('entity-right-click', entity, event)
+  emit('entityRightClick', entity, event)
 }
 
 function handleCanvasMouseDown(event: MouseEvent) {
@@ -358,7 +238,7 @@ function handleEntityMouseDown(entity: Entity, event: MouseEvent) {
   event.stopPropagation()
   
   if (!isEntitySelected(entity)) {
-    emit('entity-click', entity, event)
+    emit('entityClick', entity, event)
   }
   
   const rect = svgCanvas.value!.getBoundingClientRect()
@@ -435,7 +315,7 @@ function handleSelectionMouseUp() {
     })
     
     if (selectedEntities.length > 0) {
-      emit('selection-change', selectedEntities)
+      emit('selectionChange', selectedEntities)
     }
     
     selectionBox.value.visible = false
@@ -460,6 +340,7 @@ function handleDrop(event: DragEvent) {
       comment: '',
       fields: [
         {
+          entityId: Date.now().toString(),
           id: Date.now().toString() + '_1',
           name: 'id',
           type: 'INT',
@@ -475,7 +356,7 @@ function handleDrop(event: DragEvent) {
       height: 60, // 最小高度，将由自动计算更新
       backgroundColor: '#ffffff',
       borderColor: '#24292e',
-      databaseId: '',
+      datasourceId: '',
       entityType: 'entity'
     }
     
@@ -487,9 +368,9 @@ function handleDragOver(event: DragEvent) {
   event.preventDefault()
 }
 
-function getRelationPath(relation: Relation): string {
-  const fromEntity = entities.value.find(e => e.id === relation.fromEntityId)
-  const toEntity = entities.value.find(e => e.id === relation.toEntityId)
+function getRelationPath(relationship: Relationship): string {
+  const fromEntity = entities.value.find(e => e.id === relationship.fromEntityId)
+  const toEntity = entities.value.find(e => e.id === relationship.toEntityId)
   
   if (!fromEntity || !toEntity) return ''
   
@@ -501,11 +382,11 @@ function getRelationPath(relation: Relation): string {
   return `M ${fromX} ${fromY} L ${toX} ${toY}`
 }
 
-function getRelationLabelPosition(relation: Relation) {
-  const fromEntity = entities.value.find(e => e.id === relation.fromEntityId)
-  const toEntity = entities.value.find(e => e.id === relation.toEntityId)
+function getRelationLabelPosition(relationship: Relationship) {
+  const fromEntity = entities.value.find(e => e.id === relationship.fromEntityId)
+  const toEntity = entities.value.find(e => e.id === relationship.toEntityId)
   
-  if (!fromEntity || !toEntity) return { x: 0, y: 0 }
+  if (!fromEntity || !toEntity) return{ x: 0, y: 0 }
   
   const fromX = fromEntity.x + fromEntity.width / 2
   const fromY = fromEntity.y + fromEntity.height / 2
@@ -526,7 +407,7 @@ function handleWheel(event: WheelEvent) {
     // 缩放
     const delta = event.deltaY > 0 ? 0.9 : 1.1
     const newZoom = Math.max(0.1, Math.min(3, props.zoomLevel * delta))
-    emit('zoom-change', newZoom)
+    emit('zoomChange', newZoom)
   } else {
     // 平移画布
     const container = canvasContainer.value
@@ -557,7 +438,7 @@ function handleKeyDown(event: KeyboardEvent) {
       case 'a':
         event.preventDefault()
         // 全选实体
-        emit('selection-change', entities.value)
+        emit('selectionChange', entities.value)
         break
       case 'c':
       case 'v':
@@ -572,7 +453,7 @@ function handleKeyDown(event: KeyboardEvent) {
   
   // ESC键取消选择
   if (event.key === 'Escape') {
-    emit('selection-change', [])
+    emit('selectionChange', [])
   }
   
   // Delete键删除选中实体
@@ -580,21 +461,21 @@ function handleKeyDown(event: KeyboardEvent) {
     props.selectedEntities.forEach(entity => {
       store.deleteEntity(entity.id)
     })
-    emit('selection-change', [])
+    emit('selectionChange', [])
   }
 }
 
 // 公开方法
 function zoomIn() {
-  emit('zoom-change', Math.min(props.zoomLevel * 1.2, 3))
+  emit('zoomChange', Math.min(props.zoomLevel * 1.2, 3))
 }
 
 function zoomOut() {
-  emit('zoom-change', Math.max(props.zoomLevel / 1.2, 0.1))
+  emit('zoomChange', Math.max(props.zoomLevel / 1.2, 0.1))
 }
 
 function resetZoom() {
-  emit('zoom-change', 1)
+  emit('zoomChange', 1)
 }
 
 // 触摸事件处理
@@ -637,7 +518,7 @@ function handleTouchMove(event: TouchEvent) {
     const currentDistance = getTouchDistance(touches[0], touches[1])
     const scale = currentDistance / initialPinchDistance.value
     const newZoom = Math.max(0.1, Math.min(3, currentZoom.value * scale))
-    emit('zoom-change', newZoom)
+    emit('zoomChange', newZoom)
   }
 }
 
@@ -702,7 +583,7 @@ function handleSvgTouchEnd(_event: TouchEvent) {
              entity.y + entity.height > selectionBox.value.y
     })
     
-    emit('selection-change', selectedEntities)
+    emit('selectionChange', selectedEntities)
     selectionBox.value.visible = false
   }
 }
@@ -865,3 +746,45 @@ onMounted(() => {
   }
 })
 </script>
+<style scoped>
+.canvas-svg {
+  width: 100%;
+  height: 100%;
+  transform-origin: 0 0;
+  transform: scale(var(--zoom-level, 1));
+}
+.entity-header {
+  background: #f6f8fa;
+  padding: 2px 4px;
+  font-weight: bold;
+  border-bottom: 1px solid #e1e4e8;
+  stroke-width: 2;
+}
+.entity-header-fill {
+  background: #f6f8fa;
+  padding: 2px 4px;
+  font-weight: bold;
+  border-bottom: 1px solid #e1e4e8;
+  stroke-width: 0;
+}
+.selection-box {
+  pointer-events: none;
+}
+.dark-theme .entity-header {
+  background: #2c2c2c;
+  border-bottom: 1px solid #444444;
+  color: #ffffff;
+}
+.dark-theme .entity-header-fill {
+  background: #2c2c2c;
+  border-bottom: 1px solid #444444;
+  color: #ffffff;
+}
+@media (max-width: var(--mobile-breakpoint)) {
+  .canvas-svg {
+    width: 100%;
+    height: 100%;
+    cursor: default;
+  }
+}
+</style>

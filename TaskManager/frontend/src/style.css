@@ -1,0 +1,72 @@
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+  background: #f5f6fa;
+  color: #222;
+}
+
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.el-card {
+  border-radius: 0;
+  box-shadow: none;
+  background: #fff;
+  padding: 0;
+}
+
+.el-card__body {
+  padding: 0;
+}
+
+.el-header {
+  background: #fff;
+  box-shadow: 0 2px 8px #f0f1f2;
+  padding: 0 32px;
+  z-index: 10;
+}
+
+.el-main {
+  flex: 1;
+  background: #f5f6fa;
+  padding: 24px 8px;
+  min-height: 0;
+}
+
+@media (max-width: 900px) {
+  .el-main {
+    padding: 12px 2px;
+  }
+  .header, .nav-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .system-title {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 600px) {
+  .el-header {
+    padding: 0 8px;
+  }
+  .el-main {
+    padding: 4px 0;
+  }
+}
+
+body.dark {
+  background: #181818;
+  color: #eee;
+}
+
+body.dark .el-card, body.dark .el-header {
+  background: #232323;
+  color: #eee;
+  box-shadow: none;
+}

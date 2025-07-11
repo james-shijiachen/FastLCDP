@@ -28,4 +28,10 @@ public class BaseEntity {
 
     @Version
     private Long version;   // 乐观锁
+
+    @TableField("tenant_id")
+    private long tenantId;  //租户ID
+
+    @TableField("project_id")
+    private Long projectId; //项目ID
 }

@@ -1,24 +1,17 @@
-export interface Field {
-  id: string
-  name: string
-  type: string
-  comment?: string
-  isPrimaryKey: boolean
-  isRequired: boolean
-  isUnique: boolean
-}
-
-export interface Database {
+export interface Datasource {
   id: string
   name: string
   description?: string
-  createdAt: Date
+  createdTime: Date
 }
 
 export interface Entity {
+  datasourceId: string
+  parentEntityId?: string // 继承的父实体ID
   id: string
   name: string
   comment?: string
+  entityType: 'abstract' | 'entity'
   fields: Field[]
   x: number
   y: number
@@ -26,9 +19,20 @@ export interface Entity {
   height: number
   backgroundColor?: string
   borderColor?: string
-  databaseId: string
-  entityType: 'abstract' | 'entity'
-  parentEntityId?: string // 继承的父实体ID
+}
+
+export interface Field {
+  entityId: string
+  id: string
+  name: string
+  type: string
+  length?: number
+  precision?: number
+  defaultValue?: string
+  comment?: string
+  isPrimaryKey: boolean
+  isRequired: boolean
+  isUnique: boolean
 }
 
 export interface Relationship {
@@ -36,33 +40,32 @@ export interface Relationship {
   fromEntityId: string
   toEntityId: string
   type: 'one-to-one' | 'one-to-many' | 'many-to-one' | 'many-to-many'
-  fromField?: string
-  toField?: string
+  fromFieldId?: string
+  toFieldId?: string
   name?: string
   comment?: string
 }
 
-export interface Relation {
+export interface Index {
   id: string
+  entityId: string
   name: string
-  fromEntityId: string
-  toEntityId: string
-  fromFieldId: string
-  toFieldId: string
-  relationType: 'one-to-one' | 'one-to-many' | 'many-to-many'
+  comment?: string
+  fields: string[]
+  unique: boolean
 }
 
 export interface DiagramData {
-  databases: Database[]
+  datasources: Datasource[]
   entities: Entity[]
-  relations: Relation[]
+  relationships: Relationship[]
 }
 
 export interface TreeNode {
   id: string
   label: string
-  type: 'database' | 'entity'
+  type: 'datasource' | 'entity'
   children?: TreeNode[]
   entityType?: 'abstract' | 'entity'
-  databaseId?: string
+  datasourceId?: string
 }

@@ -1,29 +1,29 @@
 {
   "app": {
-    "title": "FastLCDP ER图设计器",
+    "title": "FastLCDP 数据源图设计器",
     "toolbar": "顶部工具栏",
     "mobileMenu": "移动端菜单按钮"
   },
-  "database": {
+  "datasource": {
     "structure": "数据结构",
-    "newDatabase": "新建数据库",
-    "noDatabase": "暂无数据库",
-    "createFirst": "请先创建一个数据库",
-    "editDatabase": "编辑数据库",
+    "newDatasource": "新建",
+    "noDatasource": "暂无数据源",
+    "createFirst": "请先创建一个数据源",
+    "editDatasource": "编辑数据源",
     "addEntity": "添加实体",
-    "deleteDatabase": "删除数据库",
-    "name": "数据库名称",
-    "namePlaceholder": "请输入数据库名称",
+    "deleteDatasource": "删除数据源",
+    "name": "数据源名称",
+    "namePlaceholder": "请输入数据源名称",
     "description": "描述",
-    "descriptionPlaceholder": "请输入数据库描述",
-    "nameRequired": "数据库名称不能为空",
-    "nameMaxLength": "数据库名称不能超过50个字符",
-    "namePattern": "数据库名称必须以字母开头，只能包含字母、数字和下划线"
+    "descriptionPlaceholder": "请输入数据源描述",
+    "nameRequired": "数据源名称不能为空",
+    "nameMaxLength": "数据源名称不能超过50个字符",
+    "namePattern": "数据源名称必须以字母开头，只能包含字母、数字和下划线"
   },
   "entity": {
     "edit": "编辑实体",
     "new": "新建实体",
-    "selectDatabase": "请选择数据库",
+    "selectDatasource": "请选择数据源",
     "type": "实体类型",
     "table": "实体表",
     "abstract": "抽象表",
@@ -77,22 +77,29 @@
     "chinese": "中文"
   },
   "toolbar": {
-    "menu": "菜单",
-    "new": "新建",
-    "save": "保存",
-    "export": "导出",
+    "toggleSidebar": "侧边栏",
+    "newDiagram": "新建图表",
+    "saveDiagram": "保存",
+    "exportDiagram": "导出",
     "undo": "撤销",
     "redo": "重做",
     "zoomIn": "放大",
     "zoomOut": "缩小",
-    "fitWindow": "适合窗口",
-    "toggleThemeLight": "切换到浅色主题",
-    "toggleThemeDark": "切换到深色主题",
-    "grid": "网格",
-    "fullscreen": "全屏"
+    "setZoom": "设置缩放",
+    "fitToScreen": "元素撑满",
+    "addEntity": "插入实体",
+    "copyEntity": "复制实体",
+    "pasteEntity": "粘贴实体",
+    "deleteEntity": "删除实体",
+    "colorEntity": "实体染色",
+    "colorRelation": "连线染色",
+    "toggleGrid": "网格",
+    "fullscreen": "全屏",
+    "scrollLeft": "左滚动",
+    "scrollRight": "右滚动"
   },
   "panel": {
-    "databaseStructure": "数据库结构",
+    "datasourceStructure": "数据源结构",
     "properties": "属性",
     "basicInfo": "基本信息",
     "fields": "字段",
@@ -131,7 +138,7 @@
     "newDiagramConfirm": "确定要新建图表吗？当前内容将被清空。",
     "diagramSaved": "图表已保存",
     "deleteEntitiesConfirm": "确定要删除选中的实体吗？",
-    "deleteDatabaseConfirm": "确定要删除这个数据库吗？这将删除其下所有实体。",
+    "deleteDatasourceConfirm": "确定要删除这个数据源吗？这将删除其下所有实体。",
     "deleteEntityConfirm": "确定要删除这个实体吗？"
   },
   "defaults": {
