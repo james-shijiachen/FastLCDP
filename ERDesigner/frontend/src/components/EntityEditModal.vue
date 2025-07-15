@@ -1,11 +1,14 @@
 <template>
   <div class="modal-overlay">
-    <div class="modal-content" @click.stop>
+    <div class="modal-content" @click.stop @wheel.prevent="handleModalWheel">
       <div class="modal-header">
         <h3>{{ isEdit ? $t('entity.edit') : $t('entity.new') }}</h3>
+        <div v-if="showHeaderName" class="entity-name-preview" :title="formData.name">
+          {{ formData.name }}
+        </div>
         <button @click="$emit('close')" class="close-btn">×</button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body" ref="modalContentRef" @scroll="handleModalScroll">
         <div class="form-row">
           <div class="form-group">
             <label>{{ $t('datasource.name') }}</label>
@@ -21,7 +24,7 @@
             <label>{{ $t('entity.type') }}</label>
             <div class="radio-group">
               <label class="radio-label">
-                <input type="radio" v-model="formData.entityType" value="table" />
+                <input type="radio" v-model="formData.entityType" value="entity" />
                 {{ $t('entity.table') }}
               </label>
               <label class="radio-label">
@@ -34,7 +37,7 @@
         
         <div class="form-group">
           <label>{{ $t('entity.name') }} *:</label>
-          <input 
+          <input ref="nameInputRef"
             v-model="formData.name" 
             :placeholder="$t('entity.namePlaceholder')"
             @keyup.enter="handleSave"
@@ -64,70 +67,73 @@
         <div class="fields-section">
           <div class="section-header">
             <h4>{{ $t('entity.fieldDefinition') }}</h4>
-            <button type="button" @click="addField" class="btn btn-primary">
-              <span class="icon">+</span>
-              {{ $t('entity.addField') }}
-            </button>
           </div>
-          
-          <div class="fields-list">
-            <div 
-              v-for="(field, index) in formData.fields" 
-              :key="field.id" 
-              class="field-item"
-            >
-              <div class="field-row">
-                <div class="field-basic">
-                  <div class="form-group">
-                    <label>{{ $t('entity.fieldName') }}:</label>
-                    <input v-model="field.name" :placeholder="$t('entity.fieldName')" />
-                  </div>
-                  <div class="form-group">
-                    <label>{{ $t('entity.dataType') }}:</label>
+          <div class="fields-list-wrapper" ref="fieldsListWrapperRef">
+            <table class="fields-table">
+              <colgroup>
+                  <col style="width: 50px;" />  <!-- 操作 -->
+                  <col style="width: 200px;" /> <!-- 字段名 -->
+                  <col style="width: 150px;" /> <!-- 类型 -->
+                  <col style="width: 80px;" /> <!-- 长度 -->
+                  <col style="width: 80px;" /> <!-- 精度 -->
+                  <col style="width: 20px;" />  <!-- 主键 -->
+                  <col style="width: 20px;" />  <!-- 必填 -->
+                  <col style="width: 20px;" />  <!-- 唯一 -->
+                  <col style="width: 300px;" /> <!-- 注释 -->
+              </colgroup>
+              <thead class="fields-table-header">
+                <tr>
+                  <th></th>
+                  <th>{{ $t('entity.fieldName') }} *</th>
+                  <th>{{ $t('entity.dataType') }} *</th>
+                  <th>{{ $t('entity.length') }}</th>
+                  <th>{{ $t('entity.scale') }}</th>
+                  <th>{{ $t('entity.primaryKey') }}</th>
+                  <th>{{ $t('entity.required') }}</th>
+                  <th>{{ $t('entity.unique') }}</th>
+                  <th>{{ $t('entity.comment') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-if="props.parentFields && props.parentFields.length > 0" v-for="field in props.parentFields" :key="field.id">
+                  <td>{{ field.name }}</td>
+                  <td>{{ field.type }}</td>
+                  <td>{{ field.length }}</td>
+                  <td>{{ field.scale }}</td>
+                  <td>{{ field.isPrimaryKey ? '🔑' : '' }}</td>
+                  <td>{{ field.isRequired ? '✔' : '' }}</td>
+                  <td>{{ field.isUnique ? '✔' : '' }}</td>
+                  <td>{{ field.comment }}</td>
+                  <td></td>
+                </tr>
+                <tr v-for="(field, index) in formData.fields" :key="field.id">
+                  <td><button @click="removeField(index)" class="remove-btn" :title="$t('entity.removeField')">X</button></td>
+                  <td><input :title="field.name" v-model="field.name" :placeholder="$t('entity.fieldName')" /></td>
+                  <td>
                     <select v-model="field.type">
                       <option value="INT">INT</option>
                       <option value="BIGINT">BIGINT</option>
-                      <option value="VARCHAR(50)">VARCHAR(50)</option>
-                      <option value="VARCHAR(255)">VARCHAR(255)</option>
+                      <option value="VARCHAR">VARCHAR</option>
                       <option value="TEXT">TEXT</option>
-                      <option value="DECIMAL(10,2)">DECIMAL(10,2)</option>
+                      <option value="DECIMAL">DECIMAL</option>
                       <option value="DATETIME">DATETIME</option>
-                      <option value="DATE">DATE</option>
-                      <option value="TIMESTAMP">TIMESTAMP</option>
                       <option value="BOOLEAN">BOOLEAN</option>
                     </select>
-                  </div>
-                </div>
-                
-                <div class="field-options">
-                  <label class="checkbox-label">
-                    <input type="checkbox" v-model="field.isPrimaryKey" />
-                    <span>主键</span>
-                  </label>
-                  <label class="checkbox-label">
-                    <input type="checkbox" v-model="field.isRequired" />
-                    <span>必填</span>
-                  </label>
-                  <label class="checkbox-label">
-                    <input type="checkbox" v-model="field.isUnique" />
-                    <span>唯一</span>
-                  </label>
-                </div>
-                
-                <div class="field-actions">
-                  <button @click="removeField(index)" class="remove-btn">删除</button>
-                </div>
-              </div>
-              
-              <div class="form-group">
-                <label>注释:</label>
-                <input v-model="field.comment" placeholder="字段注释" />
-              </div>
-            </div>
+                  </td>
+                  <td><input v-model="field.length" v-model.number="field.length" /></td>
+                  <td><input v-model="field.scale" v-model.number="field.scale" /></td>
+                  <td><input type="checkbox" v-model="field.isPrimaryKey" /></td>
+                  <td><input type="checkbox" v-model="field.isRequired" /></td>
+                  <td><input type="checkbox" v-model="field.isUnique" /></td>
+                  <td><textarea :title="field.comment" v-model="field.comment" rows="2"></textarea></td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
       <div class="modal-footer">
+        <button type="button" @click="addField" class="btn btn-primary">{{ $t('entity.addField') }}</button>
         <button @click="$emit('close')" class="btn btn-secondary">{{ $t('common.cancel') }}</button>
         <button @click="handleSave" class="btn btn-primary" :disabled="!isValid">
           {{ isEdit ? $t('common.save') : $t('common.create') }}
@@ -149,6 +155,7 @@ interface Props {
   datasources: Datasource[]
   availableParents: Entity[]
   defaultDatasourceId?: string
+  parentFields?: Field[]
 }
 
 const props = defineProps<Props>()
@@ -158,6 +165,10 @@ const emit = defineEmits<{
   close: []
 }>()
 
+const modalContentRef = ref<HTMLDivElement | null>(null)
+const nameInputRef = ref<HTMLInputElement | null>(null)
+const fieldsListWrapperRef = ref<HTMLDivElement | null>(null)
+const showHeaderName = ref(false)
 // 表单数据
 const formData = ref({
   entityId: '',
@@ -169,16 +180,31 @@ const formData = ref({
   fields: [] as Field[]
 })
 
-// 计算属性
+// 是否为编辑模式
 const isEdit = computed(() => !!props.entity)
 
+// 表单验证
 const isValid = computed(() => {
-  return formData.value.name.trim().length > 0 && formData.value.datasourceId.length > 0
+  return formData.value.name.trim().length > 0 && formData.value.datasourceId.length > 0 && formData.value.fields.every(field => field.name.trim().length > 0 && field.type.trim().length > 0)
 })
 
+// 是否可以保存
 const canSave = computed(() => {
   return formData.value.name.trim().length > 0 && formData.value.datasourceId.length > 0
 })
+
+// 监听滚轮事件（屏蔽浏览器默认滚动）
+function handleModalWheel(event: WheelEvent) {
+  event.stopPropagation();
+  const containerFields = fieldsListWrapperRef.value;
+  const containerModal = modalContentRef.value;
+  if (containerModal) {
+    containerModal.scrollTop += event.deltaY; // 纵向滚动
+  }
+  if (containerFields) {
+    containerFields.scrollLeft += event.deltaX; // 横向滚动
+  }
+}
 
 // 监听props变化
 watch(() => props.entity, (entity) => {
@@ -204,25 +230,34 @@ watch(() => props.entity, (entity) => {
         {
           entityId: '',
           id: Date.now().toString(),
-          name: 'id',
-          type: 'INT',
-          comment: '主键',
-          isPrimaryKey: true,
-          isRequired: true,
-          isUnique: true
+          name: '',
+          type: '',
+          comment: '',
+          isPrimaryKey: false,
+          isRequired: false,
+          isUnique: false
         }
       ]
     }
   }
 }, { immediate: true })
 
-// 方法
+// 监听modal滚动
+function handleModalScroll() {
+  if (!modalContentRef.value || !nameInputRef.value) return
+  const modalRect = modalContentRef.value.getBoundingClientRect()
+  const inputRect = nameInputRef.value.getBoundingClientRect()
+  // 判断输入框底部是否在 modal-content 顶部之上（即被滚动出去了）
+  showHeaderName.value = inputRect.bottom < modalRect.top || inputRect.top > modalRect.bottom
+}
+
+// 添加字段
 function addField() {
   const newField: Field = {
     entityId: formData.value.entityId,
     id: Date.now().toString(),
     name: '',
-    type: 'VARCHAR(50)',
+    type: '',
     comment: '',
     isPrimaryKey: false,
     isRequired: false,
@@ -253,7 +288,6 @@ function handleSave() {
     backgroundColor: props.entity?.backgroundColor || '#ffffff',
     borderColor: props.entity?.borderColor || '#24292e'
   }
-  
   emit('save', entity)
 }
 </script>
@@ -262,7 +296,8 @@ function handleSave() {
 .modal-content {
   width: 600px;
   min-width: 400px;
-  max-height: 60vh;
+  min-height: 50vh;
+  max-height: 50vh;
   display: flex !important;
   flex-direction: column !important;
 }
@@ -275,45 +310,29 @@ function handleSave() {
   overflow-y: auto;
   min-height: 0; /* 兼容性写法，防止flex子项溢出 */
 }
-.field-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  border-bottom: 1px solid #f6f8fa;
+.entity-name-preview {
+  margin-top: 4px;
+  font-size: 15px;
+  color: #888;
+  word-break: break-all;
+  max-width: 100%;
+  white-space: normal;
 }
 
-.field-row:last-child {
-  border-bottom: none;
-}
-.field-item {
-  background: #f6f8fa;
-  border: 1px solid #e1e4e8;
-  border-radius: 6px;
-  padding: 16px;
-  margin-bottom: 12px;
-}
-.dark-theme .field-item {
-  background: #1e1e1e;
-  border-color: #333333;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-.field-actions {
-  display: flex;
-  align-items: flex-start;
-}
 /* 字段相关样式 */
-.fields-section {
-  margin-top: 24px;
+.fields-list-wrapper {
+  overflow-x: auto;
+  max-width: 100%;
 }
-
+.fields-section {
+  margin-top: 16px;
+}
 .section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 16px;
 }
-
 .section-header h4 {
   margin: 0;
   font-size: 16px;
@@ -325,21 +344,38 @@ function handleSave() {
   font-weight: 500;
 }
 
-.field-options {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 80px;
+/* 字段表格 */
+.fields-table {
+  min-width: 900px; /* 让表格内容撑开，超出时滚动 */
+  border-collapse: collapse;
 }
-.field-basic {
-  flex: 1;
-  display: flex;
-  gap: 12px;
+.fields-table-header {
+  background: #f6f8fa !important;
+  font-weight: 600;
+  font-size: 15px;
 }
-.field-basic .form-group {
-  flex: 1;
-  margin-bottom: 0;
+.fields-table th,
+.fields-table td {
+  border: 1px solid #e1e4e8;
+  padding: 4px 8px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+.fields-table th {
+  background: #f6f8fa;
+}
+.fields-table textarea {
+  resize: none;
+}
+.fields-table input{
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 删除按钮 */
 .remove-btn {
   background: #d73a49;
   color: #fff;
@@ -364,16 +400,7 @@ function handleSave() {
 }
 
 @media (max-width: var(--mobile-breakpoint)) {
-  .field-row {
-    flex-direction: column;
-    gap: 12px;
-  }
-  .field-basic {
-    flex-direction: column;
-  }
-  .field-options {
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
+
+    
 }
 </style>

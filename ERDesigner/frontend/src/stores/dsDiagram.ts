@@ -118,18 +118,18 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
 
   // 实体操作
   function addEntity(entity: Entity) {
-    // 如果有父实体，继承父实体的字段
-    if (entity.parentEntityId) {
-      const parentEntity = getEntityById(entity.parentEntityId)
-      if (parentEntity) {
-        const inheritedFields = parentEntity.fields.map(field => ({
-          ...field,
-          id: `${entity.id}_${field.id}`, // 生成新的字段ID
-          isPrimaryKey: false // 继承的字段默认不是主键
-        }))
-        entity.fields = [...inheritedFields, ...entity.fields]
-      }
-    }
+    // // 如果有父实体，继承父实体的字段
+    // if (entity.parentEntityId) {
+    //   const parentEntity = getEntityById(entity.parentEntityId)
+    //   if (parentEntity) {
+    //     const inheritedFields = parentEntity.fields.map(field => ({
+    //       ...field,
+    //       id: `${entity.id}_${field.id}`, // 生成新的字段ID
+    //     }))
+    //     entity.fields = [...inheritedFields, ...entity.fields]
+    //   }
+    // }
+    console.log('addEntity-end', entity)
     entities.value.push(entity)
   }
 

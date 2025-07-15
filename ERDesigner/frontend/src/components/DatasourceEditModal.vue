@@ -1,6 +1,6 @@
 <template>
   <div class="modal-overlay">
-    <div class="modal-content" @click.stop>
+    <div class="modal-content" @click.stop @wheel.prevent="handleModalWheel">
       <div class="modal-header">
         <h3 class="modal-title">{{ isEdit ? $t('datasource.editDatasource') : $t('datasource.newDatasource') }}</h3>
         <button class="close-btn" @click="$emit('close')">×</button>
@@ -77,6 +77,11 @@ const isEdit = computed(() => !!props.datasource)
 const isValid = computed(() => {
   return formData.value.name.trim() !== '' && !errors.value.name
 })
+
+// 监听滚轮事件（屏蔽浏览器默认滚动）
+function handleModalWheel(event: WheelEvent) {
+  event.stopPropagation();
+}
 
 // 验证数据库名称
 function validateName() {

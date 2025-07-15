@@ -1,7 +1,7 @@
 <template>
   <g class="entity"
     :class="{ selected, 'multi-selected': multiSelected }"
-    :transform="`translate(${entity.x}, ${entity.y})`"
+    :transform="dragTransform || `translate(${entity.x}, ${entity.y})`"
     @click="e => $emit('click', entity, e)"
     @dblclick="$emit('dblclick', entity)"
     @contextmenu.prevent="e => $emit('contextmenu', entity, e)"
@@ -15,7 +15,7 @@
       :height="entity.height"
       :fill="entity.backgroundColor || '#ffffff'"
       :stroke="selected ? '#0366d6' : (entity.borderColor || '#24292e')"
-      :stroke-width="selected ? 2 : 1"
+      :stroke-width="selected ? 3 : 1"
       rx="4"/>
     <!-- 实体标题 -->
     <rect class="entity-header"
@@ -23,8 +23,7 @@
       height="30"
       :fill="entity.backgroundColor || '#f6f8fa'"
       :stroke="selected ? '#0366d6' : (entity.borderColor || '#24292e')"
-      stroke-width="1"
-      rx="4"/>
+      :stroke-width="1"/>
     <!-- 实体名称 -->
     <text class="entity-name"
       :x="entity.width / 2"
@@ -41,8 +40,7 @@
       y1="30"
       :x2="entity.width"
       y2="30"
-      :stroke="entity.borderColor || '#24292e'"
-      stroke-width="1"/>
+      :stroke="entity.borderColor || '#24292e'"/>
     <!-- 字段列表 -->
     <g class="fields">
       <g class="field"
@@ -72,7 +70,23 @@
           {{ field.name }}
         </text>
         <!-- 字段类型 -->
-        <text class="field-type"
+        <text class="field-type" v-if="field.length && field.scale"
+          :x="entity.width - 8"
+          y="14"
+          text-anchor="end"
+          font-size="10"
+          fill="#586069">
+          {{ field.type }}({{ field.length }},{{ field.scale }})
+        </text>
+        <text class="field-type" v-else-if="field.length"
+          :x="entity.width - 8"
+          y="14"
+          text-anchor="end"
+          font-size="10"
+          fill="#586069">
+          {{ field.type }}({{ field.length }})
+        </text>
+        <text class="field-type" v-else
           :x="entity.width - 8"
           y="14"
           text-anchor="end"
@@ -93,6 +107,7 @@ defineProps<{
   entity: Entity
   selected: boolean
   multiSelected: boolean
+  dragTransform?: string // 新增
 }>()
 
 defineEmits([
@@ -145,7 +160,6 @@ defineEmits([
   }
   .entity-rect {
     transition: all 0.2s ease;
-    stroke-width: 2;
   }
   .entity-name {
     user-select: none;
@@ -158,7 +172,6 @@ defineEmits([
     fill: rgba(3, 102, 214, 0.05);
   }
   .entity.selected .entity-rect {
-    stroke-width: 3;
     filter: drop-shadow(0 0 12px rgba(3, 102, 214, 0.4));
   }
   .field {

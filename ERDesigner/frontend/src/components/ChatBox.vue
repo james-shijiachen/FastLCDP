@@ -1,5 +1,5 @@
 <template>
-  <div class="chatbox-root">
+  <div class="chatbox-root" @wheel.prevent="handleModalWheel">
     <div class="chatbox-header">
       <h3>Agent</h3>
       <button class="chatbox-send-btn" @click="send">
@@ -26,6 +26,17 @@ const messages = ref([
   { role: 'agent', content: 'Hi! How can I help you?' }
 ])
 const messagesRef = ref<HTMLElement | null>(null)
+
+// 监听滚轮事件（屏蔽浏览器默认滚动）
+function handleModalWheel(event: WheelEvent) {
+  event.stopPropagation();
+  const container = messagesRef.value;
+  if (container) {
+    container.scrollLeft += event.deltaX; // 横向滚动
+    container.scrollTop += event.deltaY; // 纵向滚动
+  }
+}
+
 function send() {
   if (!input.value.trim()) return
   messages.value.push({ role: 'user', content: input.value })
@@ -94,7 +105,7 @@ function scrollToBottom() {
   width: 100%;
   border-radius: 6px;
   padding: 8px;
-  font-size: 15px;
+  font-size: 13px;
   word-break: break-all;
 }
 /* 用户消息气泡 */
@@ -107,8 +118,8 @@ function scrollToBottom() {
   background:#ebebec;
 }
 .dark-theme .chat-msg.user .msg-bubble {
-  background: #f8f6f6;
-  color: #fff;
+  background: #2e2e2e;
+  color: #9e9d9d;
 }
 /* 机器人消息气泡 */
 .chat-msg.agent .msg-bubble {

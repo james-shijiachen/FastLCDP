@@ -114,8 +114,9 @@
       v-if="showEntityModal"
       :entity="editingEntity"
       :datasources="store.datasources"
-      :available-parents="store.entities.filter(e => e.datasourceId === (editingEntity?.datasourceId || store.datasources[0]?.id))"
-      :default-datasource-id="store.datasources[0]?.id"
+      :availableParents="availableParents"
+      :defaultDatasourceId="store.datasources[0]?.id"
+      :parentFields="parentFields"
       @save="handleEntitySave"
       @close="closeEntityModal"
     />
@@ -173,10 +174,42 @@ const showGrid = ref(true)
 const canPaste = ref(false)
 const copiedEntities = ref<Entity[]>([])
 const sidebarWidth = ref(240) //右侧数据库树面板宽度
-const sidebarBottomHeight = ref(220) // 底部聊天框初始高度
+const sidebarBottomHeight = ref(600) // 底部聊天框初始高度
+const parentFields = ref<any[]>([])
 
 // 计算属性
 const isMultiSelect = computed(() => selectedEntities.value.length > 1)
+
+// 获取子代实体ID
+const descendantIds = computed(() =>
+  editingEntity.value
+    ? getDescendantIds(store.entities, editingEntity.value.id)
+    : []
+);
+
+// 获取所有子孙节点id，防止循环继承
+function getDescendantIds(entities: Entity[], entityId: string): string[] {
+  const descendants: string[] = [];
+  function findChildren(parentId: string) {
+    entities.forEach(e => {
+      if (e.parentEntityId === parentId) {
+        descendants.push(e.id);
+        findChildren(e.id);
+      }
+    });
+  }
+  findChildren(entityId);
+  return descendants;
+}
+
+// 获取可用父代实体
+const availableParents = computed(() =>
+  store.entities.filter(e =>
+    e.datasourceId === (editingEntity.value?.datasourceId || store.datasources[0]?.id) &&
+    e.id !== editingEntity.value?.id &&
+    !descendantIds.value.includes(e.id)
+  )
+);
 
 // 实体点击
 function handleEntityClick(entity: Entity, event: MouseEvent) {
@@ -210,7 +243,6 @@ function handleCanvasClick(event: MouseEvent) {
   if (!event.ctrlKey && !event.metaKey) {
     selectedEntities.value = []
   }
-  console.log('handleCanvasClick', event)
   hideContextMenus()
 }
 
@@ -365,29 +397,15 @@ function toggleFullscreen() {
   }
 }
 
-// 添加实体
+// 添加实体（点击工具栏按钮和右键菜单）
 function addEntityAtPosition() {
-  const entity: Entity = {
-    id: Date.now().toString(),
-    name: $t('defaults.newEntity'),
-    comment: '',
-    fields: [],
-    x: contextMenuX.value - 100,
-    y: contextMenuY.value - 50,
-    width: 200,
-    height: 60, // 最小高度，将由ERCanvas自动计算更新
-    backgroundColor: '#ffffff',
-    borderColor: '#000000',
-    datasourceId: store.datasources[0]?.id || '',
-    entityType: 'entity'
-  }
-  
-  store.addEntity(entity)
-  hideContextMenus()
+  handleCreateEntity(store.datasources[0]?.id || '', '')
+  hideContextMenus()  
 }
 
 // 编辑实体
 function editEntity() {
+  console.log('editEntity', selectedEntities.value)
   if (selectedEntities.value.length === 1) {
     editingEntity.value = selectedEntities.value[0]
     showEntityModal.value = true
@@ -484,8 +502,9 @@ function closeRelationModal() {
   showRelationModal.value = false
 }
 
-// 保存实体
+// 保存实体（实体编辑弹窗）
 function handleEntitySave(entity: Entity) {
+  console.log('handleEntitySave', entity)
   if (editingEntity.value && editingEntity.value.id) {
     store.updateEntity(entity)
   } else {
@@ -493,19 +512,15 @@ function handleEntitySave(entity: Entity) {
     store.addEntity(entity)
   }
   closeEntityModal()
-  // 新增后刷新树结构（如有必要）
-  if (typeof store.loadDatasources === 'function') {
-    store.loadDatasources()
-  }
 }
 
-// 保存关系
+// 保存关系（关系编辑弹窗）
 function handleRelationSave(relation: any) {
   store.addRelationship(relation)
   closeRelationModal()
 }
 
-// 编辑数据源
+// 编辑数据源（树形菜单点击）
 function handleEditDatasource(datasourceId: string) {
   const datasource = store.datasources.find(ds => ds.id === datasourceId)
   if (datasource) {
@@ -514,35 +529,28 @@ function handleEditDatasource(datasourceId: string) {
   }
 }
 
-// 删除数据源
+// 删除数据源（树形菜单点击）
 function handleDeleteDatasource(datasourceId: string) {
   if (confirm($t('messages.deleteDatasourceConfirm'))) {
     store.deleteDatasource(datasourceId)
   }
 }
 
-// 创建实体
+// 创建实体（树形菜单点击、工具栏点击、右键菜单点击）
 function handleCreateEntity(datasourceId: string, parentEntityId?: string) {
   // 新增实体时，弹窗应带上 datasourceId 和 parentEntityId
-  editingEntity.value = {
-    id: '',
-    name: '',
-    comment: '',
-    datasourceId,
-    parentEntityId,
-    entityType: 'entity',
-    fields: [],
-    x: 100,
-    y: 100,
-    width: 200,
-    height: 60,
-    backgroundColor: '#ffffff',
-    borderColor: '#24292e'
+  parentFields.value = []
+  if (parentEntityId) {
+    const parentEntity = store.entities.find(e => e.id === parentEntityId)
+    if (parentEntity) {
+      parentFields.value = parentEntity.fields
+    }
   }
+  editingEntity.value = null
   showEntityModal.value = true
 }
 
-// 编辑实体
+// 编辑实体（树形菜单点击）
 function handleEditEntity(entityId: string) {
   const entity = store.entities.find(e => e.id === entityId)
   if (entity) {
@@ -551,14 +559,14 @@ function handleEditEntity(entityId: string) {
   }
 }
 
-// 删除实体
+// 删除实体（树形菜单点击）
 function handleDeleteEntity(entityId: string) {
   if (confirm($t('messages.deleteEntityConfirm'))) {
     store.deleteEntity(entityId)
   }
 }
 
-// 从树中选择实体
+// 从树中选择实体（树形菜单点击）
 function handleSelectEntityFromTree(entityId: string) {
   const entity = store.entities.find(e => e.id === entityId)
   if (entity) {
@@ -566,7 +574,7 @@ function handleSelectEntityFromTree(entityId: string) {
   }
 }
 
-// 保存数据库
+// 保存数据库（数据库编辑弹窗）
 function handleDatasourceSave(datasource: Datasource) {
   if (editingDatasource.value) {
     store.updateDatasource(datasource)
@@ -583,7 +591,7 @@ function closeDatasourceModal() {
   editingDatasource.value = null
 }
 
-// 响应式方法
+// 响应式方法（初始化侧边栏）
 function handleResize() {
   windowWidth.value = window.innerWidth
   // 在桌面端自动显示侧边栏，移动端自动隐藏
@@ -594,12 +602,12 @@ function handleResize() {
   }
 }
 
-// 切换侧边栏
+// 切换侧边栏（点击工具栏按钮）
 function toggleSidebar() {
   sidebarVisible.value = !sidebarVisible.value
 }
 
-// 关闭侧边栏
+// 关闭侧边栏（移动端点击遮罩层）
 function closeSidebar() {
   sidebarVisible.value = false
 }
@@ -651,23 +659,26 @@ onMounted(() => {
   // 加载数据源
   store.loadDatasources()
 })
+
+// 卸载
 onUnmounted(() => {
   document.removeEventListener('click', hideContextMenus)
   document.removeEventListener('keydown', handleKeyDown)
   window.removeEventListener('resize', handleResize)
 })
 
-// 键盘事件
+// 全局键盘事件（保留 未使用）
 function handleKeyDown(event: KeyboardEvent) {
-  if (event.key === 'Delete' && selectedEntities.value.length > 0) {
-    deleteSelectedEntities()
-  } else if (event.key === 'Escape') {
-    selectedEntities.value = []
-    hideContextMenus()
-  } else if (event.ctrlKey && event.key === 'a') {
-    event.preventDefault()
-    selectAll()
-  }
+  // if ((event.key === 'Delete' || event.key === 'Backspace') && selectedEntities.value.length > 0) {
+  //   event.preventDefault()
+  //   deleteSelectedEntities()
+  // } else if (event.key === 'Escape') {
+  //   selectedEntities.value = []
+  //   hideContextMenus()
+  // } else if (event.ctrlKey && event.key === 'a') {
+  //   event.preventDefault()
+  //   selectAll()
+  // }
 }
 </script>
 

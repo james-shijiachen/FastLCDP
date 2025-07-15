@@ -1,5 +1,5 @@
 <template>
-  <div class="toolbar-wrapper">
+  <div class="toolbar-wrapper" @wheel.prevent="handleModalWheel">
     <button class="scroll-btn left" @click="scrollLeft" v-show="showLeftScroll" :aria-label="$t('toolbar.scrollLeft')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter">
         <polyline points="15 18 9 12 15 6"/>
@@ -64,12 +64,38 @@
         </svg>
       </button>
       <!-- 百分比显示/设置 -->
-      <button class="zoom-percentage" @click="setZoom(zoomLevel ?? 1)" :title="$t('toolbar.setZoom')" :aria-label="$t('toolbar.setZoom')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <text x="4" y="18" font-size="14">%</text>
-        </svg>
-        <span class="zoom-text">{{ Math.round((zoomLevel ?? 1) * 100) }}%</span>
-      </button>
+      <button
+          ref="zoomButtonRef"
+          class="zoom-percentage"
+          @click="toggleDropdown"
+          @dblclick="enableInput"
+          :title="$t('toolbar.setZoom')"
+          :aria-label="$t('toolbar.setZoom')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <text x="4" y="18" font-size="14">%</text>
+          </svg>
+          <span class="zoom-text">
+            <span v-if="!inputMode">{{ Math.round((zoomLevel ?? 1) * 100) }}%</span>
+            <span v-else style="white-space: nowrap;">
+              <input
+                ref="zoomInputRef"
+                v-model="inputValue"
+                @keyup.enter="confirmInput"
+                @blur="confirmInput"
+                style="width: 35px; text-align: right; font-size: 12px;"/>%
+            </span>
+          </span>
+        </button>
+        <!-- 下拉框 -->
+        <div v-if="dropdownVisible" :style="dropdownStyle" class="zoom-dropdown" @mousedown.prevent>
+          <div
+            v-for="option in zoomOptions"
+            :key="option"
+            class="zoom-option"
+            @click="selectZoom(option)">
+            {{ option }}%
+          </div>
+        </div>
       <!-- 缩小 -->
       <button @click="zoomOut" :title="$t('toolbar.zoomOut')" :aria-label="$t('toolbar.zoomOut')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -164,13 +190,13 @@
       </button>
       <!-- 侧边栏显示/隐藏 -->
       <button @click="toggleSidebar" :title="$t('toolbar.toggleSidebar')" :aria-label="$t('toolbar.toggleSidebar')" style="margin-left: auto;">
-        <svg v-if="sidebarVisible" width="24" height="24" viewBox="0 0 24 24" fill="none">
-          <rect x="3" y="3" width="18" height="18" rx="2" fill="#ccc"/>
-          <rect x="17" y="3" width="4" height="18" rx="1" fill="#888"/>
+        <svg v-if="sidebarVisible" width="32" height="24" viewBox="0 0 32 24" fill="none">
+          <rect x="3" y="4" width="17" height="24" stroke="currentColor" stroke-width="2" fill="none"/>
+          <rect x="22" y="4" width="7" height="24" stroke="currentColor" stroke-width="2" fill="currentColor"/>
         </svg>
-        <svg v-else width="24" height="24" viewBox="0 0 24 24" fill="none">
-          <rect x="3" y="3" width="18" height="18" rx="2" fill="#ccc"/>
-          <rect x="3" y="3" width="4" height="18" rx="1" fill="#888"/>
+        <svg v-else width="32" height="24" viewBox="0 0 32 24" fill="none">
+          <rect x="3" y="4" width="17" height="24" stroke="currentColor" stroke-width="2" fill="none"/>
+          <rect x="22" y="4" width="7" height="24" stroke="currentColor" stroke-width="2" fill="none"/>
         </svg>
       </button>
     </div>
@@ -233,10 +259,71 @@ function deleteEntity() { emit('deleteEntity') }
 function importDiagram() { emit('importDiagram') }
 function colorEntityBorder() { emit('colorEntityBorder') }
 
-// 滚动相关逻辑
+
 const toolbarRef = ref<HTMLElement | null>(null)
 const showLeftScroll = ref(false)
 const showRightScroll = ref(false)
+const dropdownVisible = ref(false)
+const inputMode = ref(false)
+const inputValue = ref('')
+const zoomInputRef = ref<HTMLInputElement | null>(null)
+const zoomOptions = [50, 75, 100, 150, 200]
+const zoomButtonRef = ref<HTMLElement | null>(null)
+const dropdownStyle = ref({})
+
+/* 百分比设置下拉框 */
+function toggleDropdown() {
+  if (inputMode.value) return
+  dropdownVisible.value = !dropdownVisible.value
+  if(dropdownVisible.value) {
+    nextTick(() => {
+      if (zoomButtonRef.value) {
+        const rect = zoomButtonRef.value.getBoundingClientRect()
+        dropdownStyle.value = {
+          left: rect.left - 17 + 'px',
+          top: rect.top - 30 + 'px'
+        }
+      }
+    })
+  }
+}
+
+/* 百分比设置下拉框选择 */
+function selectZoom(val: number) {
+  setZoom(val / 100)
+  dropdownVisible.value = false
+}
+
+/* 百分比设置下拉框输入 */
+function enableInput() {
+  inputMode.value = true
+  inputValue.value = Math.round((props.zoomLevel ?? 1) * 100).toString()
+  dropdownVisible.value = false
+  nextTick(() => {
+    zoomInputRef.value?.focus()
+    zoomInputRef.value?.select()
+  })
+}
+
+/* 百分比设置下拉框输入确认 */
+function confirmInput() {
+  let val = parseInt(inputValue.value, 10)
+  if (isNaN(val) || val < 10) val = 10
+  if (val > 500) val = 500
+  setZoom(val / 100)
+  inputMode.value = false
+}
+
+/* 监听滚轮事件（屏蔽浏览器默认滚动） */
+function handleModalWheel(event: WheelEvent) {
+  event.stopPropagation();
+  const container = toolbarRef.value;
+  if (container) {
+    container.scrollLeft += event.deltaX; // 横向滚动
+  }
+}
+
+/* 滚动按钮 */
 function updateScrollBtns() {
   const el = toolbarRef.value
   if (!el) return
@@ -244,6 +331,8 @@ function updateScrollBtns() {
   showLeftScroll.value = el.scrollLeft > 0
   showRightScroll.value = el.scrollLeft + el.clientWidth < el.scrollWidth
 }
+
+/* 滚动按钮左移 */
 function scrollLeft() {
   const el = toolbarRef.value
   if (el) {
@@ -251,6 +340,8 @@ function scrollLeft() {
     setTimeout(updateScrollBtns, 300)
   }
 }
+
+/* 滚动按钮右移 */
 function scrollRight() {
   const el = toolbarRef.value
   if (el) {
@@ -258,17 +349,21 @@ function scrollRight() {
     setTimeout(updateScrollBtns, 300)
   }
 }
+
+/* 挂载 */
 onMounted(() => {
   nextTick(updateScrollBtns)
   toolbarRef.value?.addEventListener('scroll', updateScrollBtns)
   window.addEventListener('resize', updateScrollBtns)
 })
 
+/* 卸载 */
 onBeforeUnmount(() => {
   toolbarRef.value?.removeEventListener('scroll', updateScrollBtns)
   window.removeEventListener('resize', updateScrollBtns)
 })
 
+/* 监听工具栏是否超出边界 */
 watch(toolbarRef, updateScrollBtns)
 </script>
 
@@ -371,6 +466,26 @@ watch(toolbarRef, updateScrollBtns)
   text-align: right;
   font-size: 14px;
   color: #222;
+}
+.zoom-dropdown {
+  position: absolute;
+  background: #fff;
+  border: 1px solid #e1e4e8;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  z-index: 100;
+  min-width: 70px;
+  margin-top: 2px;
+}
+.dark-theme .zoom-dropdown {
+  color: #2f2f2f;
+}
+.zoom-option {
+  padding: 6px 16px;
+  cursor: pointer;
+}
+.zoom-option:hover {
+  background: #f5f7fa;
 }
 
 /* 暗色主题 */

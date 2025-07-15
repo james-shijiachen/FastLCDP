@@ -89,9 +89,9 @@ const { t: $t } = useI18n()
 function onAddEntity() { emit('addEntity') }
 function onPaste() { if (props.canPaste) emit('paste') }
 function onSelectAll() { emit('selectAll') }
-function onEditEntity() { emit('editEntity') }
-function onCopyEntity() { emit('copyEntity') }
-function onDeleteEntity() { emit('deleteEntity') }
+function onEditEntity() { emit('editEntity', props.target?.id) }
+function onCopyEntity() { emit('copyEntity', props.target?.id) }
+function onDeleteEntity() { emit('deleteEntity', props.target?.id) }
 function onBringToFront() { emit('bringToFront') }
 function onSendToBack() { emit('sendToBack') }
 function onEditDatasource() { emit('editDatasource', props.target?.id) }

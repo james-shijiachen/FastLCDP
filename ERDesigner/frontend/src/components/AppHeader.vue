@@ -1,5 +1,5 @@
 <template>
-  <header class="top-toolbar">
+  <header class="top-toolbar" @wheel.prevent="handleModalWheel">
       <!-- 移动端菜单按钮 -->
       <button 
         class="top-toolbar-btn" 
@@ -65,6 +65,11 @@ const showDropdown = ref(false)
 const langSwitcher = ref<HTMLElement | null>(null)
 const flagMap: Record<string, string> = { en: '🇺🇸', zh: '🇨🇳' }
 const currentFlag = computed(() => flagMap[currentLocale.value] || '🇺🇸')
+
+// 监听滚轮事件（屏蔽浏览器默认滚动）
+function handleModalWheel(event: WheelEvent) {
+  event.stopPropagation();
+}
 
 function toggleSidebar() { emit('toggleSidebar') }
 function changeLanguage() {
@@ -165,7 +170,7 @@ onBeforeUnmount(() => {
   color: #333;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-  z-index: 10;
+  z-index: 1200;
   min-width: 70px;
   padding: 4px 0;
 }

@@ -27,12 +27,14 @@ export interface Field {
   name: string
   type: string
   length?: number
-  precision?: number
+  scale?: number
   defaultValue?: string
   comment?: string
   isPrimaryKey: boolean
   isRequired: boolean
   isUnique: boolean
+  extendEntityId?: string // 继承至的实体ID
+  extendFieldId?: string // 继承至的实体字段ID
 }
 
 export interface Relationship {

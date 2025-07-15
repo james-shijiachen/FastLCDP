@@ -38,15 +38,15 @@
     "addField": "Add Field",
     "fieldName": "Field Name",
     "dataType": "Data Type",
-    "primaryKey": "Primary Key",
-    "notNull": "Not Null",
+    "primaryKey": "Key",
+    "required": "Required",
     "unique": "Unique",
     "autoIncrement": "Auto Increment",
     "defaultValue": "Default Value",
     "length": "Length",
     "precision": "Precision",
     "scale": "Scale",
-    "actions": "Actions"
+    "removeField": "Remove Field"
   },
   "common": {
     "cancel": "Cancel",
@@ -78,7 +78,7 @@
   },
   "toolbar": {
     "toggleSidebar": "Sidebar",
-    "newDiagram": "New Diagram",
+    "newDiagram": "New",
     "saveDiagram": "Save",
     "exportDiagram": "Export",
     "undo": "Undo",
@@ -97,8 +97,9 @@
     "fullscreen": "Fullscreen",
     "scrollLeft": "Scroll Left",
     "scrollRight": "Scroll Right",
-    "importDiagram": "Import Diagram",
-    "colorEntityBorder": "Entity Border Color"
+    "importDiagram": "Import",
+    "colorEntityBorder": "Color Border",
+    "menu": "Menu"
   },
   "panel": {
     "datasourceStructure": "Datasource Structure",

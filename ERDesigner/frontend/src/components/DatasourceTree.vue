@@ -5,7 +5,7 @@
       'datasource-panel-hidden': hidden,
       'datasource-panel-overlay': isMobile && !hidden
     }">
-    <div class="datasource-tree">
+    <div class="datasource-tree" @wheel.prevent="handleModalWheel">
       <div class="tree-header">
         <h3>{{ $t('datasource.structure') }}</h3>
         <button class="btn btn-primary" @click="$emit('createDatasource')" :title="$t('datasource.newDatasource')">
@@ -13,7 +13,7 @@
         </button>
       </div>
       
-      <div class="tree-content">
+      <div class="tree-content" ref="treeContentRef">
         <div class="tree-nodes">
           <TreeNodeComponent 
             v-for="child in treeData" 
@@ -68,6 +68,7 @@ interface Props {
 const props = defineProps<Props>()
 const { t: $t } = useI18n()
 const dragOverNodeId = ref<string | null>(null)
+const treeContentRef = ref<HTMLDivElement | null>(null)
 
 const emit = defineEmits<{
   'createDatasource': []
@@ -86,6 +87,16 @@ const contextMenu = ref({
   type: '' as 'datasource' | 'entity',
   target: null as TreeNode | null
 })
+
+// 监听滚轮事件（屏蔽浏览器默认滚动）
+function handleModalWheel(event: WheelEvent) {
+  event.stopPropagation();
+  const container = treeContentRef.value;
+  if (container) {
+    container.scrollLeft += event.deltaX; // 横向滚动
+    container.scrollTop += event.deltaY; // 纵向滚动
+  }
+}
 
 // 拖拽节点（待实现）
 function handleNodeDrop(_: { sourceId: string, targetId: string }) {

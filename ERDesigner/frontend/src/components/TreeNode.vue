@@ -23,7 +23,13 @@
         </svg>
       </span>
       <!-- 实体/表图标 -->
-      <span v-if="node.type === 'entity'" class="node-icon entity-icon">
+      <span v-if="node && node.type === 'entity' && node.entityType === 'abstract'" class="node-icon entity-icon abstract-icon">
+        <!-- 抽象类图标：虚线矩形（无A字） -->
+        <svg width="16" height="16" viewBox="0 0 16 16">
+          <rect x="2" y="4" width="12" height="8" stroke="currentColor" stroke-width="1" fill="none" stroke-dasharray="3,2"/>
+        </svg>
+      </span>
+      <span v-else-if="node && node.type === 'entity'" class="node-icon entity-icon">
         <svg width="16" height="16" viewBox="0 0 16 16">
           <rect x="2" y="4" width="12" height="8" stroke="currentColor" stroke-width="1" fill="none"/>
           <line x1="2" y1="7" x2="14" y2="7" stroke="currentColor" stroke-width="1"/>
@@ -35,13 +41,13 @@
     </div>
     <div v-if="expanded && hasChildren" class="child-nodes">
       <TreeNode
-        v-for="child in node.children"
+        v-for="child in (node.children || []).filter(Boolean)"
         :key="child.id"
         :node="child"
         :selectedEntityId="selectedEntityId"
         @addEntity="$emit('addEntity', $event)"
         @selectEntity="$emit('selectEntity', $event)"
-        @contextmenu="$emit('contextmenu', $event)"
+        @contextmenu="$emit('contextmenu', $event, child)"
       />
     </div>
   </div>
@@ -150,7 +156,6 @@ function onDrop(e: DragEvent) {
   color: #66bb6a;
 }
 
-
 .node-content {
   display: flex;
   align-items: center;
@@ -177,8 +182,6 @@ function onDrop(e: DragEvent) {
 }
 .add-btn {
   margin-left: 8px;
-  background: #0366d6;
-  color: #fff;
   border: none;
   padding: 6px 12px;
   border-radius: 6px;
@@ -189,16 +192,7 @@ function onDrop(e: DragEvent) {
   align-items: center;
   gap: 4px;
 }
-.add-btn:hover {
-  background: #0256cc;
-}
-.dark-theme .add-btn {
-  background: #bb86fc;
-  color: #000000;
-  font-weight: 500;
-}
 .dark-theme .add-btn:hover {
-  background: #d0bcff;
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
@@ -221,5 +215,14 @@ function onDrop(e: DragEvent) {
 }
 .dark-theme .drag-over {
   background: #2c2c2c !important;
+}
+/* 抽象类图标特殊样式（可选） */
+.abstract-icon svg {
+  opacity: 0.85;
+}
+.abstract-icon text {
+  font-weight: bold;
+  font-style: italic;
+  fill: #bb86fc;
 }
 </style>

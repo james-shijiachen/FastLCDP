@@ -39,14 +39,14 @@
     "fieldName": "字段名",
     "dataType": "数据类型",
     "primaryKey": "主键",
-    "notNull": "非空",
+    "required": "非空",
     "unique": "唯一",
     "autoIncrement": "自增",
     "defaultValue": "默认值",
     "length": "长度",
     "precision": "精度",
     "scale": "小数位",
-    "actions": "操作"
+    "removeField": "删除字段"
   },
   "common": {
     "cancel": "取消",

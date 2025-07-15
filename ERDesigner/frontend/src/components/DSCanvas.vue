@@ -57,19 +57,19 @@
       <!-- 实体 -->
       <g class="entities-layer">
         <EntityNode
-          v-for="entity in entities"
+          v-for="entity in entities.filter(e => e.entityType !== 'abstract')"
           :key="entity.id"
           :entity="entity"
           :selected="isEntitySelected(entity)"
           :multiSelected="selectedEntities.length > 1 && isEntitySelected(entity)"
+          :dragTransform="draggingEntityId === entity.id ? `translate(${dragCurrent.x},${dragCurrent.y})` : undefined"
           @click="(entity, event) => handleEntityClick(entity, event)"
           @dblclick="handleEntityDoubleClick"
           @contextmenu="handleEntityRightClick"
           @mousedown="handleEntityMouseDown"
           @touchstart="handleEntityTouchStart"
           @touchmove="handleEntityTouchMove"
-          @touchend="handleEntityTouchEnd"
-        />
+          @touchend="handleEntityTouchEnd"/>
       </g>
       
       <!-- 选择框 -->
@@ -95,6 +95,7 @@ import { useDSDiagramStore } from '../stores/dsDiagram'
 import type { Entity, Relationship } from '../types/entity'
 import EntityNode from './EntityNode.vue'
 import RelationLine from './RelationLine.vue'
+import { useI18n } from 'vue-i18n'
 
 interface Props {
   zoomLevel?: number
@@ -118,6 +119,7 @@ const emit = defineEmits<{
   'zoomChange': [level: number]
 }>()
 
+const { locale, t: $t } = useI18n()
 const store = useDSDiagramStore()
 
 // 响应式数据
@@ -131,7 +133,10 @@ const isDragging = ref(false)
 const dragStartPos = ref({ x: 0, y: 0 })
 const dragEntity = ref<Entity | null>(null)
 
-// 调整尺寸功能已移除，实体框大小由计算自动确定
+// 极致流畅拖拽
+const draggingEntityId = ref<string | null>(null)
+const dragOffset = ref({ x: 0, y: 0 })
+const dragCurrent = ref({ x: 0, y: 0 })
 
 // 触摸状态
 const isTouching = ref(false)
@@ -162,6 +167,7 @@ function isEntitySelected(entity: Entity): boolean {
   return props.selectedEntities.some(e => e.id === entity.id)
 }
 
+// 画布点击事件
 function handleCanvasClick(event: MouseEvent) {
   // 检查点击的是否是实体或实体的子元素
   const target = event.target as Element
@@ -192,6 +198,7 @@ function handleEntityRightClick(entity: Entity, event: MouseEvent) {
   emit('entityRightClick', entity, event)
 }
 
+// 画布鼠标按下
 function handleCanvasMouseDown(event: MouseEvent) {
   if (event.target === svgCanvas.value) {
     // 开始选择框
@@ -214,6 +221,7 @@ function handleCanvasMouseDown(event: MouseEvent) {
   }
 }
 
+// 画布鼠标移动
 function handleCanvasMouseMove(event: MouseEvent) {
   if (isDragging.value && dragEntity.value) {
     const rect = svgCanvas.value!.getBoundingClientRect()
@@ -227,6 +235,7 @@ function handleCanvasMouseMove(event: MouseEvent) {
   }
 }
 
+// 画布鼠标抬起
 function handleCanvasMouseUp() {
   if (isDragging.value) {
     isDragging.value = false
@@ -234,63 +243,46 @@ function handleCanvasMouseUp() {
   }
 }
 
+// 实体鼠标按下
 function handleEntityMouseDown(entity: Entity, event: MouseEvent) {
   event.stopPropagation()
-  
   if (!isEntitySelected(entity)) {
     emit('entityClick', entity, event)
   }
-  
-  const rect = svgCanvas.value!.getBoundingClientRect()
-  dragStartPos.value = {
-    x: event.clientX - rect.left - entity.x,
-    y: event.clientY - rect.top - entity.y
+  draggingEntityId.value = entity.id
+  dragOffset.value = {
+    x: event.clientX - entity.x,
+    y: event.clientY - entity.y
   }
-  
-  isDragging.value = true
-  dragEntity.value = entity
-  
-  document.addEventListener('mousemove', handleDragMouseMove)
-  document.addEventListener('mouseup', handleDragMouseUp)
+  dragCurrent.value = { x: entity.x, y: entity.y }
+  document.addEventListener('mousemove', onDragMove)
+  document.addEventListener('mouseup', onDragEnd)
 }
 
-function handleDragMouseMove(event: MouseEvent) {
-  if (isDragging.value && dragEntity.value) {
-    const rect = svgCanvas.value!.getBoundingClientRect()
-    const x = event.clientX - rect.left - dragStartPos.value.x
-    const y = event.clientY - rect.top - dragStartPos.value.y
-    
-    // 如果是多选，移动所有选中的实体
-    if (props.selectedEntities.length > 1) {
-      const deltaX = x - dragEntity.value.x
-      const deltaY = y - dragEntity.value.y
-      
-      props.selectedEntities.forEach(entity => {
-        // 限制实体在画布边界内
-        entity.x = Math.max(0, Math.min(canvasWidth.value - entity.width, entity.x + deltaX))
-        entity.y = Math.max(0, Math.min(canvasHeight.value - entity.height, entity.y + deltaY))
-        store.updateEntity(entity)
-      })
-    } else {
-      // 限制实体在画布边界内
-      dragEntity.value.x = Math.max(0, Math.min(canvasWidth.value - dragEntity.value.width, x))
-      dragEntity.value.y = Math.max(0, Math.min(canvasHeight.value - dragEntity.value.height, y))
-      store.updateEntity(dragEntity.value)
-    }
+// 拖拽移动
+function onDragMove(event: MouseEvent) {
+  if (!draggingEntityId.value) return
+  dragCurrent.value = {
+    x: event.clientX - dragOffset.value.x,
+    y: event.clientY - dragOffset.value.y
   }
 }
 
-function handleDragMouseUp() {
-  isDragging.value = false
-  dragEntity.value = null
-  
-  document.removeEventListener('mousemove', handleDragMouseMove)
-  document.removeEventListener('mouseup', handleDragMouseUp)
+// 拖拽结束
+function onDragEnd(event: MouseEvent) {
+  if (!draggingEntityId.value) return
+  const entity = store.entities.find(e => e.id === draggingEntityId.value)
+  if (entity) {
+    entity.x = dragCurrent.value.x
+    entity.y = dragCurrent.value.y
+    store.updateEntity(entity)
+  }
+  draggingEntityId.value = null
+  document.removeEventListener('mousemove', onDragMove)
+  document.removeEventListener('mouseup', onDragEnd)
 }
 
-// 调整尺寸事件处理
-// 调整尺寸功能已移除，实体框大小完全由计算确定
-
+// 选择框事件处理
 function handleSelectionMouseMove(event: MouseEvent) {
   if (selectionBox.value.visible) {
     const rect = svgCanvas.value!.getBoundingClientRect()
@@ -304,6 +296,7 @@ function handleSelectionMouseMove(event: MouseEvent) {
   }
 }
 
+// 选择框鼠标抬起事件处理
 function handleSelectionMouseUp() {
   if (selectionBox.value.visible) {
     // 检查哪些实体在选择框内
@@ -364,10 +357,12 @@ function handleDrop(event: DragEvent) {
   }
 }
 
+// 拖拽覆盖事件处理
 function handleDragOver(event: DragEvent) {
   event.preventDefault()
 }
 
+// 获取关系路径
 function getRelationPath(relationship: Relationship): string {
   const fromEntity = entities.value.find(e => e.id === relationship.fromEntityId)
   const toEntity = entities.value.find(e => e.id === relationship.toEntityId)
@@ -382,6 +377,7 @@ function getRelationPath(relationship: Relationship): string {
   return `M ${fromX} ${fromY} L ${toX} ${toY}`
 }
 
+// 获取关系标签位置
 function getRelationLabelPosition(relationship: Relationship) {
   const fromEntity = entities.value.find(e => e.id === relationship.fromEntityId)
   const toEntity = entities.value.find(e => e.id === relationship.toEntityId)
@@ -418,6 +414,7 @@ function handleWheel(event: WheelEvent) {
   }
 }
 
+// 键盘事件处理
 function handleKeyDown(event: KeyboardEvent) {
   // 阻止浏览器默认快捷键
   if (event.ctrlKey || event.metaKey) {
@@ -457,7 +454,8 @@ function handleKeyDown(event: KeyboardEvent) {
   }
   
   // Delete键删除选中实体
-  if (event.key === 'Delete' && props.selectedEntities.length > 0) {
+  if ((event.key === 'Delete' || event.key === 'Backspace') && props.selectedEntities.length > 0 && confirm($t('messages.deleteEntitiesConfirm'))) {
+    event.preventDefault()
     props.selectedEntities.forEach(entity => {
       store.deleteEntity(entity.id)
     })
@@ -522,6 +520,7 @@ function handleTouchMove(event: TouchEvent) {
   }
 }
 
+// 触摸结束
 function handleTouchEnd(event: TouchEvent) {
   const touchDuration = Date.now() - touchStartTime.value
   
@@ -543,6 +542,7 @@ function handleTouchEnd(event: TouchEvent) {
   }
 }
 
+// svg触摸开始
 function handleSvgTouchStart(event: TouchEvent) {
   if (event.touches.length === 1 && event.target === svgCanvas.value) {
     // 在SVG画布上开始选择框
@@ -561,6 +561,7 @@ function handleSvgTouchStart(event: TouchEvent) {
   }
 }
 
+// svg触摸移动
 function handleSvgTouchMove(event: TouchEvent) {
   if (event.touches.length === 1 && selectionBox.value.visible) {
     const touch = event.touches[0]
@@ -588,6 +589,7 @@ function handleSvgTouchEnd(_event: TouchEvent) {
   }
 }
 
+// 实体触摸开始
 function handleEntityTouchStart(entity: Entity, event: TouchEvent) {
   event.stopPropagation()
   
@@ -607,6 +609,7 @@ function handleEntityTouchStart(entity: Entity, event: TouchEvent) {
   }
 }
 
+// 实体触摸移动
 function handleEntityTouchMove(entity: Entity, event: TouchEvent) {
   if (event.touches.length === 1 && touchEntity.value === entity) {
     const touch = event.touches[0]
@@ -635,6 +638,7 @@ function handleEntityTouchMove(entity: Entity, event: TouchEvent) {
   }
 }
 
+// 实体触摸结束
 function handleEntityTouchEnd(entity: Entity, event: TouchEvent) {
   const touchDuration = Date.now() - touchStartTime.value
   
@@ -686,7 +690,7 @@ function calculateEntityWidth(entity: Entity): number {
     const fieldNameWidth = field.name.length * 7
     const fieldTypeWidth = field.type.length * 6
     const iconWidth = field.isPrimaryKey ? 25 : 8
-    const fieldWidth = iconWidth + fieldNameWidth + fieldTypeWidth + 40
+    const fieldWidth = iconWidth + fieldNameWidth + fieldTypeWidth + 50
     maxFieldWidth = Math.max(maxFieldWidth, fieldWidth)
   })
   
