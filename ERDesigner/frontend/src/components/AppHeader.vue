@@ -71,25 +71,27 @@ function handleModalWheel(event: WheelEvent) {
   event.stopPropagation();
 }
 
+/* 切换侧边栏显示 */
 function toggleSidebar() { emit('toggleSidebar') }
+/* 切换语言 */
 function changeLanguage() {
   locale.value = currentLocale.value
   emit('changeLanguage', currentLocale.value)
 }
+/* 切换主题 */
 function toggleTheme() { emit('toggleTheme') }
-
+/* 选择语言 */
 function selectLanguage(lang: string) {
   currentLocale.value = lang
   changeLanguage()
   showDropdown.value = false
 }
-
+/* 点击工具栏外部关闭下拉框和输入框 */
 function handleClickOutside(event: MouseEvent) {
   if (langSwitcher.value && !langSwitcher.value.contains(event.target as Node)) {
     showDropdown.value = false
   }
 }
-
 // 自动根据本地时间切换主题（仅首次加载）
 onMounted(() => {
   const hour = new Date().getHours()

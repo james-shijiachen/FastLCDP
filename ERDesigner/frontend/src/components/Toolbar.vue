@@ -259,7 +259,6 @@ function deleteEntity() { emit('deleteEntity') }
 function importDiagram() { emit('importDiagram') }
 function colorEntityBorder() { emit('colorEntityBorder') }
 
-
 const toolbarRef = ref<HTMLElement | null>(null)
 const showLeftScroll = ref(false)
 const showRightScroll = ref(false)
@@ -350,17 +349,27 @@ function scrollRight() {
   }
 }
 
+/* 点击工具栏外部关闭下拉框和输入框 */
+function handleClickOutside(event: MouseEvent) {
+  if (toolbarRef.value && !toolbarRef.value.contains(event.target as Node)) {
+    dropdownVisible.value = false
+    inputMode.value = false
+  }
+}
+
 /* 挂载 */
 onMounted(() => {
   nextTick(updateScrollBtns)
   toolbarRef.value?.addEventListener('scroll', updateScrollBtns)
   window.addEventListener('resize', updateScrollBtns)
+  document.addEventListener('click', handleClickOutside)
 })
 
 /* 卸载 */
 onBeforeUnmount(() => {
   toolbarRef.value?.removeEventListener('scroll', updateScrollBtns)
   window.removeEventListener('resize', updateScrollBtns)
+  document.removeEventListener('click', handleClickOutside)
 })
 
 /* 监听工具栏是否超出边界 */

@@ -57,7 +57,7 @@
       <!-- 实体 -->
       <g class="entities-layer">
         <EntityNode
-          v-for="entity in entities.filter(e => e.entityType !== 'abstract')"
+          v-for="entity in entities.filter(e => e.entityType !== EntityType.ABSTRACT)"
           :key="entity.id"
           :entity="entity"
           :selected="isEntitySelected(entity)"
@@ -93,11 +93,13 @@
 import { ref, computed, onMounted, onUnmounted, nextTick, watchEffect } from 'vue'
 import { useDSDiagramStore } from '../stores/dsDiagram'
 import type { Entity, Relationship } from '../types/entity'
+import { EntityType } from '../types/entity'
 import EntityNode from './EntityNode.vue'
 import RelationLine from './RelationLine.vue'
 import { useI18n } from 'vue-i18n'
 
 interface Props {
+  entities?: Entity[]
   zoomLevel?: number
   showGrid?: boolean
   selectedEntities?: Entity[]
@@ -106,7 +108,8 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   zoomLevel: 1,
   showGrid: true,
-  selectedEntities: () => []
+  selectedEntities: () => [],
+  entities: () => []
 })
 
 const emit = defineEmits<{
@@ -159,7 +162,7 @@ const selectionBox = ref({
 })
 
 // 计算属性
-const entities = computed(() => store.entities)
+const entities = computed(() => props.entities)
 const relationships = computed(() => store.relationships)
 
 // 方法
@@ -271,7 +274,7 @@ function onDragMove(event: MouseEvent) {
 // 拖拽结束
 function onDragEnd(event: MouseEvent) {
   if (!draggingEntityId.value) return
-  const entity = store.entities.find(e => e.id === draggingEntityId.value)
+  const entity = entities.value.find(e => e.id === draggingEntityId.value)
   if (entity) {
     entity.x = dragCurrent.value.x
     entity.y = dragCurrent.value.y
@@ -350,7 +353,7 @@ function handleDrop(event: DragEvent) {
       backgroundColor: '#ffffff',
       borderColor: '#24292e',
       datasourceId: '',
-      entityType: 'entity'
+      entityType: EntityType.ENTITY
     }
     
     store.addEntity(entity)
@@ -739,7 +742,7 @@ onMounted(() => {
     
     // 初始化所有实体的尺寸
   nextTick(() => {
-    store.entities.forEach(entity => {
+    entities.value.forEach(entity => {
       updateEntitySize(entity)
     })
   })

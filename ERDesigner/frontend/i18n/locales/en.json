@@ -18,7 +18,14 @@
     "descriptionPlaceholder": "Enter datasource description",
     "nameRequired": "Datasource name is required",
     "nameMaxLength": "Datasource name cannot exceed 50 characters",
-    "namePattern": "Datasource name must start with a letter and can only contain letters, numbers, and underscores"
+    "namePattern": "Datasource name must start with a letter and can only contain letters, numbers, and underscores",
+    "type": "Type",
+    "database": "Database",
+    "nosql": "NoSQL",
+    "document": "Document",
+    "category": "Category",
+    "selectType": "Select type",
+    "selectCategory": "Select category"
   },
   "entity": {
     "edit": "Edit Entity",

@@ -5,7 +5,7 @@
     :style="{ left: x + 'px', top: y + 'px' }"
     @click.stop>
     <template v-if="type === 'canvas'">
-      <div class="context-menu-item" @click="onAddEntity">
+      <div class="context-menu-item" @click="onCreateEntity">
         <span class="icon">📦</span>
         {{ $t('contextMenu.addEntity') }}
       </div>
@@ -32,38 +32,19 @@
         <span class="icon">🗑️</span>
         {{ $t('contextMenu.delete') }}
       </div>
-      <div class="context-menu-separator"></div>
-      <div class="context-menu-item" @click="onBringToFront">
-        <span class="icon">⬆️</span>
-        {{ $t('contextMenu.bringToFront') }}
-      </div>
-      <div class="context-menu-item" @click="onSendToBack">
-        <span class="icon">⬇️</span>
-        {{ $t('contextMenu.sendToBack') }}
-      </div>
     </template>
     <template v-else-if="type === 'datasource'">
       <div class="context-menu-item" @click="onEditDatasource">
         <span class="icon">✏️</span>
         {{ $t('datasource.editDatasource') }}
       </div>
-      <div class="context-menu-item" @click="onCreateEntity">
+      <div class="context-menu-item" @click="onCreateEntityFromTree">
         <span class="icon">➕</span>
         {{ $t('datasource.addEntity') }}
       </div>
       <div class="context-menu-item danger" @click="onDeleteDatasource">
         <span class="icon">🗑️</span>
         {{ $t('datasource.deleteDatasource') }}
-      </div>
-    </template>
-    <template v-else-if="type === 'db-entity'">
-      <div class="context-menu-item" @click="onEditDbEntity">
-        <span class="icon">✏️</span>
-        {{ $t('entity.editEntity') }}
-      </div>
-      <div class="context-menu-item danger" @click="onDeleteDbEntity">
-        <span class="icon">🗑️</span>
-        {{ $t('entity.deleteEntity') }}
       </div>
     </template>
   </div>
@@ -77,34 +58,30 @@ const props = defineProps<{
   x: number
   y: number
   canPaste?: boolean
-  type: 'canvas' | 'entity' | 'datasource' | 'db-entity'
-  target?: any
+  type: 'canvas' | 'entity' | 'datasource'
+  targetId?: string
 }>()
 const emit = defineEmits([
-  'addEntity', 'paste', 'selectAll',
-  'editEntity', 'copyEntity', 'deleteEntity', 'bringToFront', 'sendToBack',
-  'editDatasource', 'deleteDatasource', 'createEntity', 'editDbEntity', 'deleteDbEntity'
+  'createEntity', 'paste', 'selectAll',
+  'editEntity', 'copyEntity', 'deleteEntity',
+  'editDatasource', 'deleteDatasource', 'createEntityFromTree'
 ])
 const { t: $t } = useI18n()
-function onAddEntity() { emit('addEntity') }
+function onCreateEntity() { emit('createEntity') }
 function onPaste() { if (props.canPaste) emit('paste') }
 function onSelectAll() { emit('selectAll') }
-function onEditEntity() { emit('editEntity', props.target?.id) }
-function onCopyEntity() { emit('copyEntity', props.target?.id) }
-function onDeleteEntity() { emit('deleteEntity', props.target?.id) }
-function onBringToFront() { emit('bringToFront') }
-function onSendToBack() { emit('sendToBack') }
-function onEditDatasource() { emit('editDatasource', props.target?.id) }
-function onDeleteDatasource() { emit('deleteDatasource', props.target?.id) }
-function onCreateEntity() { emit('createEntity', props.target?.id) }
-function onEditDbEntity() { emit('editDbEntity', props.target?.id) }
-function onDeleteDbEntity() { emit('deleteDbEntity', props.target?.id) }
+function onEditEntity() { emit('editEntity', props.targetId) }
+function onCopyEntity() { emit('copyEntity', props.targetId) }
+function onDeleteEntity() { emit('deleteEntity', props.targetId) }
+function onEditDatasource() { emit('editDatasource', props.targetId) }
+function onDeleteDatasource() { emit('deleteDatasource', props.targetId) }
+function onCreateEntityFromTree() { emit('createEntityFromTree', props.targetId) }
 </script>
 
 <style scoped>
 .context-menu {
   position: fixed;
-  z-index: 1000;
+  z-index: 1200;
   min-width: 120px;
   background: #fff;
   border: 1px solid #e4e7ed;

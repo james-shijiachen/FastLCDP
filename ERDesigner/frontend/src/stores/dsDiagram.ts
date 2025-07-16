@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Entity, Relationship, Datasource, TreeNode } from '../types/entity'
+import type { Entity, Relationship, Datasource, TreeNode, Index } from '../types/entity'
+import { EntityType, TreeNodeType } from '../types/entity'
 // import api from '@/api'
 
 export const useDSDiagramStore = defineStore('dsDiagram', () => {
@@ -8,6 +9,7 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
   const datasources = ref<Datasource[]>([])
   const entities = ref<Entity[]>([])
   const relationships = ref<Relationship[]>([])
+  const indexes = ref<Index[]>([])
   const selectedEntity = ref<Entity | null>(null)
   const selectedRelationship = ref<Relationship | null>(null)
   const selectedDatasource = ref<Datasource | null>(null)
@@ -40,7 +42,7 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
   
   // 可见实体（只显示entity类型，不显示abstract类型）
   const visibleEntities = computed(() => 
-    entities.value.filter(entity => entity.entityType === 'entity')
+    entities.value.filter(entity => entity.entityType === EntityType.ENTITY)
   )
   
   // 树形结构数据
@@ -54,7 +56,7 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
       entityMap[entity.id] = {
         id: entity.id,
         label: entity.name,
-        type: 'entity',
+        type: TreeNodeType.ENTITY,
         entityType: entity.entityType,
         datasourceId: entity.datasourceId,
         children: []
@@ -64,7 +66,7 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
       datasourceMap[ds.id] = {
         id: ds.id,
         label: ds.name,
-        type: 'datasource',
+        type: TreeNodeType.DATASOURCE,
         children: []
       }
     })
@@ -196,7 +198,7 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
     return entities.value.filter(entity => 
       entity.datasourceId === datasourceId && 
       entity.id !== excludeEntityId &&
-      entity.entityType === 'abstract' // 只有abstract类型的实体可以作为父实体
+      entity.entityType === EntityType.ABSTRACT // 只有abstract类型的实体可以作为父实体
     )
   }
 
@@ -328,6 +330,7 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
     datasources,
     entities,
     relationships,
+    indexes,
     selectedEntity,
     selectedRelationship,
     selectedDatasource,

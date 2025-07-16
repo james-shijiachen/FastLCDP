@@ -13,7 +13,6 @@
           <div class="form-group">
             <label>{{ $t('datasource.name') }}</label>
             <select v-model="formData.datasourceId" :disabled="isEdit">
-              <option value="">{{ $t('entity.selectDatasource') }}</option>
               <option v-for="ds in datasources" :key="ds.id" :value="ds.id">
                 {{ ds.name }}
               </option>
@@ -95,7 +94,8 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-if="props.parentFields && props.parentFields.length > 0" v-for="field in props.parentFields" :key="field.id">
+                <tr v-if="parentFields && parentFields.length > 0" v-for="field in parentFields" :key="field.id">
+                  <td></td>
                   <td>{{ field.name }}</td>
                   <td>{{ field.type }}</td>
                   <td>{{ field.length }}</td>
@@ -135,7 +135,7 @@
       <div class="modal-footer">
         <button type="button" @click="addField" class="btn btn-primary">{{ $t('entity.addField') }}</button>
         <button @click="$emit('close')" class="btn btn-secondary">{{ $t('common.cancel') }}</button>
-        <button @click="handleSave" class="btn btn-primary" :disabled="!isValid">
+        <button @click="handleSave" class="btn btn-primary" :disabled="!canSave">
           {{ isEdit ? $t('common.save') : $t('common.create') }}
         </button>
       </div>
@@ -147,14 +147,16 @@
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { Entity, Field, Datasource } from '../types/entity'
+import { EntityType } from '../types/entity'
 
 const { t } = useI18n()
 
 interface Props {
   entity?: Entity | null
+  parentEntity?: Entity | null
   datasources: Datasource[]
+  currentDatasourceId?: string
   availableParents: Entity[]
-  defaultDatasourceId?: string
   parentFields?: Field[]
 }
 
@@ -169,6 +171,7 @@ const modalContentRef = ref<HTMLDivElement | null>(null)
 const nameInputRef = ref<HTMLInputElement | null>(null)
 const fieldsListWrapperRef = ref<HTMLDivElement | null>(null)
 const showHeaderName = ref(false)
+
 // 表单数据
 const formData = ref({
   entityId: '',
@@ -190,7 +193,7 @@ const isValid = computed(() => {
 
 // 是否可以保存
 const canSave = computed(() => {
-  return formData.value.name.trim().length > 0 && formData.value.datasourceId.length > 0
+  return formData.value.name.trim().length > 0 && formData.value.datasourceId.length > 0 && formData.value.fields.every(field => field.name.trim().length > 0 && field.type.trim().length > 0)
 })
 
 // 监听滚轮事件（屏蔽浏览器默认滚动）
@@ -208,13 +211,14 @@ function handleModalWheel(event: WheelEvent) {
 
 // 监听props变化
 watch(() => props.entity, (entity) => {
+  console.log('entity', entity, props.parentEntity)
   if (entity) {
     formData.value = {
       entityId: entity.id,
       name: entity.name,
       comment: entity.comment || '',
       datasourceId: entity.datasourceId,
-      entityType: entity.entityType,
+      entityType: entity.entityType === EntityType.ABSTRACT ? 'abstract' : 'entity',
       parentEntityId: entity.parentEntityId || '',
       fields: JSON.parse(JSON.stringify(entity.fields))
     }
@@ -223,9 +227,9 @@ watch(() => props.entity, (entity) => {
       entityId: '',
       name: '',
       comment: '',
-      datasourceId: props.defaultDatasourceId || '',
+      datasourceId: props.currentDatasourceId || '',
       entityType: 'entity',
-      parentEntityId: '',
+      parentEntityId: props.parentEntity?.id || '',
       fields: [
         {
           entityId: '',
@@ -278,7 +282,7 @@ function handleSave() {
     name: formData.value.name.trim(),
     comment: formData.value.comment.trim(),
     datasourceId: formData.value.datasourceId,
-    entityType: formData.value.entityType,
+    entityType: formData.value.entityType === 'abstract' ? EntityType.ABSTRACT : EntityType.ENTITY,
     parentEntityId: formData.value.parentEntityId || undefined,
     fields: formData.value.fields.filter(f => f.name.trim()),
     x: props.entity?.x || 100,

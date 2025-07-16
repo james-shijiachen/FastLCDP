@@ -18,7 +18,14 @@
     "descriptionPlaceholder": "请输入数据源描述",
     "nameRequired": "数据源名称不能为空",
     "nameMaxLength": "数据源名称不能超过50个字符",
-    "namePattern": "数据源名称必须以字母开头，只能包含字母、数字和下划线"
+    "namePattern": "数据源名称必须以字母开头，只能包含字母、数字和下划线",
+    "type": "类型",
+    "database": "关系型数据库",
+    "nosql": "NoSQL数据库",
+    "document": "文档数据库",
+    "category": "种类",
+    "selectType": "请选择类型",
+    "selectCategory": "请选择种类"
   },
   "entity": {
     "edit": "编辑实体",

@@ -12,14 +12,13 @@
           {{ $t('datasource.newDatasource') }}
         </button>
       </div>
-      
       <div class="tree-content" ref="treeContentRef">
         <div class="tree-nodes">
           <TreeNodeComponent 
             v-for="child in treeData" 
             :key="child.id" 
             :node="child" 
-            :selectedEntityId="selectedEntityId" 
+            :selectedEntities="selectedEntities" 
             :dragOverNodeId="dragOverNodeId"
             @addEntity="handleAddEntity" 
             @selectEntity="handleSelectEntity" 
@@ -29,38 +28,20 @@
             @dragLeaveNode="(id: string) => { if (dragOverNodeId === id) dragOverNodeId = null }" />
         </div>
       </div>
-      
-      <!-- 右键菜单 -->
-      <ContextMenu
-        :show="contextMenu.show"
-        :x="contextMenu.x"
-        :y="contextMenu.y"
-        :type="contextMenu.type === 'datasource' ? 'datasource' : 'entity'"
-        :target="contextMenu.target"
-        @editDatasource="(id: string) => $emit('editDatasource', id)"
-        @deleteDatasource="(id: string) => $emit('deleteDatasource', id)"
-        @createEntity="(id: string) => $emit('createEntity', id)"
-        @editEntity="(id: string) => $emit('editEntity', id)"
-        @deleteEntity="(id: string) => $emit('deleteEntity', id)"
-        @close="hideContextMenu"
-      />
-      <!-- 遮罩层用于关闭右键菜单 -->
-      <div v-if="contextMenu.show" class="context-menu-overlay" @click="hideContextMenu"></div>
     </div>
-    
   </aside>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { TreeNode } from '../types/entity'
-import ContextMenu from './ContextMenu.vue'
+import type { TreeNode, Entity } from '../types/entity'
+import { TreeNodeType } from '../types/entity'
 import TreeNodeComponent from './TreeNode.vue'
 
 interface Props {
   treeData: TreeNode[]
-  selectedEntityId?: string
+  selectedEntities: Entity[]
   hidden?: boolean
   isMobile?: boolean
 }
@@ -78,15 +59,8 @@ const emit = defineEmits<{
   'editEntity': [entityId: string]
   'deleteEntity': [entityId: string]
   'selectEntity': [entityId: string]
+  'contextmenu': [event: MouseEvent, node: TreeNode, type: string]
 }>()
-
-const contextMenu = ref({
-  show: false,
-  x: 0,
-  y: 0,
-  type: '' as 'datasource' | 'entity',
-  target: null as TreeNode | null
-})
 
 // 监听滚轮事件（屏蔽浏览器默认滚动）
 function handleModalWheel(event: WheelEvent) {
@@ -106,29 +80,18 @@ function handleNodeDrop(_: { sourceId: string, targetId: string }) {
 
 // 显示右键菜单
 function showContextMenu(event: MouseEvent, node: TreeNode) {
-  contextMenu.value = {
-    show: true,
-    x: event.clientX,
-    y: event.clientY,
-    type: node.type,
-    target: node
-  }
-}
-
-// 隐藏右键菜单
-function hideContextMenu() {
-  contextMenu.value.show = false
+  emit('contextmenu', event, node, node.type)
 }
 
 // 添加实体
 function handleAddEntity(node: TreeNode) {
-  if (node.type === 'datasource') {
+  if (node.type === TreeNodeType.DATASOURCE) {
     emit('createEntity', node.id)
-  } else if (node.type === 'entity') {
+  } else if (node.type === TreeNodeType.ENTITY) {
+    emit('selectEntity', node.id)
     emit('createEntity', node.datasourceId!, node.id)
   }
 }
-
 // 选择实体
 function handleSelectEntity(node: TreeNode) {
   emit('selectEntity', node.id)
@@ -200,15 +163,5 @@ function handleSelectEntity(node: TreeNode) {
 }
 .dark-theme .tree-header h3 {
   color: #ffffff;
-}
-
-/* 右键菜单遮罩层 */
-.context-menu-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 999;
 }
 </style>

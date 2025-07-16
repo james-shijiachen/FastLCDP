@@ -1,5 +1,5 @@
 <template>
-  <div :class="['tree-node', node.type === 'datasource' ? 'datasource-node' : 'entity-node', { selected: selectedEntityId === node.id}]"
+  <div :class="['tree-node', node.type === TreeNodeType.DATASOURCE ? 'datasource-node' : 'entity-node', { selected: selectedEntities.some(e => e.id === node.id) }]"
   draggable="true"
   @dragover.stop="onDragOver"
   @dragenter.stop="onDragEnter"
@@ -14,7 +14,7 @@
         </svg>
       </span>
       <!-- 数据库图标 -->
-      <span v-if="node.type === 'datasource'" class="node-icon datasource-icon">
+      <span v-if="node.type === TreeNodeType.DATASOURCE" class="node-icon datasource-icon">
         <svg width="16" height="16" viewBox="0 0 16 16">
           <path d="M8 1C5.5 1 3 1.5 3 2.5v11c0 1 2.5 1.5 5 1.5s5-.5 5-1.5v-11C13 1.5 10.5 1 8 1z" stroke="currentColor" stroke-width="1" fill="none"/>
           <ellipse cx="8" cy="2.5" rx="5" ry="1.5" stroke="currentColor" stroke-width="1" fill="none"/>
@@ -23,13 +23,13 @@
         </svg>
       </span>
       <!-- 实体/表图标 -->
-      <span v-if="node && node.type === 'entity' && node.entityType === 'abstract'" class="node-icon entity-icon abstract-icon">
+      <span v-if="node && node.type === TreeNodeType.ENTITY && node.entityType === EntityType.ABSTRACT" class="node-icon entity-icon abstract-icon">
         <!-- 抽象类图标：虚线矩形（无A字） -->
         <svg width="16" height="16" viewBox="0 0 16 16">
           <rect x="2" y="4" width="12" height="8" stroke="currentColor" stroke-width="1" fill="none" stroke-dasharray="3,2"/>
         </svg>
       </span>
-      <span v-else-if="node && node.type === 'entity'" class="node-icon entity-icon">
+      <span v-else-if="node && node.type === TreeNodeType.ENTITY" class="node-icon entity-icon">
         <svg width="16" height="16" viewBox="0 0 16 16">
           <rect x="2" y="4" width="12" height="8" stroke="currentColor" stroke-width="1" fill="none"/>
           <line x1="2" y1="7" x2="14" y2="7" stroke="currentColor" stroke-width="1"/>
@@ -44,7 +44,7 @@
         v-for="child in (node.children || []).filter(Boolean)"
         :key="child.id"
         :node="child"
-        :selectedEntityId="selectedEntityId"
+        :selectedEntities="selectedEntities"
         @addEntity="$emit('addEntity', $event)"
         @selectEntity="$emit('selectEntity', $event)"
         @contextmenu="$emit('contextmenu', $event, child)"
@@ -55,11 +55,12 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import type { TreeNode as TreeNodeType } from '../types/entity'
+import type { TreeNode, Entity } from '../types/entity'
+import { TreeNodeType, EntityType } from '../types/entity'
 
 const props = defineProps<{
-  node: TreeNodeType
-  selectedEntityId?: string
+  node: TreeNode
+  selectedEntities: Entity[]
   dragOverNodeId?: string | null
 }>()
 const emit = defineEmits(['addEntity', 'selectEntity', 'contextmenu', 'nodeDrop', 'dragOverNode', 'dragLeaveNode'])
@@ -75,13 +76,12 @@ watch(() => props.node.children?.length ?? 0, (newVal, oldVal = 0) => {
 })
 // 递归统计所有后代节点数量
 const totalDescendants = computed(() => {
-  function count(node: TreeNodeType): number {
+  function count(node: TreeNode): number {
     if (!node.children || node.children.length === 0) return 0
     return node.children.length + node.children.reduce((sum, c) => sum + count(c), 0)
   }
   return count(props.node)
 })
-
 // 展开/折叠节点
 function toggle() {
   expanded.value = !expanded.value
@@ -92,7 +92,7 @@ function handleAdd() {
 }
 // 选择实体
 function handleSelect() {
-  if (props.node.type === 'entity') emit('selectEntity', props.node)
+  if (props.node.type === TreeNodeType.ENTITY) emit('selectEntity', props.node)
 }
 // 右键菜单
 function handleContextMenu(e: MouseEvent) {
@@ -121,7 +121,6 @@ function onDrop(e: DragEvent) {
 .tree-node {
   margin-bottom: 2px;
 }
-
 /* 图标 */
 .entity-icon {
   color: #28a745;

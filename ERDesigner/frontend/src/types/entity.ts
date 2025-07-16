@@ -1,7 +1,50 @@
+export enum DatasourceType {
+  DATABASE = 'DATABASE',
+  NOSQL = 'NOSQL',
+  DOCUMENT = 'DOCUMENT'
+}
+
+export enum Category {
+  MYSQL = 'MYSQL',
+  ORACLE = 'ORACLE',
+  POSTGRESQL = 'POSTGRESQL',
+  SQLSERVER = 'SQLSERVER',
+  REDIS = 'REDIS',
+  JSON = 'JSON',
+  XML = 'XML'
+}
+
+export enum RelationshipType {
+  ONE_TO_ONE = 'ONE_TO_ONE',
+  ONE_TO_MANY = 'ONE_TO_MANY',
+  MANY_TO_ONE = 'MANY_TO_ONE',
+  MANY_TO_MANY = 'MANY_TO_MANY'
+}
+
+export enum EntityType {
+  ABSTRACT = 'ABSTRACT',
+  ENTITY = 'ENTITY'
+}
+
+export enum TreeNodeType {
+  DATASOURCE = 'DATASOURCE',
+  ENTITY = 'ENTITY'
+}
+
+export interface View {
+  id: string
+  name: string
+  datasources: Datasource[]
+  createdTime: Date
+}
+
 export interface Datasource {
   id: string
   name: string
   description?: string
+  type?: DatasourceType
+  category?: Category
+  views?: View[]
   createdTime: Date
 }
 
@@ -11,7 +54,7 @@ export interface Entity {
   id: string
   name: string
   comment?: string
-  entityType: 'abstract' | 'entity'
+  entityType: EntityType
   fields: Field[]
   x: number
   y: number
@@ -41,7 +84,7 @@ export interface Relationship {
   id: string
   fromEntityId: string
   toEntityId: string
-  type: 'one-to-one' | 'one-to-many' | 'many-to-one' | 'many-to-many'
+  type: RelationshipType
   fromFieldId?: string
   toFieldId?: string
   name?: string
@@ -53,7 +96,7 @@ export interface Index {
   entityId: string
   name: string
   comment?: string
-  fields: string[]
+  fields: Field[]
   unique: boolean
 }
 
@@ -61,13 +104,14 @@ export interface DiagramData {
   datasources: Datasource[]
   entities: Entity[]
   relationships: Relationship[]
+  indexs: Index[]
 }
 
 export interface TreeNode {
   id: string
   label: string
-  type: 'datasource' | 'entity'
+  type: TreeNodeType
   children?: TreeNode[]
-  entityType?: 'abstract' | 'entity'
+  entityType?: EntityType
   datasourceId?: string
 }

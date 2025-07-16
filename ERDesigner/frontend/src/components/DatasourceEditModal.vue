@@ -5,21 +5,42 @@
         <h3 class="modal-title">{{ isEdit ? $t('datasource.editDatasource') : $t('datasource.newDatasource') }}</h3>
         <button class="close-btn" @click="$emit('close')">×</button>
       </div>
-      
       <div class="modal-body">
-        <div class="form-group">
-          <label for="datasource-name">{{ $t('datasource.name') }} *</label>
-          <input 
-            id="datasource-name"
-            v-model="formData.name" 
-            type="text" 
-            :placeholder="$t('datasource.namePlaceholder')"
-            @keyup.enter="handleSave"
-            :class="{ 'error': errors.name }"
-          />
-          <span v-if="errors.name" class="error-message">{{ $t(errors.name) }}</span>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="datasource-name">{{ $t('datasource.name') }} *</label>
+            <input 
+              id="datasource-name"
+              v-model="formData.name"
+              type="text"
+              :placeholder="$t('datasource.namePlaceholder')"
+              @keyup.enter="handleSave"
+              @change="validateName"
+              :class="{ 'error': errors.name }"/>
+              <span v-if="errors.name" class="error-message">{{ $t(errors.name) }}</span>
+          </div>
+          <div class="form-group">
+            <label for="datasource-type">{{ $t('datasource.type') }} *</label>
+            <select id="datasource-type" v-model="formData.type">
+              <option value="">{{ $t('datasource.selectType') }}</option>
+              <option value="DATABASE">{{ $t('datasource.database') }}</option>
+              <option value="NOSQL">{{ $t('datasource.nosql') }}</option>
+              <option value="DOCUMENT">{{ $t('datasource.document') }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="datasource-category">{{ $t('datasource.category') }} *</label>
+            <select id="datasource-category" v-model="formData.category">
+              <option value="">{{ $t('datasource.selectCategory') }}</option>
+              <option value="MYSQL">MySQL</option>
+              <option value="ORACLE">Oracle</option>
+              <option value="POSTGRESQL">PostgreSQL</option>
+              <option value="SQLSERVER">SQL Server</option>
+              <option value="REDIS">Redis</option>
+              <option value="JSON">JSON</option>
+            </select>
+          </div>
         </div>
-        
         <div class="form-group">
           <label for="datasource-description">{{ $t('datasource.description') }}</label>
           <textarea 
@@ -30,7 +51,6 @@
           ></textarea>
         </div>
       </div>
-      
       <div class="modal-footer">
         <button class="btn btn-secondary" @click="$emit('close')">{{ $t('common.cancel') }}</button>
         <button class="btn btn-primary" @click="handleSave" :disabled="!isValid">
@@ -45,6 +65,7 @@
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { Datasource } from '../types/entity'
+import { DatasourceType, Category } from '../types/entity'
 
 const { t: $t } = useI18n()
 
@@ -62,6 +83,8 @@ const emit = defineEmits<{
 // 表单数据
 const formData = ref({
   name: '',
+  type: '' as 'DATABASE' | 'NOSQL' | 'DOCUMENT',
+  category: '' as 'MYSQL' | 'ORACLE' | 'POSTGRESQL' | 'SQLSERVER' | 'REDIS' | 'JSON' | 'XML',
   description: ''
 })
 
@@ -106,6 +129,8 @@ function handleSave() {
   const datasource: Datasource = {
     id: props.datasource?.id || Date.now().toString(),
     name: formData.value.name.trim(),
+    type: formData.value.type as DatasourceType,
+    category: formData.value.category as Category,
     description: formData.value.description.trim(),
     createdTime: props.datasource?.createdTime || new Date()
   }
@@ -117,11 +142,15 @@ watch(() => props.datasource, (newDatasource) => {
   if (newDatasource) {
     formData.value = {
       name: newDatasource.name,
+      type: newDatasource.type || 'DATABASE',
+      category: newDatasource.category || 'MYSQL',
       description: newDatasource.description || ''
     }
   } else {
     formData.value = {
       name: '',
+      type: '' as 'DATABASE' | 'NOSQL' | 'DOCUMENT',
+      category: '' as 'MYSQL' | 'ORACLE' | 'POSTGRESQL' | 'SQLSERVER' | 'REDIS' | 'JSON' | 'XML',
       description: ''
     }
   }
