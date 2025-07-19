@@ -312,7 +312,7 @@ function handleEntityMouseDown(entity: Entity, event: MouseEvent) {
 
   mouseDownPos = { x: event.clientX, y: event.clientY }
   draggingEntityIds.value = [entity.id]
-  if(isEntitySelected(entity)) {
+  if(isEntitySelected(entity) || props.selectedEntities.length === 0) {
 
     dragEntity[entity.id] = { x: entity.x, y: entity.y }
     dragStartPos.value[entity.id] = { 
