@@ -39,7 +39,10 @@
             :label="$t('entity.parent')"
             @focus="clearFieldError('entity.parentEntityId')"
             type="select"
-            :options="formData.parentEntityId ? [{ value: formData.parentEntityId, label: formData.parentEntityName }] : []"/>
+            :options="[
+              { value: '', label: $t('entity.noParent') },
+              ...availableParentEntities.map(entity => ({ value: entity.id, label: entity.name }))
+            ]"/>
           <ValidateField
             v-model="formData.name"
             field="entity.name"
@@ -93,7 +96,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-if="parentFields && parentFields.length > 0" v-for="field in parentFields" :key="field.id">
+                <tr v-if="allParentField && allParentField.length > 0" v-for="field in allParentField" :key="field.id">
                   <td></td>
                   <td><input :disabled="true" :value="field.name" /></td>
                   <td><input :disabled="true" :value="field.type" /></td>
@@ -144,7 +147,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed} from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { Entity, Field, Datasource } from '../types/entity'
 import { EntityType } from '../types/entity'
@@ -158,10 +161,10 @@ const { modalRef, onHeaderMousedown } = useDraggableModal()
 
 interface Props {
   entity?: Entity | null
+  entities: Entity[]
   parentEntity?: Entity | null
   datasources: Datasource[]
   currentDatasourceId?: string
-  parentFields?: Field[]
 }
 
 const props = defineProps<Props>()
@@ -224,6 +227,75 @@ const canSave = computed(() => {
   return formData.value.name.trim().length > 0 && formData.value.datasourceId.length > 0 && formData.value.fields.every(field => field.name.trim().length > 0 && field.type.trim().length > 0)
 })
 
+const allParentField = computed(() => {
+  return props.parentEntity ? getAllParentFields(props.entities, props.parentEntity.id) : props.entity && props.entity.parentEntityId ? getAllParentFields(props.entities, props.entity.parentEntityId) : []
+})
+
+// 获取可选的父实体列表
+const availableParentEntities = computed(() => {
+  if (!formData.value.datasourceId) return []
+  const currentEntityId = props.entity?.id || formData.value.entityId
+  // 获取当前数据源下的所有实体
+  const datasourceEntities = props.entities.filter(e => e.datasourceId === formData.value.datasourceId)
+  // 过滤掉当前实体和其所有子实体，只保留抽象实体作为可选父实体
+  return datasourceEntities.filter(entity => {
+    return entity.id !== currentEntityId && // 排除当前实体
+           !getChildEntityIds(datasourceEntities, currentEntityId).includes(entity.id) // 排除所有子实体
+  })
+})
+
+// 获取当前实体的所有子实体ID（递归）
+function getChildEntityIds(datasourceEntities: Entity[], parentId: string): string[] {
+  const children = datasourceEntities.filter(e => e.parentEntityId === parentId)
+  const childIds = children.map(c => c.id)
+  
+  // 递归获取子实体的子实体
+  children.forEach(child => {
+    childIds.push(...getChildEntityIds(datasourceEntities, child.id))
+  })
+  return childIds
+}
+
+// 监听数据源ID变化，重置父实体ID
+watch(() => formData.value.datasourceId, (newDatasourceId, oldDatasourceId) => {
+  if (newDatasourceId !== oldDatasourceId && formData.value.parentEntityId) {
+    // 检查当前选择的父实体是否在新的可选列表中
+    const isParentStillAvailable = availableParentEntities.value.some(entity => entity.id === formData.value.parentEntityId)
+    
+    if (!isParentStillAvailable) {
+      // 如果当前选择的父实体不在新的可选列表中，则清空
+      formData.value.parentEntityId = ''
+      formData.value.parentEntityName = ''
+    }
+  }
+})
+
+// 递归获取所有父级字段
+function getAllParentFields(entities: Entity[], parentEntityId: string | undefined): Field[] {
+  const result: Field[] = [];
+  let currentParentId = parentEntityId;
+  while (currentParentId) {
+    const parent = entities.find(e => e.id === currentParentId);
+    if (parent) {
+      
+      // 设置来源信息，用于显示来源字段
+      parent.fields.forEach(field => {
+        field.extended = {
+          entityId: parent.id,
+          fieldId: field.id
+        }
+      })
+
+      // 先递归上级，再加本级，保证顺序
+      result.unshift(...parent.fields);
+      currentParentId = parent.parentEntityId;
+    } else {
+      break;
+    }
+  }
+  return result;
+}
+
 // 监听滚轮事件（屏蔽浏览器默认滚动）
 function handleModalWheel(event: WheelEvent) {
   event.stopPropagation();
@@ -264,6 +336,7 @@ function removeField(index: number) {
 }
 // 保存实体
 function handleSave() {
+  console.log("handleSave", canSave.value, isValid.value)
   if (!canSave.value) return
   if(isValid.value) {
     const entity: Entity = {
@@ -281,6 +354,7 @@ function handleSave() {
       backgroundColor: props.entity?.backgroundColor || '#ffffff',
       borderColor: props.entity?.borderColor || '#24292e'
     }
+    console.log("handleSave", formData.value.parentEntityId, entity)
     emit('save', entity)
   }
 }

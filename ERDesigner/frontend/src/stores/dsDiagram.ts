@@ -17,6 +17,7 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
   const indexes = ref<Index[]>([])
   
   // 选择状态
+  const refreshTreeNode = ref(true)
   const selectedEntities = ref<Entity[]>([])
   const selectedRelationships = ref<Relationship[]>([])
   
@@ -47,48 +48,51 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
     const tree: TreeNode[] = []
     const entityMap: Record<string, TreeNode> = {}
     const datasourceMap: Record<string, TreeNode> = {}
+    console.log("refreshTreeNode", refreshTreeNode.value)
+    if(refreshTreeNode.value){
+      // 构建所有实体节点
+      entities.value.forEach(entity => {
+        entityMap[entity.id] = {
+          id: entity.id,
+          label: entity.name,
+          type: TreeNodeType.ENTITY,
+          entityType: entity.entityType,
+          datasourceId: entity.datasourceId,
+          children: [],
+          icon: entity.entityType === EntityType.ABSTRACT ? 'abstract-entity' : 'entity'
+        }
+      })
 
-    // 构建所有实体节点
-    entities.value.forEach(entity => {
-      entityMap[entity.id] = {
-        id: entity.id,
-        label: entity.name,
-        type: TreeNodeType.ENTITY,
-        entityType: entity.entityType,
-        datasourceId: entity.datasourceId,
-        children: [],
-        icon: entity.entityType === EntityType.ABSTRACT ? 'abstract-entity' : 'entity'
-      }
-    })
+      // 构建所有数据源节点
+      datasources.value.forEach(ds => {
+        datasourceMap[ds.id] = {
+          id: ds.id,
+          label: ds.name,
+          type: TreeNodeType.DATASOURCE,
+          children: [],
+          icon: 'datasource'
+        }
+      })
 
-    // 构建所有数据源节点
-    datasources.value.forEach(ds => {
-      datasourceMap[ds.id] = {
-        id: ds.id,
-        label: ds.name,
-        type: TreeNodeType.DATASOURCE,
-        children: [],
-        icon: 'datasource'
-      }
-    })
+      // 实体挂到数据源（先处理没有父节点的实体）
+      entities.value.forEach(entity => {
+        const node = entityMap[entity.id]
+        if (!entity.parentEntityId || !entityMap[entity.parentEntityId]) {
+          datasourceMap[entity.datasourceId]?.children?.push(node)
+        }
+      })
 
-    // 实体挂到数据源（先处理没有父节点的实体）
-    entities.value.forEach(entity => {
-      const node = entityMap[entity.id]
-      if (!entity.parentEntityId || !entityMap[entity.parentEntityId]) {
-        datasourceMap[entity.datasourceId]?.children?.push(node)
-      }
-    })
+      // 再挂子节点
+      entities.value.forEach(entity => {
+        if (entity.parentEntityId && entityMap[entity.parentEntityId]) {
+          entityMap[entity.parentEntityId].children!.push(entityMap[entity.id])
+        }
+      })
 
-    // 再挂子节点
-    entities.value.forEach(entity => {
-      if (entity.parentEntityId && entityMap[entity.parentEntityId]) {
-        entityMap[entity.parentEntityId].children!.push(entityMap[entity.id])
-      }
-    })
-
-    // 汇总到树形结构
-    Object.values(datasourceMap).forEach(dsNode => tree.push(dsNode))
+      // 汇总到树形结构
+      Object.values(datasourceMap).forEach(dsNode => tree.push(dsNode))
+    }
+    console.log("tree", tree)
     return tree
   })
 
@@ -167,25 +171,28 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
     if (index === -1) {
       throw new Error('实体不存在')
     }
-    
     const oldEntity = entities.value[index]
     entities.value[index] = updatedEntity
-    
     saveToHistory(OperationType.UPDATE_ENTITY, '更新实体', { entity: oldEntity }, { entity: updatedEntity })
   }
 
   function deleteEntity(entityId: string) {
+
+    const deletedEntity = entities.value.find(e => e.id === entityId)
+
     // 检查是否有子实体继承了这个实体
     const childEntities = entities.value.filter(e => e.parentEntityId === entityId)
     if (childEntities.length > 0) {
+
+      const parentEntityId = deletedEntity?.parentEntityId;
+
       // 可以选择阻止删除或者清除子实体的继承关系
       childEntities.forEach(child => {
-        child.parentEntityId = undefined
+        child.parentEntityId = parentEntityId
         updateEntity(child)
       })
     }
     
-    const deletedEntity = entities.value.find(e => e.id === entityId)
     entities.value = entities.value.filter(e => e.id !== entityId)
     
     // 同时删除相关的关系

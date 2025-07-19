@@ -22,6 +22,7 @@
             :dragOverNodeId="dragOverNodeId"
             @addEntity="handleAddEntity" 
             @selectEntity="handleSelectEntity" 
+            @doubleClick="handleDoubleClick"
             @contextmenu="showContextMenu"
             @nodeDrop="handleNodeDrop"
             @dragOverNode="(id: string) => dragOverNodeId = id"
@@ -60,6 +61,7 @@ const emit = defineEmits<{
   'deleteEntity': [entityId: string]
   'selectEntity': [entityId: string]
   'contextmenu': [event: MouseEvent, node: TreeNode, type: string]
+  'doubleClick': [node: TreeNode]
 }>()
 
 // 监听滚轮事件（屏蔽浏览器默认滚动）
@@ -92,6 +94,12 @@ function handleAddEntity(node: TreeNode) {
     emit('createEntity', node.datasourceId!, node.id)
   }
 }
+
+// 双击树节点，打开实体编辑弹窗
+function handleDoubleClick(node: TreeNode) {
+  emit('doubleClick', node)
+}
+
 // 选择实体
 function handleSelectEntity(node: TreeNode) {
   emit('selectEntity', node.id)

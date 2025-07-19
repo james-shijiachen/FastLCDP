@@ -6,7 +6,7 @@
   @dragleave.stop="onDragLeave"
   @drop.stop="onDrop"
   >
-    <div :class="['node-content',{ 'drag-over': node.id === dragOverNodeId }]" @click="handleSelect" @contextmenu.prevent="handleContextMenu">
+    <div :class="['node-content',{ 'drag-over': node.id === dragOverNodeId }]" @click="handleSelect" @dblclick="handleDoubleClick(node)" @contextmenu.prevent="handleContextMenu($event, node)">
       <span v-if="hasChildren" class="expand-icon" @click.stop="toggle">
         <svg width="12" height="12" viewBox="0 0 12 12">
           <polygon v-if="!expanded" points="4,3 9,6 4,9" fill="currentColor" />
@@ -45,9 +45,10 @@
         :key="child.id"
         :node="child"
         :selectedEntities="selectedEntities"
+        @doubleClick="handleDoubleClick"
         @addEntity="$emit('addEntity', $event)"
         @selectEntity="$emit('selectEntity', $event)"
-        @contextmenu="$emit('contextmenu', $event, child)"
+        @contextmenu.prevent="handleContextMenu"
       />
     </div>
   </div>
@@ -63,7 +64,7 @@ const props = defineProps<{
   selectedEntities: Entity[]
   dragOverNodeId?: string | null
 }>()
-const emit = defineEmits(['addEntity', 'selectEntity', 'contextmenu', 'nodeDrop', 'dragOverNode', 'dragLeaveNode'])
+const emit = defineEmits(['addEntity', 'selectEntity', 'contextmenu', 'nodeDrop', 'dragOverNode', 'dragLeaveNode', 'doubleClick'])
 
 const expanded = ref(false)
 const hasChildren = computed(() => props.node.children && props.node.children.length > 0)
@@ -95,9 +96,22 @@ function handleSelect() {
   if (props.node.type === TreeNodeType.ENTITY) emit('selectEntity', props.node)
 }
 // 右键菜单
-function handleContextMenu(e: MouseEvent) {
-  emit('contextmenu', e, props.node)
+function handleContextMenu(e: MouseEvent, node: TreeNode) {
+  if(node){
+    emit('contextmenu', e, node)
+  }else{
+    emit('contextmenu', e, props.node)
+  }
 }
+
+function handleDoubleClick(node: TreeNode) {
+  if(node){
+    emit('doubleClick', node)
+  }else{
+    emit('doubleClick', props.node)
+  }
+}
+
 // 拖拽相关
 function onDragOver() {
   emit('dragOverNode', props.node.id)

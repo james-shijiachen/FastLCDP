@@ -118,6 +118,7 @@
             @createEntity="handleCreateEntity"
             @editEntity="handleEditEntity"
             @deleteEntity="handleDeleteEntity"
+            @doubleClick="handleDoubleClick"
             @selectEntity="handleSelectEntityFromTree"
           />
         </div>
@@ -133,8 +134,8 @@
       :entity="editingEntity"
       :parentEntity="parentEntity"
       :datasources="store.datasources"
-      :currentDatasourceId="currentDatasourceId || store.datasources[0]?.id"
-      :parentFields="parentFields"
+      :entities="store.entities"
+      :currentDatasourceId="currentDatasourceId || store.datasources[0]?.id" 
       @save="handleEntitySave"
       @close="closeEntityModal"
     />
@@ -162,8 +163,8 @@ import { useDSDiagramStore } from './stores/dsDiagram'
 import { DSCanvas, EntityEditModal, RelationEditModal, DatasourceTree, DatasourceEditModal, 
   Toolbar, AppHeader, ContextMenu, ViewTabs} from './components'
 import ChatBox from './components/ChatBox.vue'
-import type { Entity, Field, Datasource, View } from './types/entity'
-import { EntityType } from './types/entity'
+import type { Entity, Datasource, View, TreeNode } from './types/entity'
+import { EntityType, TreeNodeType } from './types/entity'
 import { errorHandler } from './utils/errorHandler'
 
 const store = useDSDiagramStore()  // 数据源存储
@@ -189,15 +190,14 @@ const showEntityModal = ref(false)  // 是否显示实体编辑模态框
 const showRelationModal = ref(false)  // 是否显示关系编辑模态框
 const showDatasourceModal = ref(false)  // 是否显示数据源编辑模态框
 const editingEntity = ref<Entity | null>(null)  // 当前编辑的实体
-const parentEntity = ref<Entity | null>(null)   // 父实体(用于新增实体时，显示父实体信息)
+const parentEntity = ref<Entity | null>(null)   // 父实体(用于点击树+号新增实体时，显示父实体信息)
 const editingDatasource = ref<Datasource | null>(null)  // 当前编辑的数据源
 const showGrid = ref(true)  // 是否显示网格
 const canPaste = ref(false)  // 是否可以粘贴
 const copiedEntities = ref<Entity[]>([])  // 复制选中的实体(用于粘贴)
 const sidebarWidth = ref(240) //右侧数据库树面板宽度
 const sidebarBottomHeight = ref(600) // 底部聊天框初始高度
-const parentFields = ref<Field[]>([])  // 父实体的字段(用于新增实体时，显示父实体字段)
-const currentDatasourceId = ref<string | null>(null)  // 当前编辑的数据源ID或新增实体的数据源ID
+const currentDatasourceId = ref<string | null>(null)  // 只有当点击树的+时，才需要告知当前数据库ID
 
 // 右键菜单
 const contextMenu = ref({
@@ -445,10 +445,10 @@ function hideContextMenus() {
 function showContextMenuFromTree(event: MouseEvent, target: any, type: string) {
   event.preventDefault()
   event.stopPropagation()
-
+  
   const entity = store.entities.find(e => e.id === target.id)
   if (entity) {
-    if (!store.selectedEntities.includes(entity)) {
+    if (!store.selectedEntities.some(e => e.id === entity.id)) {
       store.selectedEntities = [entity]
     }
   }
@@ -474,7 +474,6 @@ function createEntityAtPosition() {
 // 创建实体（树形菜单点击、工具栏点击、右键菜单点击）
 function handleCreateEntity(datasourceId: string, parentEntityId?: string) {
   parentEntity.value = parentEntityId ? store.entities.find(e => e.id === parentEntityId) || null : null
-  parentFields.value = parentEntityId ? getAllParentFields(store.entities, parentEntityId) : []
   currentDatasourceId.value = datasourceId
   showEntityModal.value = true
 }
@@ -482,9 +481,9 @@ function handleCreateEntity(datasourceId: string, parentEntityId?: string) {
 function handleEntitySave(entity: Entity) {
   try {
     if (editingEntity.value && editingEntity.value.id) {
+      console.log("handleEntitySave", entity)
       store.updateEntity(entity)
     } else {
-      // 新增实体，parentEntityId 需保留
       store.addEntity(entity)
     }
     hideContextMenus()
@@ -493,31 +492,17 @@ function handleEntitySave(entity: Entity) {
     errorHandler.handleBusinessError(error instanceof Error ? error.message : String(error))
   }
 }
-// 递归获取所有父级字段
-function getAllParentFields(entities: Entity[], parentEntityId: string | undefined): Field[] {
-  const result: Field[] = [];
-  let currentParentId = parentEntityId;
-  while (currentParentId) {
-    const parent = entities.find(e => e.id === currentParentId);
-    if (parent) {
-      
-      // 设置来源信息，用于显示来源字段
-      parent.fields.forEach(field => {
-        field.extended = {
-          entityId: parent.id,
-          fieldId: field.id
-        }
-      })
 
-      // 先递归上级，再加本级，保证顺序
-      result.unshift(...parent.fields);
-      currentParentId = parent.parentEntityId;
-    } else {
-      break;
-    }
+// 树节点双击
+function handleDoubleClick(node: TreeNode) {
+  console.log("handleDoubleClick", node)
+  if(node.type === TreeNodeType.ENTITY){
+    handleEditEntity(node.id)
+  }else if(node.type === TreeNodeType.DATASOURCE){
+    handleEditDatasource(node.id)
   }
-  return result;
 }
+
 // 编辑实体（双击）
 function handleEntityDoubleClick(entity: Entity) {
   handleEditEntity(entity.id)
@@ -525,9 +510,9 @@ function handleEntityDoubleClick(entity: Entity) {
 // 编辑实体（树形菜单点击）
 function handleEditEntity(entityId: string) {
   const entity = store.entities.find(e => e.id === entityId)
+  parentEntity.value = entity?.parentEntityId ? store.entities.find(e => e.id === entity?.parentEntityId) || null : null
   if (entity) {
     editingEntity.value = entity
-    parentFields.value = entity.parentEntityId ? getAllParentFields(store.entities, entity.parentEntityId) : []
     showEntityModal.value = true
   }
   hideContextMenus()
