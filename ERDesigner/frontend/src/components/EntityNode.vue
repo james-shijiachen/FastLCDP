@@ -9,22 +9,22 @@
     @touchend="e => $emit('touchend', entity, e)">
     <!-- 实体主体 -->
     <rect class="entity-rect"
-      :width="entity.width"
-      :height="entity.height"
+      :width="copyEntity.width"
+      :height="copyEntity.height"
       :fill="entity.backgroundColor || '#ffffff'"
       :stroke="selected ? '#0366d6' : (entity.borderColor || '#24292e')"
       :stroke-width="selected ? 3 : 1"
       rx="4"/>
     <!-- 实体标题 -->
     <rect class="entity-header"
-      :width="entity.width"
+      :width="copyEntity.width"
       height="30"
       :fill="entity.backgroundColor || '#f6f8fa'"
       :stroke="selected ? '#0366d6' : (entity.borderColor || '#24292e')"
       :stroke-width="1"/>
     <!-- 实体名称 -->
     <text class="entity-name"
-      :x="entity.width / 2"
+      :x="copyEntity.width / 2"
       y="20"
       text-anchor="middle"
       font-weight="bold"
@@ -36,18 +36,18 @@
     <line class="header-separator"
       x1="0"
       y1="30"
-      :x2="entity.width"
+      :x2="copyEntity.width"
       y2="30"
       :stroke="entity.borderColor || '#24292e'"/>
     <!-- 字段列表 -->
     <g class="fields">
       <g class="field"
-        v-for="(field, index) in entity.fields" 
+        v-for="(field, index) in copyEntity.fields" 
         :key="field.id"
         :transform="`translate(0, ${30 + index * 20})`">
         <!-- 字段背景 -->
         <rect class="field-bg"
-          :width="entity.width"
+          :width="copyEntity.width"
           height="20"
           fill="transparent"/>
         <!-- 主键图标 -->
@@ -69,7 +69,7 @@
         </text>
         <!-- 字段类型 -->
         <text class="field-type" v-if="field.length && field.scale"
-          :x="entity.width - 8"
+          :x="copyEntity.width - 8"
           y="14"
           text-anchor="end"
           font-size="10"
@@ -77,7 +77,7 @@
           {{ field.type }}({{ field.length }},{{ field.scale }})
         </text>
         <text class="field-type" v-else-if="field.length"
-          :x="entity.width - 8"
+          :x="copyEntity.width - 8"
           y="14"
           text-anchor="end"
           font-size="10"
@@ -85,7 +85,7 @@
           {{ field.type }}({{ field.length }})
         </text>
         <text class="field-type" v-else
-          :x="entity.width - 8"
+          :x="copyEntity.width - 8"
           y="14"
           text-anchor="end"
           font-size="10"
@@ -98,14 +98,25 @@
 </template>
 
 <script setup lang="ts">
-import type { Entity } from '../types/entity'
-import { defineProps, defineEmits } from 'vue'
+import type { Entity, Field } from '../types/entity'
+import { defineProps, defineEmits, computed, onMounted } from 'vue'
 
-defineProps<{
+
+const props = defineProps<{
   entity: Entity
   selected: boolean
   dragTransform?: string
+  visibleEntities: Entity[]
 }>()
+
+const copyEntity = computed(() => {
+  const entity = { ...props.entity }
+  const allFields = props.entity.parentEntityId ? [...getAllParentFields(props.visibleEntities, props.entity.parentEntityId), ...props.entity.fields] : props.entity.fields
+  entity.fields = allFields
+  updateEntitySize(entity)
+  return entity
+})
+
 
 defineEmits([
   'dblclick',
@@ -115,6 +126,72 @@ defineEmits([
   'touchmove',
   'touchend',
 ])
+
+// 递归获取所有父级字段
+function getAllParentFields(entities: Entity[], parentEntityId: string | undefined): Field[] {
+  const result: Field[] = [];
+  let currentParentId = parentEntityId;
+  while (currentParentId) {
+    const parent = entities.find(e => e.id === currentParentId);
+    if (parent) {
+      
+      // 设置来源信息，用于显示来源字段
+      parent.fields.forEach(field => {
+        field.extended = {
+          entityId: parent.id,
+          fieldId: field.id
+        }
+      })
+
+      // 先递归上级，再加本级，保证顺序
+      result.unshift(...parent.fields);
+      currentParentId = parent.parentEntityId;
+    } else {
+      break;
+    }
+  }
+  return result;
+}
+
+// 计算实体的最小高度
+function calculateEntityHeight(entity: Entity): number {
+  // 头部高度30px + 每个字段20px，最小高度60px
+  const headerHeight = 30
+  const fieldHeight = 20
+  const minHeight = 60
+  
+  const calculatedHeight = headerHeight + entity.fields.length * fieldHeight
+  return Math.max(minHeight, calculatedHeight)
+}
+// 计算实体的最小宽度
+function calculateEntityWidth(entity: Entity): number {
+  // 基础最小宽度
+  const minWidth = 150
+  
+  // 根据实体名称长度计算宽度
+  const nameWidth = entity.name.length * 8 + 40
+  
+  // 根据字段内容计算宽度
+  let maxFieldWidth = 0
+  entity.fields.forEach(field => {
+    const fieldNameWidth = field.name.length * 7
+    const fieldTypeWidth = field.type.length * 6
+    const iconWidth = field.isPrimaryKey ? 25 : 8
+    const fieldWidth = iconWidth + fieldNameWidth + fieldTypeWidth + 50
+    maxFieldWidth = Math.max(maxFieldWidth, fieldWidth)
+  })
+  return Math.max(minWidth, nameWidth, maxFieldWidth)
+}
+// 更新实体尺寸
+function updateEntitySize(entity: Entity) {
+  const width = calculateEntityWidth(entity)
+  const height = calculateEntityHeight(entity)
+  
+  // 始终更新尺寸，实体框大小完全由计算确定
+  entity.width = width
+  entity.height = height
+}
+
 </script>
 
 <style scoped>

@@ -271,45 +271,6 @@ function handleEntityRightClick(entity: Entity, event: MouseEvent) {
 function handleSelectionChange(entities: Entity[]) {
   store.selectedEntities = entities
 }
-// 计算实体的最小高度
-function calculateEntityHeight(entity: Entity): number {
-  // 头部高度30px + 每个字段20px，最小高度60px
-  const headerHeight = 30
-  const fieldHeight = 20
-  const minHeight = 60
-  
-  const calculatedHeight = headerHeight + entity.fields.length * fieldHeight
-  return Math.max(minHeight, calculatedHeight)
-}
-// 计算实体的最小宽度
-function calculateEntityWidth(entity: Entity): number {
-  // 基础最小宽度
-  const minWidth = 150
-  
-  // 根据实体名称长度计算宽度
-  const nameWidth = entity.name.length * 8 + 40
-  
-  // 根据字段内容计算宽度
-  let maxFieldWidth = 0
-  entity.fields.forEach(field => {
-    const fieldNameWidth = field.name.length * 7
-    const fieldTypeWidth = field.type.length * 6
-    const iconWidth = field.isPrimaryKey ? 25 : 8
-    const fieldWidth = iconWidth + fieldNameWidth + fieldTypeWidth + 50
-    maxFieldWidth = Math.max(maxFieldWidth, fieldWidth)
-  })
-  
-  return Math.max(minWidth, nameWidth, maxFieldWidth)
-}
-// 更新实体尺寸
-function updateEntitySize(entity: Entity) {
-  const width = calculateEntityWidth(entity)
-  const height = calculateEntityHeight(entity)
-  
-  // 始终更新尺寸，实体框大小完全由计算确定
-  entity.width = width
-  entity.height = height
-}
 // ------------------------------ 画布方法 end------------------------------
 
 // ------------------------------ 导航栏方法 start------------------------------
@@ -520,7 +481,6 @@ function handleCreateEntity(datasourceId: string, parentEntityId?: string) {
 // 保存实体（实体编辑弹窗）
 function handleEntitySave(entity: Entity) {
   try {
-    updateEntitySize(entity)
     if (editingEntity.value && editingEntity.value.id) {
       store.updateEntity(entity)
     } else {

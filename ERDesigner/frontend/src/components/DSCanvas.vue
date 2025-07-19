@@ -53,6 +53,7 @@
           :key="entity.id"
           :entity="entity"
           :selected="isEntitySelected(entity)"
+          :visibleEntities="props.entities"
           :dragTransform="draggingEntityIds.includes(entity.id) ? `translate(${dragEntity[entity.id]?.x || entity.x},${dragEntity[entity.id]?.y || entity.y})` : undefined"
           @dblclick="handleEntityDoubleClick"
           @mousedown="handleEntityMouseDown"
@@ -312,7 +313,7 @@ function handleEntityMouseDown(entity: Entity, event: MouseEvent) {
 
   mouseDownPos = { x: event.clientX, y: event.clientY }
   draggingEntityIds.value = [entity.id]
-  if(isEntitySelected(entity) || props.selectedEntities.length === 0) {
+  if(isEntitySelected(entity) || props.selectedEntities.length === 0) {  //如果当前实体没选中，但其他实体有选中，则不产生拖拽效果（必须选中当前节点），否则容易误操作
 
     dragEntity[entity.id] = { x: entity.x, y: entity.y }
     dragStartPos.value[entity.id] = { 
@@ -381,22 +382,24 @@ function onDragEnd(_event: MouseEvent){
       }
     }
   }else{
-    // 更新实体位置
-    draggingEntityIds.value.forEach(id => {
-      const entity = props.entities.find(e => e.id === id)
-      if (entity) {
-        entity.x = dragEntity[id].x
-        entity.y = dragEntity[id].y
-        store.updateEntity(entity)
+    if(Object.keys(dragEntity).length > 0){   //如果当前实体没选中，但其他实体有选中，则不产生拖拽效果（必须选中当前节点），否则容易误操作
+      // 更新实体位置
+      draggingEntityIds.value.forEach(id => {
+        const entity = props.entities.find(e => e.id === id)
+        if (entity) {
+          entity.x = dragEntity[id].x
+          entity.y = dragEntity[id].y
+          store.updateEntity(entity)
 
-        // 同步更新 selectedEntities 中的实体
-        const selectedEntity = props.selectedEntities.find(e => e.id === id)
-        if (selectedEntity) {
-          selectedEntity.x = dragEntity[id].x
-          selectedEntity.y = dragEntity[id].y
+          // 同步更新 selectedEntities 中的实体
+          const selectedEntity = props.selectedEntities.find(e => e.id === id)
+          if (selectedEntity) {
+            selectedEntity.x = dragEntity[id].x
+            selectedEntity.y = dragEntity[id].y
+          }
         }
-      }
-    })
+      })
+    }
   }
 
   draggingEntityIds.value = []

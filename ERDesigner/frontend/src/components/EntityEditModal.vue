@@ -9,6 +9,19 @@
         <button @click="$emit('close')" class="close-btn">×</button>
       </div>
       <div class="modal-body" ref="modalContentRef" @scroll="handleModalScroll">
+        <div class="form-group" :style="{flexDirection:'row', display:'flex'}">
+          <label>{{ $t('entity.type') }}</label>
+          <div class="radio-group" :style="{marginLeft:'15px'}">
+            <label class="radio-label">
+              <input type="radio" v-model="formData.entityType" value="ENTITY" />
+              {{ $t('entity.table') }}
+            </label>
+            <label class="radio-label">
+              <input type="radio" v-model="formData.entityType" value="ABSTRACT" />
+              {{ $t('entity.abstract') }}
+            </label>
+          </div>
+        </div>
         <div class="form-row">
           <ValidateField
             v-model="formData.datasourceId"
@@ -19,21 +32,15 @@
             :required="true"
             type="select"
             :options="props.datasources.map(ds => ({ value: ds.id, label: ds.name }))"/>
-          <div class="form-group">
-            <label>{{ $t('entity.type') }}</label>
-            <div class="radio-group">
-              <label class="radio-label">
-                <input type="radio" v-model="formData.entityType" value="ENTITY" />
-                {{ $t('entity.table') }}
-              </label>
-              <label class="radio-label">
-                <input type="radio" v-model="formData.entityType" value="ABSTRACT" />
-                {{ $t('entity.abstract') }}
-              </label>
-            </div>
-          </div>
-        </div>
-        <ValidateField
+          <ValidateField
+            v-model="formData.parentEntityId"
+            field="entity.parentEntityId"
+            component="EntityEditModal"
+            :label="$t('entity.parent')"
+            @focus="clearFieldError('entity.parentEntityId')"
+            type="select"
+            :options="formData.parentEntityId ? [{ value: formData.parentEntityId, label: formData.parentEntityName }] : []"/>
+          <ValidateField
             v-model="formData.name"
             field="entity.name"
             component="EntityEditModal"
@@ -44,6 +51,7 @@
             @blur="validateName"
             @focus="clearFieldError('entity.name')"
             :required="true"/>
+        </div>
         <div class="form-group">
           <label>{{ $t('entity.comment') }}:</label>
           <textarea 
@@ -51,14 +59,7 @@
             :placeholder="$t('entity.commentPlaceholder')" 
             rows="3"></textarea>
         </div>
-        <div class="form-group">
-          <label>{{ $t('entity.inheritance') }}:</label>
-          <select v-model="formData.parentEntityId">
-            <option :value="props.parentEntity?.id" :disabled="!props.parentEntity">
-              {{ props.parentEntity?.name }}
-            </option>
-          </select>
-        </div>
+
         <div class="fields-section">
           <div class="section-header">
             <h4>{{ $t('entity.fieldDefinition') }}</h4>
@@ -183,6 +184,7 @@ const formData = ref({
   datasourceId: props.entity?.datasourceId || props.currentDatasourceId || '',
   entityType: props.entity?.entityType || 'ENTITY',
   parentEntityId: props.entity?.parentEntityId || props.parentEntity?.id || '',
+  parentEntityName: props.parentEntity?.name || '',
   fields: props.entity?.fields || [
             {
               entityId: '',
@@ -202,7 +204,7 @@ const isEdit = computed(() => !!props.entity)
 
 // 表单验证
 const isValid = computed(() => {
-  return getFieldError('entity.name') === undefined && formData.value.datasourceId.length > 0 && formData.value.fields.every(field => field.name.trim().length > 0 && field.type.trim().length > 0)
+  return getFieldError('entity.name') === '' && formData.value.datasourceId.length > 0 && formData.value.fields.every(field => field.name.trim().length > 0 && field.type.trim().length > 0)
 })
 
 function validateName() {
@@ -263,23 +265,24 @@ function removeField(index: number) {
 // 保存实体
 function handleSave() {
   if (!canSave.value) return
-  
-  const entity: Entity = {
-    id: props.entity?.id || Date.now().toString(),
-    name: formData.value.name.trim(),
-    comment: formData.value.comment.trim(),
-    datasourceId: formData.value.datasourceId,
-    entityType: formData.value.entityType === 'ABSTRACT' ? EntityType.ABSTRACT : EntityType.ENTITY,
-    parentEntityId: formData.value.parentEntityId || undefined,
-    fields: formData.value.fields.filter(f => f.name.trim()),
-    x: props.entity?.x || 100,
-    y: props.entity?.y || 100,
-    width: props.entity?.width || 200,
-    height: props.entity?.height || 60, // 高度将由ERCanvas自动计算
-    backgroundColor: props.entity?.backgroundColor || '#ffffff',
-    borderColor: props.entity?.borderColor || '#24292e'
+  if(isValid.value) {
+    const entity: Entity = {
+      id: props.entity?.id || Date.now().toString(),
+      name: formData.value.name.trim(),
+      comment: formData.value.comment.trim(),
+      datasourceId: formData.value.datasourceId,
+      entityType: formData.value.entityType === 'ABSTRACT' ? EntityType.ABSTRACT : EntityType.ENTITY,
+      parentEntityId: formData.value.parentEntityId || undefined,
+      fields: formData.value.fields.filter(f => f.name.trim()),
+      x: props.entity?.x || 100,
+      y: props.entity?.y || 100,
+      width: props.entity?.width || 200,
+      height: props.entity?.height || 60, // 高度将由ERCanvas自动计算
+      backgroundColor: props.entity?.backgroundColor || '#ffffff',
+      borderColor: props.entity?.borderColor || '#24292e'
+    }
+    emit('save', entity)
   }
-  emit('save', entity)
 }
 </script>
 
