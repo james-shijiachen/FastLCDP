@@ -122,14 +122,14 @@
         </svg>
       </button>
       <!-- 复制实体 -->
-      <button @click="copyEntity" :title="$t('toolbar.copyEntity')" :aria-label="$t('toolbar.copyEntity')">
+      <button @click="copyEntity" :disabled="!isSelectedEntity" :title="$t('toolbar.copyEntity')" :aria-label="$t('toolbar.copyEntity')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect x="9" y="9" width="13" height="13" rx="2" />
           <rect x="3" y="3" width="13" height="13" rx="2" />
         </svg>
       </button>
       <!-- 粘贴实体 -->
-      <button @click="pasteEntity" :title="$t('toolbar.pasteEntity')" :aria-label="$t('toolbar.pasteEntity')">
+      <button @click="pasteEntity" :disabled="!canPaste" :title="$t('toolbar.pasteEntity')" :aria-label="$t('toolbar.pasteEntity')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect x="9" y="9" width="13" height="13" rx="2"/>
           <path d="M5 15V5a2 2 0 0 1 2-2h10"/>
@@ -137,7 +137,7 @@
         </svg>
       </button>
       <!-- 删除实体 -->
-      <button @click="deleteEntity" :title="$t('toolbar.deleteEntity')" :aria-label="$t('toolbar.deleteEntity')">
+      <button @click="deleteEntity" :disabled="!isSelectedEntity" :title="$t('toolbar.deleteEntity')" :aria-label="$t('toolbar.deleteEntity')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="3 6 5 6 21 6"/>
           <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
@@ -148,7 +148,7 @@
       </button>
       <div class="toolbar-separator"></div>
       <!-- 实体染色 -->
-      <button @click="colorEntity" :title="$t('toolbar.colorEntity')" :aria-label="$t('toolbar.colorEntity')">
+      <button @click="colorEntity" :disabled="!isSelectedEntity" :title="$t('toolbar.colorEntity')" :aria-label="$t('toolbar.colorEntity')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M19.4 15a2 2 0 1 1-2.8 2.8"/>
           <path d="M4 19.5V17a2 2 0 0 1 2-2h1"/>
@@ -158,7 +158,7 @@
         </svg>
       </button>
       <!-- 实体外框染色 -->
-      <button @click="colorEntityBorder" :title="$t('toolbar.colorEntityBorder')" :aria-label="$t('toolbar.colorEntityBorder')">
+      <button @click="colorEntityBorder" :disabled="!isSelectedEntity" :title="$t('toolbar.colorEntityBorder')" :aria-label="$t('toolbar.colorEntityBorder')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/>
           <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/>
@@ -209,7 +209,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, defineProps, defineEmits, onMounted, nextTick, onBeforeUnmount, watch, computed } from 'vue'
+import { ref, defineProps, defineEmits, onMounted, nextTick, onBeforeUnmount, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 const emit = defineEmits([
   'toggleSidebar',
@@ -235,7 +235,9 @@ const emit = defineEmits([
 ])
 const props = defineProps({
   sidebarVisible: Boolean,
-  zoomLevel: Number
+  zoomLevel: Number,
+  canPaste: Boolean,
+  isSelectedEntity: Boolean
 })
 const { t: $t } = useI18n()
 function toggleSidebar() { emit('toggleSidebar') }
@@ -457,6 +459,16 @@ watch(toolbarRef, updateScrollBtns)
   transform: scale(1.12);
   color: #409eff;
   background: none;
+}
+.toolbar button:disabled svg {
+  opacity: 0.4;         /* 变淡 */
+  filter: grayscale(1); /* 变灰 */
+  cursor: not-allowed;  /* 禁用手势 */
+}
+.toolbar button:disabled {
+  background: none;  /* 可选：按钮背景变淡 */
+  color: #aaa;          /* 可选：文字变灰 */
+  border-color: none;   /* 可选：边框变淡 */
 }
 /* 百分比显示/设置 */
 .zoom-percentage {

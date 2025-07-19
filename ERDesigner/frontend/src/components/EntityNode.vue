@@ -1,10 +1,8 @@
 <template>
   <g class="entity"
-    :class="{ selected, 'multi-selected': multiSelected }"
+    :class="{ selected }"
     :transform="dragTransform || `translate(${entity.x}, ${entity.y})`"
-    @click="e => $emit('click', entity, e)"
-    @dblclick="$emit('dblclick', entity)"
-    @contextmenu.prevent="e => $emit('contextmenu', entity, e)"
+    @dblclick.stop="$emit('dblclick', entity)"
     @mousedown="e => $emit('mousedown', entity, e)"
     @touchstart="e => $emit('touchstart', entity, e)"
     @touchmove="e => $emit('touchmove', entity, e)"
@@ -106,12 +104,10 @@ import { defineProps, defineEmits } from 'vue'
 defineProps<{
   entity: Entity
   selected: boolean
-  multiSelected: boolean
-  dragTransform?: string // 新增
+  dragTransform?: string
 }>()
 
 defineEmits([
-  'click',
   'dblclick',
   'contextmenu',
   'mousedown',
@@ -124,8 +120,16 @@ defineEmits([
 <style scoped>
 .entity {
   border: 2px solid #010101;
-  cursor: move;
+  cursor: pointer;
   transition: all 0.1s ease;
+}
+.entity.selected {
+  cursor: move;
+}
+.entity, .entity * {
+  user-select: none;
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE10+/Edge */
 }
 .entity-header {
   padding: 2px 4px;

@@ -4,7 +4,7 @@
     class="context-menu"
     :style="{ left: x + 'px', top: y + 'px' }"
     @click.stop>
-    <template v-if="type === 'canvas'">
+    <template v-if="type === 'CANVAS'">
       <div class="context-menu-item" @click="onCreateEntity">
         <span class="icon">📦</span>
         {{ $t('contextMenu.addEntity') }}
@@ -19,8 +19,8 @@
         {{ $t('contextMenu.selectAll') }}
       </div>
     </template>
-    <template v-else-if="type === 'entity'">
-      <div class="context-menu-item" @click="onEditEntity">
+    <template v-else-if="type === 'ENTITY'">
+      <div class="context-menu-item" @click="onEditEntity" :class="{ disabled: isMultiSelect }">
         <span class="icon">✏️</span>
         {{ $t('contextMenu.edit') }}
       </div>
@@ -33,7 +33,7 @@
         {{ $t('contextMenu.delete') }}
       </div>
     </template>
-    <template v-else-if="type === 'datasource'">
+    <template v-else-if="type === 'DATASOURCE'">
       <div class="context-menu-item" @click="onEditDatasource">
         <span class="icon">✏️</span>
         {{ $t('datasource.editDatasource') }}
@@ -53,13 +53,16 @@
 <script setup lang="ts">
 import { defineProps, defineEmits } from 'vue'
 import { useI18n } from 'vue-i18n'
+import type { Entity } from '../types/entity'
 const props = defineProps<{
   show: boolean
   x: number
   y: number
   canPaste?: boolean
-  type: 'canvas' | 'entity' | 'datasource'
+  type: 'CANVAS' | 'ENTITY' | 'DATASOURCE'
   targetId?: string
+  entities?: Entity[]
+  isMultiSelect?: boolean
 }>()
 const emit = defineEmits([
   'createEntity', 'paste', 'selectAll',
@@ -69,8 +72,8 @@ const emit = defineEmits([
 const { t: $t } = useI18n()
 function onCreateEntity() { emit('createEntity') }
 function onPaste() { if (props.canPaste) emit('paste') }
-function onSelectAll() { emit('selectAll') }
-function onEditEntity() { emit('editEntity', props.targetId) }
+function onSelectAll() { emit('selectAll', props.entities) }
+function onEditEntity() { if (!props.isMultiSelect) emit('editEntity', props.targetId) }
 function onCopyEntity() { emit('copyEntity', props.targetId) }
 function onDeleteEntity() { emit('deleteEntity', props.targetId) }
 function onEditDatasource() { emit('editDatasource', props.targetId) }
@@ -82,7 +85,7 @@ function onCreateEntityFromTree() { emit('createEntityFromTree', props.targetId)
 .context-menu {
   position: fixed;
   z-index: 1200;
-  min-width: 120px;
+  min-width: 160px;
   background: #fff;
   border: 1px solid #e4e7ed;
   border-radius: 4px;
@@ -90,6 +93,11 @@ function onCreateEntityFromTree() { emit('createEntityFromTree', props.targetId)
   padding: 4px 0;
   font-size: 14px;
   color: #222;
+}
+.context-menu, .context-menu * {
+  user-select: none;
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE10+/Edge */
 }
 .context-menu-item {
   display: flex;
@@ -136,6 +144,7 @@ function onCreateEntityFromTree() { emit('createEntityFromTree', props.targetId)
 .dark-theme .context-menu-item:hover {
   background: #333333;
 }
+.dark-theme .context-menu-item.disabled,
 .dark-theme .context-menu-item[disabled] {
   color: #777777;
   cursor: not-allowed;

@@ -14,10 +14,11 @@
       :is-mobile="isMobile"
       :is-dark-theme="isDarkTheme"
       :current-locale="currentLocale"
-      :zoomLevel="zoomLevel"
+      :zoomLevel="store.zoom"
       :sidebarVisible="sidebarVisible"
+      :canPaste="canPaste"
+      :isSelectedEntity="isSelectedEntity"
       @toggleSidebar="toggleSidebar"
-      @newDiagram="newDiagram"
       @saveDiagram="saveDiagram"
       @exportDiagram="exportDiagram"
       @addEntity="createEntityAtPosition"
@@ -30,7 +31,7 @@
       @toggleGrid="toggleGrid"
       @toggleFullscreen="toggleFullscreen"
       @copyEntity="copyEntity"
-      @pasteEntity="paste"
+      @pasteEntity="pasteEntity"
       @deleteEntity="deleteSelectedEntities"
       @importDiagram="importDiagram"
       @colorEntityBorder="colorEntityBorder"
@@ -48,24 +49,29 @@
       <main class="canvas-container">
         <!-- 视图标签 -->
         <ViewTabs
-          :views="views"
+          :views="store.views"
           :activeViewId="activeViewId"
           @update:activeViewId="activeViewId = $event"
-          @addView="addView"/>
+          @deleteView="handleDeleteView"
+          />
         <DSCanvas 
           ref="canvasRef"
-          :zoomLevel="zoomLevel"
+          :zoomLevel="store.zoom"
           :showGrid="showGrid"
           :entities="visibleEntities"
-          :selectedEntities="selectedEntities"
-          @entityClick="handleEntityClick"
+          :selectedEntities="store.selectedEntities"
           @entityDoubleClick="handleEntityDoubleClick"
           @entityRightClick="handleEntityRightClick"
           @canvasClick="handleCanvasClick"
           @canvasRightClick="handleCanvasRightClick"
           @selectionChange="handleSelectionChange"
           @zoomChange="handleZoomChange"
-          :style="{ '--zoom-level': zoomLevel }"
+          @copyEntity="copyEntity"
+          @pasteEntity="pasteEntity"
+          @hideContextMenu="hideContextMenus"
+          @undo="undo"
+          @redo="redo"
+          :style="{ '--zoom-level': store.zoom }"
         />
         <!-- 右键菜单 -->
         <ContextMenu
@@ -75,9 +81,11 @@
           :canPaste="canPaste"
           :type="contextMenu.type"
           :targetId="contextMenu.targetId || undefined"
+          :entities="visibleEntities"
+          :isMultiSelect="isMultiSelect"
           @createEntity="createEntityAtPosition"
-          @paste="paste"
-          @selectAll="selectAll"
+          @paste="pasteEntity"
+          @selectAll="handleSelectAll"
           @editEntity="handleEditEntity"
           @copyEntity="copyEntity"
           @deleteEntity="handleDeleteEntity"
@@ -87,9 +95,9 @@
           @createEntityFromTree="handleCreateEntity"
         />
         <!-- 关系创建提示 -->
-        <div v-if="selectedEntities.length === 2" class="relation-hint">
+        <div v-if="store.selectedEntities.length === 2" class="relation-hint">
           <div class="hint-content">
-            <span>{{ $t('relation.hint') }} {{ selectedEntities.length }} {{ $t('panel.entities') }}</span>
+            <span>{{ $t('relation.hint') }} {{ store.selectedEntities.length }} {{ $t('panel.entities') }}</span>
             <button @click="createRelation" class="create-relation-btn">{{ $t('relation.createRelation') }}</button>
           </div>
         </div>
@@ -100,7 +108,7 @@
         <div class="sidebar-top" :style="{ height: `calc(100% - ${sidebarBottomHeight}px)` }">
           <DatasourceTree
             :treeData="store.treeData"
-            :selectedEntities="selectedEntities"
+            :selectedEntities="store.selectedEntities"
             :hidden="!sidebarVisible"
             :is-mobile="isMobile"
             @contextmenu="showContextMenuFromTree"
@@ -125,7 +133,6 @@
       :entity="editingEntity"
       :parentEntity="parentEntity"
       :datasources="store.datasources"
-      :availableParents="availableParents"
       :currentDatasourceId="currentDatasourceId || store.datasources[0]?.id"
       :parentFields="parentFields"
       @save="handleEntitySave"
@@ -134,7 +141,7 @@
     <!-- 关系编辑模态框 -->
     <RelationEditModal 
       v-if="showRelationModal"
-      :entities="selectedEntities"
+      :entities="store.selectedEntities"
       @save="handleRelationSave"
       @close="closeRelationModal"
     />
@@ -145,25 +152,19 @@
       @save="handleDatasourceSave"
       @close="closeDatasourceModal"
     />
-    <!-- 视图编辑模态框 -->
-    <ViewEditModal
-      v-if="showViewModal"
-      :datasources="store.datasources"
-      :view="editingView"
-      @save="handleSaveView"
-      @close="showViewModal = false"
-    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted} from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useDSDiagramStore } from './stores/dsDiagram'
 import { DSCanvas, EntityEditModal, RelationEditModal, DatasourceTree, DatasourceEditModal, 
-  Toolbar, AppHeader, ContextMenu, ViewTabs, ViewEditModal} from './components'
+  Toolbar, AppHeader, ContextMenu, ViewTabs} from './components'
 import ChatBox from './components/ChatBox.vue'
 import type { Entity, Field, Datasource, View } from './types/entity'
+import { EntityType } from './types/entity'
+import { errorHandler } from './utils/errorHandler'
 
 const store = useDSDiagramStore()  // 数据源存储
 const { locale, t: $t } = useI18n()  // 国际化
@@ -177,29 +178,19 @@ const sidebarVisible = ref(!isMobile.value)  // 是否显示右侧数据库树�
 const isDarkTheme = ref(false)  // 是否暗色主题
 
 // 响应式数据
-const views = ref<View[]>([{
-  id: 'default',
-  name: 'Default',
-  datasources: store.datasources,
-  createdTime: new Date()
-}])
 const activeViewId = ref<string>('default') // 当前激活视图ID
-const currentView = computed(() => views.value.find(v => v.id === activeViewId.value))
+const currentView = computed(() => store.views.find(v => v.id === activeViewId.value))
 const visibleEntities = computed(() =>
-  store.entities.filter(e => currentView.value?.datasources.some(ds => ds.id === e.datasourceId))
+  // 可见实体（只显示entity类型，不显示abstract类型）
+  store.entities.filter(e => currentView.value?.datasourceIds.some(ds => ds === e.datasourceId) && e.entityType === EntityType.ENTITY)
 )
-
 const canvasRef = ref<InstanceType<typeof DSCanvas> | null>(null)  // 画布实例
 const showEntityModal = ref(false)  // 是否显示实体编辑模态框
 const showRelationModal = ref(false)  // 是否显示关系编辑模态框
 const showDatasourceModal = ref(false)  // 是否显示数据源编辑模态框
-const showViewModal = ref(false)  // 是否显示视图编辑模态框
-const editingView = ref<View | null>(null)  // 当前编辑的视图
 const editingEntity = ref<Entity | null>(null)  // 当前编辑的实体
 const parentEntity = ref<Entity | null>(null)   // 父实体(用于新增实体时，显示父实体信息)
 const editingDatasource = ref<Datasource | null>(null)  // 当前编辑的数据源
-const selectedEntities = ref<Entity[]>([])  // 选中的实体（多选）
-const zoomLevel = ref(1)  // 缩放级别
 const showGrid = ref(true)  // 是否显示网格
 const canPaste = ref(false)  // 是否可以粘贴
 const copiedEntities = ref<Entity[]>([])  // 复制选中的实体(用于粘贴)
@@ -213,101 +204,36 @@ const contextMenu = ref({
   show: false,
   x: 0,
   y: 0,
-  type: '' as 'datasource' | 'entity' | 'canvas',
+  type: '' as 'DATASOURCE' | 'ENTITY' | 'CANVAS',
   targetId: null as string | null
 })
 
 // 计算属性
-const isMultiSelect = computed(() => selectedEntities.value.length > 1)
-
-// 获取新增实体时，子代实体ID
-const descendantIds = computed(() =>
-  editingEntity.value
-    ? getDescendantIds(store.entities, editingEntity.value.id)
-    : []
-);
-
-// 获取新增实体时，可用父代实体（不包括子代实体和当前编辑的实体）
-const availableParents = computed(() =>
-  store.entities.filter(e =>
-    e.datasourceId === (editingEntity.value?.datasourceId || store.datasources[0]?.id) &&
-    e.id !== editingEntity.value?.id &&
-    !descendantIds.value.includes(e.id)
-  )
-);
-
-// 获取所有子孙节点id，防止循环继承
-function getDescendantIds(entities: Entity[], entityId: string): string[] {
-  const descendants: string[] = [];
-  function findChildren(parentId: string) {
-    entities.forEach(e => {
-      if (e.parentEntityId === parentId) {
-        descendants.push(e.id);
-        findChildren(e.id);
-      }
-    });
-  }
-  findChildren(entityId);
-  return descendants;
-}
-
-// 从树形菜单显示右键菜单
-function showContextMenuFromTree(event: MouseEvent, target: any, type: string) {
-  event.preventDefault()
-  event.stopPropagation()
-
-  const entity = store.entities.find(e => e.id === target.id)
-  if (entity) {
-    if (!selectedEntities.value.includes(entity)) {
-      selectedEntities.value = [entity]
-    }
-  }
-
-  contextMenu.value.x = event.clientX
-  contextMenu.value.y = event.clientY
-  contextMenu.value.show = true
-  contextMenu.value.type = type as 'datasource' | 'entity' | 'canvas'
-  contextMenu.value.targetId = target.id
-}
+const isMultiSelect = computed(() => store.selectedEntities.length > 1)
+const isSelectedEntity = computed(() => store.selectedEntities.length > 0)
 
 // ------------------------------ 视图方法 start------------------------------
-function addView() {
+function handleDeleteView(viewId: string) {
+  if (confirm($t('messages.deleteViewConfirm'))) {
+    store.deleteView(viewId)
+  }
+  activeViewId.value = 'default'
+}
+// 添加视图
+function handleAddView(datasource: Datasource) {
   const newView: View = {
     id: Date.now().toString(),
-    name: `View ${views.value.length + 1}`,
-    datasources: [], // 或默认数据
-    createdTime: new Date()
+    name: datasource.name,
+    datasourceIds: [datasource.id],
   }
-  views.value.push(newView)
+  store.views.push(newView)
   activeViewId.value = newView.id
+  return newView
 }
-function handleAddView() {
-  editingView.value = null
-  showViewModal.value = true
-}
-function handleEditView(view: View) {
-  editingView.value = view
-  showViewModal.value = true
-}
-function handleSaveView({ name, datasourceIds }: { name: string, datasourceIds: string[] }) {
-  // 获取该数据库下所有实体
-  const datasources = store.datasources.filter(ds => datasourceIds.includes(ds.id))
-  if (editingView.value) {
-    // 编辑
-    editingView.value.name = name
-    editingView.value.datasources = datasources
-  } else {
-    // 新增
-    const newView: View = {
-      id: Date.now().toString(),
-      name,
-      datasources: datasources,
-      createdTime: new Date()
-    }
-    views.value.push(newView)
-    activeViewId.value = newView.id
-  }
-  showViewModal.value = false
+// 将数据源添加到视图
+function addDatasourceToView(datasource: Datasource, view: View) {
+  view.datasourceIds.push(datasource.id)
+  activeViewId.value = view.id
 }
 // ------------------------------ 视图方法 end------------------------------
 
@@ -315,7 +241,7 @@ function handleSaveView({ name, datasourceIds }: { name: string, datasourceIds: 
 // 画布点击
 function handleCanvasClick(event: MouseEvent) {
   if (!event.ctrlKey && !event.metaKey) {
-    selectedEntities.value = []
+    store.selectedEntities = []
   }
   hideContextMenus()
 }
@@ -325,42 +251,64 @@ function handleCanvasRightClick(event: MouseEvent) {
   contextMenu.value.x = event.clientX
   contextMenu.value.y = event.clientY
   contextMenu.value.show = true
-  contextMenu.value.type = 'canvas'
-}
-// 实体点击
-function handleEntityClick(entity: Entity, event: MouseEvent) {
-  if (event.altKey) {
-    // Alt+点击进行多选
-    const index = selectedEntities.value.findIndex(e => e.id === entity.id)
-    if (index >= 0) {
-      selectedEntities.value.splice(index, 1)
-    } else {
-      selectedEntities.value.push(entity)
-    }
-  } else {
-    // 单选
-    selectedEntities.value = [entity]
-  }
-  hideContextMenus()
+  contextMenu.value.type = 'CANVAS'
 }
 // 实体右键菜单
 function handleEntityRightClick(entity: Entity, event: MouseEvent) {
   event.preventDefault()
   event.stopPropagation()
-  
-  if (!selectedEntities.value.includes(entity)) {
-    selectedEntities.value = [entity]
-  }
+
+  store.selectedEntities = store.selectedEntities.filter(e => e.id !== entity.id)
+  store.selectedEntities.push(entity)
   
   contextMenu.value.x = event.clientX
   contextMenu.value.y = event.clientY
   contextMenu.value.show = true
-  contextMenu.value.type = 'entity'
+  contextMenu.value.type = 'ENTITY'
   contextMenu.value.targetId = entity.id
 }
 // 选择变化
 function handleSelectionChange(entities: Entity[]) {
-  selectedEntities.value = entities
+  store.selectedEntities = entities
+}
+// 计算实体的最小高度
+function calculateEntityHeight(entity: Entity): number {
+  // 头部高度30px + 每个字段20px，最小高度60px
+  const headerHeight = 30
+  const fieldHeight = 20
+  const minHeight = 60
+  
+  const calculatedHeight = headerHeight + entity.fields.length * fieldHeight
+  return Math.max(minHeight, calculatedHeight)
+}
+// 计算实体的最小宽度
+function calculateEntityWidth(entity: Entity): number {
+  // 基础最小宽度
+  const minWidth = 150
+  
+  // 根据实体名称长度计算宽度
+  const nameWidth = entity.name.length * 8 + 40
+  
+  // 根据字段内容计算宽度
+  let maxFieldWidth = 0
+  entity.fields.forEach(field => {
+    const fieldNameWidth = field.name.length * 7
+    const fieldTypeWidth = field.type.length * 6
+    const iconWidth = field.isPrimaryKey ? 25 : 8
+    const fieldWidth = iconWidth + fieldNameWidth + fieldTypeWidth + 50
+    maxFieldWidth = Math.max(maxFieldWidth, fieldWidth)
+  })
+  
+  return Math.max(minWidth, nameWidth, maxFieldWidth)
+}
+// 更新实体尺寸
+function updateEntitySize(entity: Entity) {
+  const width = calculateEntityWidth(entity)
+  const height = calculateEntityHeight(entity)
+  
+  // 始终更新尺寸，实体框大小完全由计算确定
+  entity.width = width
+  entity.height = height
 }
 // ------------------------------ 画布方法 end------------------------------
 
@@ -394,13 +342,6 @@ function loadLocale() {
 // ------------------------------ 导航栏方法 end------------------------------
 
 // ------------------------------ 工具栏方法 start------------------------------
-// 新建图表
-function newDiagram() {
-  if (confirm($t('messages.newDiagramConfirm'))) {
-    store.clearDiagram()
-    selectedEntities.value = []
-  }
-}
 // 保存图表
 function saveDiagram() {
   // 实现保存逻辑
@@ -460,7 +401,7 @@ function resetZoom() {
 }
 // 缩放变化
 function handleZoomChange(level: number) {
-  zoomLevel.value = level
+  store.zoom = level
 }
 // 切换网格
 function toggleGrid() {
@@ -482,16 +423,16 @@ function colorEntityBorder() {
 
 // ------------------------------ 复制粘贴方法 start------------------------------
 // 复制实体(工具栏按钮和右键菜单)
-function copyEntity(entityId: string) {
+function copyEntity(entityId?: string) {
   if (entityId) {
     const entity = store.entities.find(e => e.id === entityId)
     if (entity) {
       copiedEntities.value = [entity]
       canPaste.value = true
     }
-  } else if (selectedEntities.value.length > 0) {
+  } else if (store.selectedEntities.length > 0) {
     // 深拷贝选中的实体
-    copiedEntities.value = selectedEntities.value.map(entity => ({
+    copiedEntities.value = store.selectedEntities.map(entity => ({
       ...entity,
       fields: entity.fields.map(field => ({ ...field }))
     }))
@@ -500,7 +441,7 @@ function copyEntity(entityId: string) {
   hideContextMenus()
 }
 // 粘贴实体(工具栏按钮和右键菜单)
-function paste() {
+function pasteEntity() {
   if (copiedEntities.value.length > 0) {
     const offsetX = 20
     const offsetY = 20
@@ -521,7 +462,7 @@ function paste() {
     })
     
     // 清空选择并选中新粘贴的实体
-    selectedEntities.value = []
+    store.selectedEntities = []
     copiedEntities.value = []
     canPaste.value = false
   }
@@ -531,13 +472,30 @@ function paste() {
 
 // ------------------------------ 右键菜单方法 start------------------------------
 // 全选
-function selectAll() {
-  selectedEntities.value = [...store.entities]
+function handleSelectAll(entities: Entity[]) {
+  handleSelectionChange(entities)
   hideContextMenus()
 }
 // 隐藏右键菜单
 function hideContextMenus() {
   contextMenu.value.show = false
+}
+// 从树形菜单显示右键菜单
+function showContextMenuFromTree(event: MouseEvent, target: any, type: string) {
+  event.preventDefault()
+  event.stopPropagation()
+
+  const entity = store.entities.find(e => e.id === target.id)
+  if (entity) {
+    if (!store.selectedEntities.includes(entity)) {
+      store.selectedEntities = [entity]
+    }
+  }
+  contextMenu.value.x = event.clientX
+  contextMenu.value.y = event.clientY
+  contextMenu.value.type = type as 'DATASOURCE' | 'ENTITY' | 'CANVAS'
+  contextMenu.value.targetId = target.id
+  contextMenu.value.show = true
 }
 // ------------------------------ 右键菜单方法 end------------------------------
 
@@ -561,13 +519,19 @@ function handleCreateEntity(datasourceId: string, parentEntityId?: string) {
 }
 // 保存实体（实体编辑弹窗）
 function handleEntitySave(entity: Entity) {
-  if (editingEntity.value && editingEntity.value.id) {
-    store.updateEntity(entity)
-  } else {
-    // 新增实体，parentEntityId 需保留
-    store.addEntity(entity)
+  try {
+    updateEntitySize(entity)
+    if (editingEntity.value && editingEntity.value.id) {
+      store.updateEntity(entity)
+    } else {
+      // 新增实体，parentEntityId 需保留
+      store.addEntity(entity)
+    }
+    hideContextMenus()
+    closeEntityModal()
+  } catch (error) {
+    errorHandler.handleBusinessError(error instanceof Error ? error.message : String(error))
   }
-  closeEntityModal()
 }
 // 递归获取所有父级字段
 function getAllParentFields(entities: Entity[], parentEntityId: string | undefined): Field[] {
@@ -576,6 +540,15 @@ function getAllParentFields(entities: Entity[], parentEntityId: string | undefin
   while (currentParentId) {
     const parent = entities.find(e => e.id === currentParentId);
     if (parent) {
+      
+      // 设置来源信息，用于显示来源字段
+      parent.fields.forEach(field => {
+        field.extended = {
+          entityId: parent.id,
+          fieldId: field.id
+        }
+      })
+
       // 先递归上级，再加本级，保证顺序
       result.unshift(...parent.fields);
       currentParentId = parent.parentEntityId;
@@ -609,19 +582,20 @@ function handleDeleteEntity(entityId: string) {
 function handleSelectEntityFromTree(entityId: string) {
   const entity = store.entities.find(e => e.id === entityId)
   if (entity) {
-    selectedEntities.value = [entity]
+    store.selectedEntities = [entity]
   }
 }
 // 删除选中的实体
 function deleteSelectedEntities() {
-  if (selectedEntities.value.length > 0 && confirm($t('messages.deleteEntitiesConfirm'))) {
-    selectedEntities.value.forEach(entity => {
+  if (store.selectedEntities.length > 0 && confirm($t('messages.deleteEntitiesConfirm'))) {
+    store.selectedEntities.forEach(entity => {
       store.deleteEntity(entity.id)
     })
-    selectedEntities.value = []
+    store.selectedEntities = []
   }
   hideContextMenus()
 }
+
 // ------------------------------ 实体方法 end------------------------------
 
 // ------------------------------ 数据源方法 start------------------------------
@@ -633,15 +607,35 @@ function handleEditDatasource(datasourceId: string) {
     showDatasourceModal.value = true
   }
 }
+
 // 保存数据源（数据源编辑弹窗）
 function handleDatasourceSave(datasource: Datasource) {
-  if (editingDatasource.value) {
-    store.updateDatasource(datasource)
-  } else {
-    store.addDatasource(datasource)
+  try {
+    if (datasource.viewId === '') {
+      // 如果数据源选择新视图，则确认默认视图是否包含该数据源，如果包含则删除，并添加到新视图
+      const defaultView = store.views.find(v => v.id === 'default')
+      if (defaultView) {
+        defaultView.datasourceIds = defaultView.datasourceIds.filter(dsId => dsId !== datasource.id)
+      }
+      const newView = handleAddView(datasource)
+      datasource.viewId = newView.id
+    }else if (datasource.viewId === 'default') {
+      const view = store.views.find(v => v.id === datasource.viewId)
+      if (view) {
+        addDatasourceToView(datasource, view)
+      }
+    }
+    if (editingDatasource.value) {
+      store.updateDatasource(datasource)
+    } else {
+      store.addDatasource(datasource)
+    }
+    showDatasourceModal.value = false
+    editingDatasource.value = null
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    errorHandler.handleBusinessError(errorMessage)
   }
-  showDatasourceModal.value = false
-  editingDatasource.value = null
 }
 // 关闭数据源编辑模态框
 function closeDatasourceModal() {
@@ -659,14 +653,18 @@ function handleDeleteDatasource(datasourceId: string) {
 // ------------------------------ 关系方法 start------------------------------
 // 创建关系
 function createRelation() {
-  if (selectedEntities.value.length === 2) {
+  if (store.selectedEntities.length === 2) {
     showRelationModal.value = true
   }
 }
 // 保存关系（关系编辑弹窗）
 function handleRelationSave(relation: any) {
-  store.addRelationship(relation)
-  closeRelationModal()
+  try {
+    store.addRelationship(relation)
+    closeRelationModal()
+  } catch (error) {
+    errorHandler.handleBusinessError(error instanceof Error ? error.message : String(error))
+  }
 }
 // 关闭关系编辑模态框
 function closeRelationModal() {
@@ -800,7 +798,7 @@ function handleKeyDown(event: KeyboardEvent) {
   height: 100%;
   min-height: 0;
   background: #fff;
-  border-left: 1px solid #e4e7ed;
+  border-left: 0.5px solid #d6d7d7;
   z-index: 1000;
   position: relative;
 }

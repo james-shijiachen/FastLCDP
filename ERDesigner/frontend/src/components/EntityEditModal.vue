@@ -1,7 +1,7 @@
 <template>
   <div class="modal-overlay">
-    <div class="modal-content" @click.stop @wheel.prevent="handleModalWheel">
-      <div class="modal-header">
+    <div class="modal-content" ref="modalRef" @click.stop @wheel.prevent="handleModalWheel">
+      <div class="modal-header" @mousedown="onHeaderMousedown">
         <h3>{{ isEdit ? $t('entity.edit') : $t('entity.new') }}</h3>
         <div v-if="showHeaderName" class="entity-name-preview" :title="formData.name">
           {{ formData.name }}
@@ -10,59 +10,55 @@
       </div>
       <div class="modal-body" ref="modalContentRef" @scroll="handleModalScroll">
         <div class="form-row">
-          <div class="form-group">
-            <label>{{ $t('datasource.name') }}</label>
-            <select v-model="formData.datasourceId" :disabled="isEdit">
-              <option v-for="ds in datasources" :key="ds.id" :value="ds.id">
-                {{ ds.name }}
-              </option>
-            </select>
-          </div>
-          
+          <ValidateField
+            v-model="formData.datasourceId"
+            field="entity.datasourceId"
+            component="EntityEditModal"
+            :label="$t('datasource.name')"
+            @focus="clearFieldError('entity.datasourceId')"
+            :required="true"
+            type="select"
+            :options="props.datasources.map(ds => ({ value: ds.id, label: ds.name }))"/>
           <div class="form-group">
             <label>{{ $t('entity.type') }}</label>
             <div class="radio-group">
               <label class="radio-label">
-                <input type="radio" v-model="formData.entityType" value="entity" />
+                <input type="radio" v-model="formData.entityType" value="ENTITY" />
                 {{ $t('entity.table') }}
               </label>
               <label class="radio-label">
-                <input type="radio" v-model="formData.entityType" value="abstract" />
+                <input type="radio" v-model="formData.entityType" value="ABSTRACT" />
                 {{ $t('entity.abstract') }}
               </label>
             </div>
           </div>
         </div>
-        
-        <div class="form-group">
-          <label>{{ $t('entity.name') }} *:</label>
-          <input ref="nameInputRef"
-            v-model="formData.name" 
+        <ValidateField
+            v-model="formData.name"
+            field="entity.name"
+            component="EntityEditModal"
+            :label="$t('entity.name')"
             :placeholder="$t('entity.namePlaceholder')"
-            @keyup.enter="handleSave"
-          />
-        </div>
-        
+            @enter="handleSave"
+            @input="validateName"
+            @blur="validateName"
+            @focus="clearFieldError('entity.name')"
+            :required="true"/>
         <div class="form-group">
           <label>{{ $t('entity.comment') }}:</label>
           <textarea 
             v-model="formData.comment" 
             :placeholder="$t('entity.commentPlaceholder')" 
-            rows="3"
-          ></textarea>
+            rows="3"></textarea>
         </div>
-        
-        <div class="form-group" v-if="formData.datasourceId && availableParents.length > 0">
+        <div class="form-group">
           <label>{{ $t('entity.inheritance') }}:</label>
           <select v-model="formData.parentEntityId">
-            <option value="">{{ $t('entity.noInheritance') }}</option>
-            <option v-for="parent in availableParents" :key="parent.id" :value="parent.id">
-              {{ parent.name }}
+            <option :value="props.parentEntity?.id" :disabled="!props.parentEntity">
+              {{ props.parentEntity?.name }}
             </option>
           </select>
-          <small class="form-hint">{{ $t('entity.inheritanceNote') }}</small>
         </div>
-        
         <div class="fields-section">
           <div class="section-header">
             <h4>{{ $t('entity.fieldDefinition') }}</h4>
@@ -79,32 +75,34 @@
                   <col style="width: 20px;" />  <!-- 必填 -->
                   <col style="width: 20px;" />  <!-- 唯一 -->
                   <col style="width: 300px;" /> <!-- 注释 -->
+                  <col style="width: 100px;" /> <!-- 来源 -->
               </colgroup>
               <thead class="fields-table-header">
                 <tr>
                   <th></th>
-                  <th>{{ $t('entity.fieldName') }} *</th>
-                  <th>{{ $t('entity.dataType') }} *</th>
+                  <th>{{ $t('entity.fieldName') }} <span class="required">*</span></th>
+                  <th>{{ $t('entity.dataType') }} <span class="required">*</span></th>
                   <th>{{ $t('entity.length') }}</th>
                   <th>{{ $t('entity.scale') }}</th>
                   <th>{{ $t('entity.primaryKey') }}</th>
                   <th>{{ $t('entity.required') }}</th>
                   <th>{{ $t('entity.unique') }}</th>
                   <th>{{ $t('entity.comment') }}</th>
+                  <th>{{ $t('entity.source') }}</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-if="parentFields && parentFields.length > 0" v-for="field in parentFields" :key="field.id">
                   <td></td>
-                  <td>{{ field.name }}</td>
-                  <td>{{ field.type }}</td>
-                  <td>{{ field.length }}</td>
-                  <td>{{ field.scale }}</td>
-                  <td>{{ field.isPrimaryKey ? '🔑' : '' }}</td>
-                  <td>{{ field.isRequired ? '✔' : '' }}</td>
-                  <td>{{ field.isUnique ? '✔' : '' }}</td>
-                  <td>{{ field.comment }}</td>
-                  <td></td>
+                  <td><input :disabled="true" :value="field.name" /></td>
+                  <td><input :disabled="true" :value="field.type" /></td>
+                  <td><input :disabled="true" :value="field.length" /></td>
+                  <td><input :disabled="true" :value="field.scale" /></td>
+                  <td><input type="checkbox" :disabled="true" :checked="field.isPrimaryKey" /></td>
+                  <td><input type="checkbox" :disabled="true" :checked="field.isRequired" /></td>
+                  <td><input type="checkbox" :disabled="true" :checked="field.isUnique" /></td>
+                  <td><textarea :disabled="true" :value="field.comment" /></td>
+                  <td>&nbsp;{{ field.extended?.entityId ? field.extended.entityId + '.' + field.extended.fieldId : '' }}</td>
                 </tr>
                 <tr v-for="(field, index) in formData.fields" :key="field.id">
                   <td><button @click="removeField(index)" class="remove-btn" :title="$t('entity.removeField')">X</button></td>
@@ -126,6 +124,7 @@
                   <td><input type="checkbox" v-model="field.isRequired" /></td>
                   <td><input type="checkbox" v-model="field.isUnique" /></td>
                   <td><textarea :title="field.comment" v-model="field.comment" rows="2"></textarea></td>
+                  <td>&nbsp;{{ field.extended?.entityId ? field.extended.entityId + '.' + field.extended.fieldId : '' }}</td>
                 </tr>
               </tbody>
             </table>
@@ -144,19 +143,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed} from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { Entity, Field, Datasource } from '../types/entity'
 import { EntityType } from '../types/entity'
+import { useDraggableModal } from '@/utils/useDraggableModal'
+import { ValidateField } from '@/components'
+import { useFieldError } from '@/utils/useFieldError'
 
-const { t } = useI18n()
+const {clearFieldError, setFieldError, getFieldError } = useFieldError('EntityEditModal')
+const { t: $t } = useI18n()
+const { modalRef, onHeaderMousedown } = useDraggableModal()
 
 interface Props {
   entity?: Entity | null
   parentEntity?: Entity | null
   datasources: Datasource[]
   currentDatasourceId?: string
-  availableParents: Entity[]
   parentFields?: Field[]
 }
 
@@ -174,13 +177,24 @@ const showHeaderName = ref(false)
 
 // 表单数据
 const formData = ref({
-  entityId: '',
-  name: '',
-  comment: '',
-  datasourceId: '',
-  entityType: 'entity' as 'entity' | 'abstract',
-  parentEntityId: '',
-  fields: [] as Field[]
+  entityId: props.entity?.id || '',
+  name: props.entity?.name || '',
+  comment: props.entity?.comment || '',
+  datasourceId: props.entity?.datasourceId || props.currentDatasourceId || '',
+  entityType: props.entity?.entityType || 'ENTITY',
+  parentEntityId: props.entity?.parentEntityId || props.parentEntity?.id || '',
+  fields: props.entity?.fields || [
+            {
+              entityId: '',
+              id: Date.now().toString(),
+              name: '',
+              type: '',
+              comment: '',
+              isPrimaryKey: false,
+              isRequired: false,
+              isUnique: false
+            }
+          ]
 })
 
 // 是否为编辑模式
@@ -188,8 +202,20 @@ const isEdit = computed(() => !!props.entity)
 
 // 表单验证
 const isValid = computed(() => {
-  return formData.value.name.trim().length > 0 && formData.value.datasourceId.length > 0 && formData.value.fields.every(field => field.name.trim().length > 0 && field.type.trim().length > 0)
+  return getFieldError('entity.name') === undefined && formData.value.datasourceId.length > 0 && formData.value.fields.every(field => field.name.trim().length > 0 && field.type.trim().length > 0)
 })
+
+function validateName() {
+  if (!formData.value.name.trim()) {
+    setFieldError('entity.name', $t('entity.nameRequired'))
+  } else if (formData.value.name.length > 50) {
+    setFieldError('entity.name', $t('entity.nameMaxLength'))
+  } else if (!/^[a-zA-Z][a-zA-Z0-9_]*$/.test(formData.value.name)) {
+    setFieldError('entity.name', $t('entity.namePattern'))
+  } else {
+    clearFieldError('entity.name')
+  }
+}
 
 // 是否可以保存
 const canSave = computed(() => {
@@ -208,44 +234,6 @@ function handleModalWheel(event: WheelEvent) {
     containerFields.scrollLeft += event.deltaX; // 横向滚动
   }
 }
-
-// 监听props变化
-watch(() => props.entity, (entity) => {
-  console.log('entity', entity, props.parentEntity)
-  if (entity) {
-    formData.value = {
-      entityId: entity.id,
-      name: entity.name,
-      comment: entity.comment || '',
-      datasourceId: entity.datasourceId,
-      entityType: entity.entityType === EntityType.ABSTRACT ? 'abstract' : 'entity',
-      parentEntityId: entity.parentEntityId || '',
-      fields: JSON.parse(JSON.stringify(entity.fields))
-    }
-  } else {
-    formData.value = {
-      entityId: '',
-      name: '',
-      comment: '',
-      datasourceId: props.currentDatasourceId || '',
-      entityType: 'entity',
-      parentEntityId: props.parentEntity?.id || '',
-      fields: [
-        {
-          entityId: '',
-          id: Date.now().toString(),
-          name: '',
-          type: '',
-          comment: '',
-          isPrimaryKey: false,
-          isRequired: false,
-          isUnique: false
-        }
-      ]
-    }
-  }
-}, { immediate: true })
-
 // 监听modal滚动
 function handleModalScroll() {
   if (!modalContentRef.value || !nameInputRef.value) return
@@ -254,7 +242,6 @@ function handleModalScroll() {
   // 判断输入框底部是否在 modal-content 顶部之上（即被滚动出去了）
   showHeaderName.value = inputRect.bottom < modalRect.top || inputRect.top > modalRect.bottom
 }
-
 // 添加字段
 function addField() {
   const newField: Field = {
@@ -269,11 +256,11 @@ function addField() {
   }
   formData.value.fields.push(newField)
 }
-
+// 删除字段
 function removeField(index: number) {
   formData.value.fields.splice(index, 1)
 }
-
+// 保存实体
 function handleSave() {
   if (!canSave.value) return
   
@@ -282,7 +269,7 @@ function handleSave() {
     name: formData.value.name.trim(),
     comment: formData.value.comment.trim(),
     datasourceId: formData.value.datasourceId,
-    entityType: formData.value.entityType === 'abstract' ? EntityType.ABSTRACT : EntityType.ENTITY,
+    entityType: formData.value.entityType === 'ABSTRACT' ? EntityType.ABSTRACT : EntityType.ENTITY,
     parentEntityId: formData.value.parentEntityId || undefined,
     fields: formData.value.fields.filter(f => f.name.trim()),
     x: props.entity?.x || 100,
@@ -321,6 +308,10 @@ function handleSave() {
   word-break: break-all;
   max-width: 100%;
   white-space: normal;
+}
+.required {
+  color: #ff4d4f;
+  margin-left: 2px;
 }
 
 /* 字段相关样式 */

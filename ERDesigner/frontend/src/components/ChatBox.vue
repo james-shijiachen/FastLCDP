@@ -62,6 +62,11 @@ function scrollToBottom() {
   flex-direction: column;
   background: #fff;
 }
+.chatbox-root, .chatbox-root * {
+  user-select: none;
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE10+/Edge */
+}
 .dark-theme .chatbox-root {
   background: #1a1a1a;
   color: #ffffff;

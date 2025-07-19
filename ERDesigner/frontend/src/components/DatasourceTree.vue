@@ -109,6 +109,11 @@ function handleSelectEntity(node: TreeNode) {
   transition: transform 0.2s ease;
   z-index: 1000;
 }
+.datasource-panel, .datasource-panel * {
+  user-select: none;
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE10+/Edge */
+}
 /* 隐藏数据源树面板 */
 .datasource-panel-hidden {
   display: none;

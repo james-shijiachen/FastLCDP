@@ -1,57 +1,54 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Entity, Relationship, Datasource, TreeNode, Index } from '../types/entity'
-import { EntityType, TreeNodeType } from '../types/entity'
+import type { Entity, Relationship, Datasource, TreeNode, Index, View, HistoryState } from '../types/entity'
+import { EntityType, TreeNodeType, OperationType } from '../types/entity'
 // import api from '@/api'
 
+// 常量定义
+const MAX_HISTORY_SIZE = 50
+
 export const useDSDiagramStore = defineStore('dsDiagram', () => {
-  // 状态
+  
+  // 核心状态
   const datasources = ref<Datasource[]>([])
+  const views = ref<View[]>([])
   const entities = ref<Entity[]>([])
   const relationships = ref<Relationship[]>([])
   const indexes = ref<Index[]>([])
-  const selectedEntity = ref<Entity | null>(null)
-  const selectedRelationship = ref<Relationship | null>(null)
-  const selectedDatasource = ref<Datasource | null>(null)
-  const isSelectMode = ref(true)
+  
+  // 选择状态
+  const selectedEntities = ref<Entity[]>([])
+  const selectedRelationships = ref<Relationship[]>([])
+  
+  // 画布状态
   const zoom = ref(1)
   const panX = ref(0)
   const panY = ref(0)
+  const showGrid = ref(true)
 
-  // 加载数据源（含兜底逻辑）
-  async function loadDatasources() {
-    // TODO: 替换为你的实际 API 调用
-    // const res = await api.get('/datasources')
-    // let list: Datasource[] = res.data
-    let list: Datasource[] = [] // mock: 实际应为 API 返回
-    if (!list || list.length === 0) {
-      list = [{
-        id: 'default',
-        name: 'default',
-        description: '',
-        createdTime: new Date()
-      }]
-    }
-    datasources.value = list
-  }
+  // 历史记录
+  const history = ref<HistoryState[]>([])
+  const historyIndex = ref(-1)
 
   // 计算属性
   const entityCount = computed(() => entities.value.length)
   const relationshipCount = computed(() => relationships.value.length)
   const datasourceCount = computed(() => datasources.value.length)
-  
-  // 可见实体（只显示entity类型，不显示abstract类型）
-  const visibleEntities = computed(() => 
-    entities.value.filter(entity => entity.entityType === EntityType.ENTITY)
-  )
-  
+
+  const canvasState = computed(() => ({
+    zoom: zoom.value,
+    panX: panX.value,
+    panY: panY.value,
+    showGrid: showGrid.value,
+  }))
+
   // 树形结构数据
   const treeData = computed(() => {
     const tree: TreeNode[] = []
     const entityMap: Record<string, TreeNode> = {}
     const datasourceMap: Record<string, TreeNode> = {}
 
-    // 1. 先建所有节点
+    // 构建所有实体节点
     entities.value.forEach(entity => {
       entityMap[entity.id] = {
         id: entity.id,
@@ -59,47 +56,54 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
         type: TreeNodeType.ENTITY,
         entityType: entity.entityType,
         datasourceId: entity.datasourceId,
-        children: []
+        children: [],
+        icon: entity.entityType === EntityType.ABSTRACT ? 'abstract-entity' : 'entity'
       }
     })
+
+    // 构建所有数据源节点
     datasources.value.forEach(ds => {
       datasourceMap[ds.id] = {
         id: ds.id,
         label: ds.name,
         type: TreeNodeType.DATASOURCE,
-        children: []
+        children: [],
+        icon: 'datasource'
       }
     })
 
-    // 2. 先全部挂到 datasource
+    // 实体挂到数据源（先处理没有父节点的实体）
     entities.value.forEach(entity => {
       const node = entityMap[entity.id]
       if (!entity.parentEntityId || !entityMap[entity.parentEntityId]) {
-        // 没有父节点，直接挂到数据源
         datasourceMap[entity.datasourceId]?.children?.push(node)
       }
     })
-    // 3. 再挂子节点
+
+    // 再挂子节点
     entities.value.forEach(entity => {
       if (entity.parentEntityId && entityMap[entity.parentEntityId]) {
         entityMap[entity.parentEntityId].children!.push(entityMap[entity.id])
       }
     })
 
-    // 4. 汇总
+    // 汇总到树形结构
     Object.values(datasourceMap).forEach(dsNode => tree.push(dsNode))
     return tree
   })
 
-  // 数据库操作
+  // 数据源操作
   function addDatasource(datasource: Datasource) {
     datasources.value.push(datasource)
+    saveToHistory(OperationType.ADD_DATASOURCE, '添加数据源: ' + datasource.name, undefined, { datasource })
   }
 
   function updateDatasource(updatedDatasource: Datasource) {
     const index = datasources.value.findIndex(d => d.id === updatedDatasource.id)
     if (index !== -1) {
+      const oldDatasource = datasources.value[index]
       datasources.value[index] = { ...updatedDatasource }
+      saveToHistory(OperationType.UPDATE_DATASOURCE, '更新数据源: ' + updatedDatasource.name, { datasource: oldDatasource }, { datasource: updatedDatasource })
     }
   }
 
@@ -108,38 +112,66 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
     const datasourceEntities = entities.value.filter(e => e.datasourceId === datasourceId)
     datasourceEntities.forEach(entity => deleteEntity(entity.id))
     
+    const deletedDatasource = datasources.value.find(d => d.id === datasourceId)
     datasources.value = datasources.value.filter(d => d.id !== datasourceId)
-    if (selectedDatasource.value?.id === datasourceId) {
-      selectedDatasource.value = null
-    }
+    
+    saveToHistory(OperationType.DELETE_DATASOURCE, '删除数据源', { datasource: deletedDatasource }, undefined)
   }
 
   function getDatasourceById(id: string): Datasource | undefined {
     return datasources.value.find(d => d.id === id)
   }
 
+  function deleteView(viewId: string) {
+    // 删除视图前，将视图中的数据源添加到默认视图
+    const view = views.value.find(v => v.id === viewId)
+    if (!view) {
+      throw new Error('视图不存在')
+    }
+
+    // 删除视图前，将视图中的数据源添加到默认视图
+    view.datasourceIds.forEach(dsId => {
+      const datasource = datasources.value.find(d => d.id === dsId)
+      if (datasource) {
+        datasource.viewId = 'default'
+        updateDatasource(datasource)
+      }
+    })
+
+    // 给默认视图添加数据源
+    const defaultView = views.value.find(v => v.id === 'default')
+    if (defaultView) {
+      defaultView.datasourceIds.push(...view.datasourceIds)
+    }
+
+    views.value = views.value.filter(v => v.id !== viewId)
+  }
+
   // 实体操作
   function addEntity(entity: Entity) {
-    // // 如果有父实体，继承父实体的字段
-    // if (entity.parentEntityId) {
-    //   const parentEntity = getEntityById(entity.parentEntityId)
-    //   if (parentEntity) {
-    //     const inheritedFields = parentEntity.fields.map(field => ({
-    //       ...field,
-    //       id: `${entity.id}_${field.id}`, // 生成新的字段ID
-    //     }))
-    //     entity.fields = [...inheritedFields, ...entity.fields]
-    //   }
-    // }
-    console.log('addEntity-end', entity)
+    if (!entity.id || !entity.name) {
+      throw new Error('实体ID和名称不能为空')
+    }
+    
+    if (entities.value.some(e => e.id === entity.id)) {
+      throw new Error('实体ID已存在')
+    }
+
     entities.value.push(entity)
+    
+    saveToHistory(OperationType.ADD_ENTITY, '添加实体', undefined, { entity })
   }
 
   function updateEntity(updatedEntity: Entity) {
     const index = entities.value.findIndex(e => e.id === updatedEntity.id)
-    if (index !== -1) {
-      entities.value[index] = { ...updatedEntity }
+    if (index === -1) {
+      throw new Error('实体不存在')
     }
+    
+    const oldEntity = entities.value[index]
+    entities.value[index] = updatedEntity
+    
+    saveToHistory(OperationType.UPDATE_ENTITY, '更新实体', { entity: oldEntity }, { entity: updatedEntity })
   }
 
   function deleteEntity(entityId: string) {
@@ -153,14 +185,22 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
       })
     }
     
+    const deletedEntity = entities.value.find(e => e.id === entityId)
     entities.value = entities.value.filter(e => e.id !== entityId)
+    
     // 同时删除相关的关系
     relationships.value = relationships.value.filter(r => 
       r.fromEntityId !== entityId && r.toEntityId !== entityId
     )
-    if (selectedEntity.value?.id === entityId) {
-      selectedEntity.value = null
+
+    // 删除索引
+    indexes.value = indexes.value.filter(i => i.entityId !== entityId)
+    
+    if (selectedEntities.value.some(e => e.id === entityId)) {
+      selectedEntities.value = selectedEntities.value.filter(e => e.id !== entityId)
     }
+    
+    saveToHistory(OperationType.DELETE_ENTITY, '删除实体', { entity: deletedEntity }, undefined)
   }
 
   function getEntityById(id: string): Entity | undefined {
@@ -205,101 +245,56 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
   // 关系操作
   function addRelationship(relationship: Relationship) {
     relationships.value.push(relationship)
+    saveToHistory(OperationType.ADD_RELATIONSHIP, '添加关系', undefined, { relationship })
   }
 
   function updateRelationship(updatedRelationship: Relationship) {
     const index = relationships.value.findIndex(r => r.id === updatedRelationship.id)
     if (index !== -1) {
+      const oldRelationship = relationships.value[index]
       relationships.value[index] = { ...updatedRelationship }
+      saveToHistory(OperationType.UPDATE_RELATIONSHIP, '更新关系', { relationship: oldRelationship }, { relationship: updatedRelationship })
     }
   }
 
   function deleteRelationship(relationshipId: string) {
+    const deletedRelationship = relationships.value.find(r => r.id === relationshipId)
+    if (!deletedRelationship) {
+      throw new Error('关系不存在')
+    }
+
     relationships.value = relationships.value.filter(r => r.id !== relationshipId)
-    if (selectedRelationship.value?.id === relationshipId) {
-      selectedRelationship.value = null
+    
+    if (selectedRelationships.value.some(r => r.id === relationshipId)) {
+      selectedRelationships.value = selectedRelationships.value.filter(r => r.id !== relationshipId)
     }
+    saveToHistory(OperationType.DELETE_RELATIONSHIP, '删除关系', { relationship: deletedRelationship }, undefined)
   }
 
-  // 选择操作
-  function selectEntity(entity: Entity) {
-    selectedEntity.value = entity
-    selectedRelationship.value = null
+  function toggleGrid() {
+    showGrid.value = !showGrid.value
   }
 
-  function selectRelationship(relationship: Relationship) {
-    selectedRelationship.value = relationship
-    selectedEntity.value = null
-  }
-
-  function clearSelection() {
-    selectedEntity.value = null
-    selectedRelationship.value = null
-  }
-
-  // 模式切换
-  function toggleSelectMode() {
-    isSelectMode.value = !isSelectMode.value
-  }
-
-  function setSelectMode(mode: boolean) {
-    isSelectMode.value = mode
-  }
-
-  // 视图操作
-  function setZoom(newZoom: number) {
-    zoom.value = Math.max(0.1, Math.min(3, newZoom))
-  }
-
-  function setPan(x: number, y: number) {
-    panX.value = x
-    panY.value = y
-  }
-
-  function resetView() {
-    zoom.value = 1
-    panX.value = 0
-    panY.value = 0
-  }
-
-  // 数据操作
-  function loadDiagram(data: { entities: Entity[], relationships: Relationship[] }) {
-    entities.value = data.entities
-    relationships.value = data.relationships
-    clearSelection()
-  }
-
-  function exportDiagram() {
-    return {
-      entities: entities.value,
-      relationships: relationships.value
-    }
-  }
-
-  function clearDiagram() {
-    entities.value = []
-    relationships.value = []
-    clearSelection()
-    resetView()
-  }
-
-  // 撤销/重做功能
-  const history = ref<{ entities: Entity[], relationships: Relationship[] }[]>([])
-  const historyIndex = ref(-1)
-
-  function saveToHistory() {
-    const currentState = {
-      entities: JSON.parse(JSON.stringify(entities.value)),
-      relationships: JSON.parse(JSON.stringify(relationships.value))
+  // 历史记录操作
+  function saveToHistory(type: OperationType, description: string, before?: any, after?: any) {
+    const historyState: HistoryState = {
+      id: Date.now().toString(),
+      type,
+      description,
+      undone: false,
+      redone: false,
+      operationTime: new Date(),
+      before,
+      after
     }
     
     // 移除当前索引之后的历史记录
     history.value = history.value.slice(0, historyIndex.value + 1)
-    history.value.push(currentState)
+    history.value.push(historyState)
     historyIndex.value = history.value.length - 1
     
     // 限制历史记录数量
-    if (history.value.length > 50) {
+    if (history.value.length > MAX_HISTORY_SIZE) {
       history.value.shift()
       historyIndex.value--
     }
@@ -309,9 +304,7 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
     if (historyIndex.value > 0) {
       historyIndex.value--
       const state = history.value[historyIndex.value]
-      entities.value = JSON.parse(JSON.stringify(state.entities))
-      relationships.value = JSON.parse(JSON.stringify(state.relationships))
-      clearSelection()
+      applyHistoryState(state, true)
     }
   }
 
@@ -319,39 +312,195 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
     if (historyIndex.value < history.value.length - 1) {
       historyIndex.value++
       const state = history.value[historyIndex.value]
-      entities.value = JSON.parse(JSON.stringify(state.entities))
-      relationships.value = JSON.parse(JSON.stringify(state.relationships))
-      clearSelection()
+      applyHistoryState(state, false)
+    }
+  }
+
+  // 应用历史状态
+  function applyHistoryState(state: HistoryState, isUndo: boolean) {
+    const { type, before, after } = state
+    
+    switch (type) {
+      case OperationType.ADD_ENTITY:
+        if (isUndo && after?.entity) {
+          entities.value = entities.value.filter(e => e.id !== after.entity!.id)
+        } else if (!isUndo && after?.entity) {
+          entities.value.push(after.entity)
+        }
+        break
+        
+      case OperationType.UPDATE_ENTITY:
+        if (isUndo && before?.entity) {
+          const index = entities.value.findIndex(e => e.id === before.entity!.id)
+          if (index !== -1) {
+            entities.value[index] = before.entity
+          }
+        } else if (!isUndo && after?.entity) {
+          const index = entities.value.findIndex(e => e.id === after.entity!.id)
+          if (index !== -1) {
+            entities.value[index] = after.entity
+          }
+        }
+        break
+        
+      case OperationType.DELETE_ENTITY:
+        if (isUndo && before?.entity) {
+          entities.value.push(before.entity)
+        } else if (!isUndo && after?.entity) {
+          entities.value = entities.value.filter(e => e.id !== after.entity!.id)
+        }
+        break
+        
+      case OperationType.ADD_RELATIONSHIP:
+        if (isUndo && after?.relationship) {
+          relationships.value = relationships.value.filter(r => r.id !== after.relationship!.id)
+        } else if (!isUndo && after?.relationship) {
+          relationships.value.push(after.relationship)
+        }
+        break
+        
+      case OperationType.UPDATE_RELATIONSHIP:
+        if (isUndo && before?.relationship) {
+          const index = relationships.value.findIndex(r => r.id === before.relationship!.id)
+          if (index !== -1) {
+            relationships.value[index] = before.relationship
+          }
+        } else if (!isUndo && after?.relationship) {
+          const index = relationships.value.findIndex(r => r.id === after.relationship!.id)
+          if (index !== -1) {
+            relationships.value[index] = after.relationship
+          }
+        }
+        break
+        
+      case OperationType.DELETE_RELATIONSHIP:
+        if (isUndo && before?.relationship) {
+          relationships.value.push(before.relationship)
+        } else if (!isUndo && after?.relationship) {
+          relationships.value = relationships.value.filter(r => r.id !== after.relationship!.id)
+        }
+        break
+        
+      case OperationType.ADD_DATASOURCE:
+        if (isUndo && after?.datasource) {
+          datasources.value = datasources.value.filter(d => d.id !== after.datasource!.id)
+        } else if (!isUndo && after?.datasource) {
+          datasources.value.push(after.datasource)
+        }
+        break
+        
+      case OperationType.UPDATE_DATASOURCE:
+        if (isUndo && before?.datasource) {
+          const index = datasources.value.findIndex(d => d.id === before.datasource!.id)
+          if (index !== -1) {
+            datasources.value[index] = before.datasource
+          }
+        } else if (!isUndo && after?.datasource) {
+          const index = datasources.value.findIndex(d => d.id === after.datasource!.id)
+          if (index !== -1) {
+            datasources.value[index] = after.datasource
+          }
+        }
+        break
+        
+      case OperationType.DELETE_DATASOURCE:
+        if (isUndo && before?.datasource) {
+          datasources.value.push(before.datasource)
+        } else if (!isUndo && after?.datasource) {
+          datasources.value = datasources.value.filter(d => d.id !== after.datasource!.id)
+        }
+        break
+    }
+    clearSelection()
+  }
+
+  // 数据操作
+  function loadDiagram(data: { views: View[], datasources: Datasource[], entities: Entity[], relationships: Relationship[], indexes: Index[] }) {
+    views.value = data.views
+    datasources.value = data.datasources
+    entities.value = data.entities
+    relationships.value = data.relationships
+    indexes.value = data.indexes
+    clearSelection()
+  }
+
+  function exportDiagram() {
+    return {
+      entities: entities.value,
+      relationships: relationships.value,
+      datasources: datasources.value,
+      views: views.value
+    }
+  }
+
+  function clearSelection(){
+    selectedEntities.value = []
+    selectedRelationships.value = []
+  }
+
+  // 加载数据源（含兜底逻辑）
+  async function loadDatasources() {
+    try {
+      // TODO: 替换为你的实际 API 调用
+      // const res = await api.get('/datasources')
+      // let list: Datasource[] = res.data
+      let list: Datasource[] = [] // mock: 实际应为 API 返回
+      let viewList: View[] = [] // mock: 实际应为 API 返回
+      
+      if (!list || list.length === 0) {
+        list = [{
+          id: 'default',
+          name: 'Default',
+          description: ''
+        }]
+      }
+      
+      if (!viewList || viewList.length === 0) {
+        viewList = [{
+          id: 'default',
+          name: 'Default',
+          datasourceIds: ['default']
+        }]
+      }
+      
+      datasources.value = [...list]
+      views.value = [...viewList]
+    } catch (error) {
+      console.error('加载数据源失败:', error)
+      throw error
     }
   }
 
   return {
     // 状态
+    views,
     datasources,
     entities,
     relationships,
     indexes,
-    selectedEntity,
-    selectedRelationship,
-    selectedDatasource,
-    isSelectMode,
+    selectedEntities,
+    selectedRelationships,
     zoom,
     panX,
     panY,
+    showGrid,
     
     // 计算属性
     entityCount,
     relationshipCount,
     datasourceCount,
-    visibleEntities,
     treeData,
+    canvasState,
     
-    // 数据库方法
+    // 数据源方法
     addDatasource,
     updateDatasource,
     deleteDatasource,
     getDatasourceById,
     loadDatasources,
+    
+    // 视图方法
+    deleteView,
     
     // 实体方法
     addEntity,
@@ -366,22 +515,16 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
     updateRelationship,
     deleteRelationship,
     
-    // 选择方法
-    selectEntity,
-    selectRelationship,
-    clearSelection,
+    // 画布方法
+    toggleGrid,
     
-    // 其他方法
-    toggleSelectMode,
-    setSelectMode,
-    setZoom,
-    setPan,
-    resetView,
-    loadDiagram,
-    exportDiagram,
-    clearDiagram,
+    // 历史方法
     undo,
     redo,
-    saveToHistory
+    saveToHistory,
+    
+    // 数据方法
+    loadDiagram,
+    exportDiagram
   }
 })

@@ -88,6 +88,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import type { Entity, Relationship } from '../types/entity'
+import { RelationshipType } from '../types/entity'
 
 interface Props {
   entities: Entity[]
@@ -163,7 +164,8 @@ function handleSave() {
     toEntityId: toEntity.value.id,
     fromFieldId: formData.value.fromFieldId,
     toFieldId: formData.value.toFieldId,
-    type: formData.value.relationType
+    type: formData.value.relationType as RelationshipType,
+    datasourceId: fromEntity.value.datasourceId
   }
   
   emit('save', relationship)

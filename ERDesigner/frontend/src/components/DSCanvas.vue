@@ -2,10 +2,7 @@
   <div 
     ref="canvasContainer" 
     class="canvas-container"
-    @click="handleCanvasClick"
     @contextmenu.prevent="handleCanvasRightClick"
-    @drop="handleDrop"
-    @dragover="handleDragOver"
     @wheel.prevent="handleWheel"
     @keydown.prevent="handleKeyDown"
     @touchstart.prevent="handleTouchStart"
@@ -18,12 +15,7 @@
       :width="canvasWidth"
       :height="canvasHeight"
       :viewBox="`0 0 ${canvasWidth} ${canvasHeight}`"
-      @mousedown="handleCanvasMouseDown"
-      @mousemove="handleCanvasMouseMove"
-      @mouseup="handleCanvasMouseUp"
-      @touchstart="handleSvgTouchStart"
-      @touchmove="handleSvgTouchMove"
-      @touchend="handleSvgTouchEnd">
+      @mousedown="handleCanvasMouseDown">
       <!-- 网格背景 -->
       <defs v-if="showGrid">
         <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
@@ -35,7 +27,7 @@
       <!-- 关系连线 -->
       <g class="relations-layer">
         <RelationLine
-          v-for="relationship in relationships"
+          v-for="relationship in store.relationships"
           :relation="relationship"
           :key="relationship.id"
           :relationship="relationship"
@@ -57,22 +49,18 @@
       <!-- 实体 -->
       <g class="entities-layer">
         <EntityNode
-          v-for="entity in entities.filter(e => e.entityType !== EntityType.ABSTRACT)"
+          v-for="entity in props.entities"
           :key="entity.id"
           :entity="entity"
           :selected="isEntitySelected(entity)"
-          :multiSelected="selectedEntities.length > 1 && isEntitySelected(entity)"
-          :dragTransform="draggingEntityId === entity.id ? `translate(${dragCurrent.x},${dragCurrent.y})` : undefined"
-          @click="(entity, event) => handleEntityClick(entity, event)"
+          :dragTransform="draggingEntityIds.includes(entity.id) ? `translate(${dragEntity[entity.id]?.x || entity.x},${dragEntity[entity.id]?.y || entity.y})` : undefined"
           @dblclick="handleEntityDoubleClick"
-          @contextmenu="handleEntityRightClick"
           @mousedown="handleEntityMouseDown"
           @touchstart="handleEntityTouchStart"
           @touchmove="handleEntityTouchMove"
           @touchend="handleEntityTouchEnd"/>
       </g>
-      
-      <!-- 选择框 -->
+
       <rect
         v-if="selectionBox.visible"
         :x="selectionBox.x"
@@ -83,17 +71,15 @@
         stroke="#0366d6"
         stroke-width="1"
         stroke-dasharray="5,5"
-        class="selection-box"
-      />
+        class="selection-box"/>
     </svg>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick, watchEffect } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick, reactive } from 'vue'
 import { useDSDiagramStore } from '../stores/dsDiagram'
 import type { Entity, Relationship } from '../types/entity'
-import { EntityType } from '../types/entity'
 import EntityNode from './EntityNode.vue'
 import RelationLine from './RelationLine.vue'
 import { useI18n } from 'vue-i18n'
@@ -113,16 +99,20 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<{
-  'entityClick': [entity: Entity, event: MouseEvent]
   'entityDoubleClick': [entity: Entity]
   'entityRightClick': [entity: Entity, event: MouseEvent]
   'canvasClick': [event: MouseEvent]
   'canvasRightClick': [event: MouseEvent]
   'selectionChange': [entities: Entity[]]
   'zoomChange': [level: number]
+  'hideContextMenu': []
+  'copyEntity': []
+  'pasteEntity': []
+  'undo': []
+  'redo': []
 }>()
 
-const { locale, t: $t } = useI18n()
+const { t: $t } = useI18n()
 const store = useDSDiagramStore()
 
 // 响应式数据
@@ -131,15 +121,10 @@ const svgCanvas = ref<SVGSVGElement>()
 const canvasWidth = ref(2000)
 const canvasHeight = ref(2000)
 
-// 拖拽状态
-const isDragging = ref(false)
-const dragStartPos = ref({ x: 0, y: 0 })
-const dragEntity = ref<Entity | null>(null)
-
-// 极致流畅拖拽
-const draggingEntityId = ref<string | null>(null)
-const dragOffset = ref({ x: 0, y: 0 })
-const dragCurrent = ref({ x: 0, y: 0 })
+// 画布选择框拖拽状态
+const draggingEntityIds = ref<string[]>([])
+const dragStartPos = ref<Record<string, { x: number, y: number }>>({})
+const dragEntity = reactive<Record<string, { x: number, y: number }>>({})
 
 // 触摸状态
 const isTouching = ref(false)
@@ -150,26 +135,128 @@ const isMultiTouch = ref(false)
 const initialPinchDistance = ref(0)
 const currentZoom = ref(1)
 
-// 选择框状态
+let mouseDownPos = { x: 0, y: 0 }
+let animationFrameId: number | null = null
+
+// 框选状态
 const selectionBox = ref({
   visible: false,
+  startX: 0,
+  startY: 0,
   x: 0,
   y: 0,
   width: 0,
-  height: 0,
-  startX: 0,
-  startY: 0
+  height: 0
 })
 
-// 计算属性
-const entities = computed(() => props.entities)
-const relationships = computed(() => store.relationships)
-
-// 方法
+// 判断实体是否选中
 function isEntitySelected(entity: Entity): boolean {
   return props.selectedEntities.some(e => e.id === entity.id)
 }
 
+// 判断点击位置是否在某个 entity 上
+function getEntityAtPosition(clientX: number, clientY: number): Entity | null {
+  const rect = svgCanvas.value!.getBoundingClientRect()
+  const clickX = clientX - rect.left
+  const clickY = clientY - rect.top
+  
+  return props.entities.find(entity => {
+    return clickX >= entity.x && 
+           clickX <= entity.x + entity.width &&
+           clickY >= entity.y && 
+           clickY <= entity.y + entity.height
+  }) || null
+}
+
+// 判断触摸位置是否在某个 entity 上
+function getEntityAtTouchPosition(touchX: number, touchY: number): Entity | null {
+  const rect = svgCanvas.value!.getBoundingClientRect()
+  const clickX = touchX - rect.left
+  const clickY = touchY - rect.top
+  
+  return props.entities.find(entity => {
+    return clickX >= entity.x && 
+           clickX <= entity.x + entity.width &&
+           clickY >= entity.y && 
+           clickY <= entity.y + entity.height
+  }) || null
+}
+
+// ------------------------------ 框选状态 开始 ------------------------------
+// 画布鼠标按下
+function handleCanvasMouseDown(event: MouseEvent) {
+  // 只允许左键
+  if (event.button !== 0) return
+  mouseDownPos = { x: event.clientX, y: event.clientY }
+  const rect = svgCanvas.value!.getBoundingClientRect()
+  const startX = event.clientX - rect.left
+  const startY = event.clientY - rect.top
+  selectionBox.value = {
+    visible: true,
+    startX,
+    startY,
+    x: startX,
+    y: startY,
+    width: 0,
+    height: 0
+  }
+  document.addEventListener('mousemove', handleSelectionBoxMouseMove)
+  document.addEventListener('mouseup', handleSelectionBoxMouseUp)
+}
+// 框选鼠标移动
+function handleSelectionBoxMouseMove(event: MouseEvent) {
+  if (!selectionBox.value.visible) return
+  const rect = svgCanvas.value!.getBoundingClientRect()
+  const currX = event.clientX - rect.left
+  const currY = event.clientY - rect.top
+  const x = Math.min(selectionBox.value.startX, currX)
+  const y = Math.min(selectionBox.value.startY, currY)
+  const width = Math.abs(currX - selectionBox.value.startX)
+  const height = Math.abs(currY - selectionBox.value.startY)
+  selectionBox.value = {
+    ...selectionBox.value,
+    x,
+    y,
+    width,
+    height
+  }
+}
+// 框选鼠标抬起
+function handleSelectionBoxMouseUp(_event: MouseEvent) {
+  if (!selectionBox.value.visible) return
+  const moved =
+    Math.abs(_event.clientX - mouseDownPos.x) > 3 ||
+    Math.abs(_event.clientY - mouseDownPos.y) > 3
+  if (!moved) {
+    // 单击事件
+    if(_event.button === 0) {
+      handleCanvasClick(_event)
+    }else if(_event.button === 2) {
+      handleCanvasRightClick(_event)
+    }
+  }else{
+    // 框选实体
+    const { x, y, width, height } = selectionBox.value
+    const selected = props.entities.filter(entity => {
+      // 判断实体中心点是否在选择框内
+      const cx = entity.x + entity.width / 2
+      const cy = entity.y + entity.height / 2
+      return (
+        cx >= x &&
+        cx <= x + width &&
+        cy >= y &&
+        cy <= y + height
+      )
+    })
+    emit('selectionChange', selected)
+    selectionBox.value.visible = false
+  }
+  document.removeEventListener('mousemove', handleSelectionBoxMouseMove)
+  document.removeEventListener('mouseup', handleSelectionBoxMouseUp)
+}
+// ------------------------------ 框选状态 结束 ------------------------------
+
+// ------------------------------ 画布事件处理 开始 ------------------------------
 // 画布点击事件
 function handleCanvasClick(event: MouseEvent) {
   // 检查点击的是否是实体或实体的子元素
@@ -181,194 +268,156 @@ function handleCanvasClick(event: MouseEvent) {
     emit('canvasClick', event)
   }
 }
-
+// 画布右键点击事件
 function handleCanvasRightClick(event: MouseEvent) {
-  emit('canvasRightClick', event)
+  const clickedEntity = getEntityAtPosition(event.clientX, event.clientY)
+  if (!clickedEntity) {
+    emit('canvasRightClick', event)
+  }
 }
+// ------------------------------ 画布事件处理 结束 ------------------------------
 
+// ------------------------------ 实体事件处理 开始 ------------------------------
+// 实体点击事件
 function handleEntityClick(entity: Entity, event: MouseEvent) {
   event.stopPropagation()
-  emit('entityClick', entity, event)
+  if (event.ctrlKey || event.metaKey) {
+    const index = props.selectedEntities.findIndex(e => e.id === entity.id)
+    if (index === -1) {
+      emit('selectionChange', [...props.selectedEntities, entity])
+    } else {
+      emit('selectionChange', props.selectedEntities.filter(e => e.id !== entity.id))
+    }
+  } else {
+    emit('selectionChange', [entity])
+  }
 }
-
+// 实体双击事件
 function handleEntityDoubleClick(entity: Entity) {
   emit('entityDoubleClick', entity)
 }
-
+// 实体右键点击事件
 function handleEntityRightClick(entity: Entity, event: MouseEvent) {
   event.stopPropagation()
   // 触发实体右键菜单事件
   emit('entityRightClick', entity, event)
 }
+// ------------------------------ 实体事件处理 结束 ------------------------------
 
-// 画布鼠标按下
-function handleCanvasMouseDown(event: MouseEvent) {
-  if (event.target === svgCanvas.value) {
-    // 开始选择框
-    const rect = svgCanvas.value!.getBoundingClientRect()
-    const x = event.clientX - rect.left
-    const y = event.clientY - rect.top
-    
-    selectionBox.value = {
-      visible: true,
-      x,
-      y,
-      width: 0,
-      height: 0,
-      startX: x,
-      startY: y
-    }
-    
-    document.addEventListener('mousemove', handleSelectionMouseMove)
-    document.addEventListener('mouseup', handleSelectionMouseUp)
-  }
-}
-
-// 画布鼠标移动
-function handleCanvasMouseMove(event: MouseEvent) {
-  if (isDragging.value && dragEntity.value) {
-    const rect = svgCanvas.value!.getBoundingClientRect()
-    const x = event.clientX - rect.left - dragStartPos.value.x
-    const y = event.clientY - rect.top - dragStartPos.value.y
-    
-    dragEntity.value.x = Math.max(0, x)
-    dragEntity.value.y = Math.max(0, y)
-    
-    store.updateEntity(dragEntity.value)
-  }
-}
-
-// 画布鼠标抬起
-function handleCanvasMouseUp() {
-  if (isDragging.value) {
-    isDragging.value = false
-    dragEntity.value = null
-  }
-}
-
+// ------------------------------ 实体拖拽 开始 ------------------------------
 // 实体鼠标按下
 function handleEntityMouseDown(entity: Entity, event: MouseEvent) {
+  event.preventDefault()
   event.stopPropagation()
-  if (!isEntitySelected(entity)) {
-    emit('entityClick', entity, event)
+
+  mouseDownPos = { x: event.clientX, y: event.clientY }
+  draggingEntityIds.value = [entity.id]
+  if(isEntitySelected(entity)) {
+
+    dragEntity[entity.id] = { x: entity.x, y: entity.y }
+    dragStartPos.value[entity.id] = { 
+      x: event.clientX - entity.x, 
+      y: event.clientY - entity.y 
+    }
+
+    // 记录其他选中实体的初始位置
+    props.selectedEntities.forEach(e => {
+      if (e.id !== entity.id) {
+        dragEntity[e.id] = { x: e.x, y: e.y }
+        dragStartPos.value[e.id] = { 
+          x: event.clientX - e.x, 
+          y: event.clientY - e.y 
+        }
+        draggingEntityIds.value.push(e.id)
+      }
+    })
+    
+    document.addEventListener('mousemove', onDragMove)
   }
-  draggingEntityId.value = entity.id
-  dragOffset.value = {
-    x: event.clientX - entity.x,
-    y: event.clientY - entity.y
-  }
-  dragCurrent.value = { x: entity.x, y: entity.y }
-  document.addEventListener('mousemove', onDragMove)
   document.addEventListener('mouseup', onDragEnd)
 }
-
-// 拖拽移动
+// 实体拖拽移动
 function onDragMove(event: MouseEvent) {
-  if (!draggingEntityId.value) return
-  dragCurrent.value = {
-    x: event.clientX - dragOffset.value.x,
-    y: event.clientY - dragOffset.value.y
-  }
-}
+  if (draggingEntityIds.value.length === 0) return
+  
+  // 拖拽时隐藏右键菜单
+  emit('hideContextMenu')
 
-// 拖拽结束
-function onDragEnd(event: MouseEvent) {
-  if (!draggingEntityId.value) return
-  const entity = entities.value.find(e => e.id === draggingEntityId.value)
-  if (entity) {
-    entity.x = dragCurrent.value.x
-    entity.y = dragCurrent.value.y
-    store.updateEntity(entity)
+  // 取消之前的动画帧
+  if (animationFrameId) {
+    cancelAnimationFrame(animationFrameId)
   }
-  draggingEntityId.value = null
+
+  // 使用 requestAnimationFrame 确保流畅
+  animationFrameId = requestAnimationFrame(() => {
+    draggingEntityIds.value.forEach(id => {
+      const startPos = dragStartPos.value[id]
+      if (startPos) {
+        // 更新拖拽时的临时位置
+        dragEntity[id] = {
+          x: event.clientX - startPos.x,
+          y: event.clientY - startPos.y
+        }
+      }
+    })
+  })
+}
+// 实体拖拽结束
+function onDragEnd(_event: MouseEvent){
+  if (draggingEntityIds.value.length === 0) return
+
+  const moved =
+    Math.abs(_event.clientX - mouseDownPos.x) > 3 ||
+    Math.abs(_event.clientY - mouseDownPos.y) > 3
+
+  if (!moved) {
+    // 解决点击事件和拖拽事件冲突 单击事件触发时，拖拽事件也会触发，导致拖拽事件无法触发
+    const entityObj = props.entities.find(e => e.id === draggingEntityIds.value[0])
+    if (entityObj) {
+      if(_event.button === 0) { // 左键
+        handleEntityClick(entityObj, _event)
+      }else if(_event.button === 2) { // 右键
+        handleEntityRightClick(entityObj, _event)
+      }
+    }
+  }else{
+    // 更新实体位置
+    draggingEntityIds.value.forEach(id => {
+      const entity = props.entities.find(e => e.id === id)
+      if (entity) {
+        entity.x = dragEntity[id].x
+        entity.y = dragEntity[id].y
+        store.updateEntity(entity)
+
+        // 同步更新 selectedEntities 中的实体
+        const selectedEntity = props.selectedEntities.find(e => e.id === id)
+        if (selectedEntity) {
+          selectedEntity.x = dragEntity[id].x
+          selectedEntity.y = dragEntity[id].y
+        }
+      }
+    })
+  }
+
+  draggingEntityIds.value = []
+  Object.keys(dragEntity).forEach(key => delete dragEntity[key])
+  mouseDownPos = { x: 0, y: 0 }
+
+  if (animationFrameId) {
+    cancelAnimationFrame(animationFrameId)
+    animationFrameId = null
+  }
+
   document.removeEventListener('mousemove', onDragMove)
   document.removeEventListener('mouseup', onDragEnd)
 }
+// ------------------------------ 实体拖拽 结束 ------------------------------
 
-// 选择框事件处理
-function handleSelectionMouseMove(event: MouseEvent) {
-  if (selectionBox.value.visible) {
-    const rect = svgCanvas.value!.getBoundingClientRect()
-    const currentX = event.clientX - rect.left
-    const currentY = event.clientY - rect.top
-    
-    selectionBox.value.x = Math.min(selectionBox.value.startX, currentX)
-    selectionBox.value.y = Math.min(selectionBox.value.startY, currentY)
-    selectionBox.value.width = Math.abs(currentX - selectionBox.value.startX)
-    selectionBox.value.height = Math.abs(currentY - selectionBox.value.startY)
-  }
-}
-
-// 选择框鼠标抬起事件处理
-function handleSelectionMouseUp() {
-  if (selectionBox.value.visible) {
-    // 检查哪些实体在选择框内
-    const selectedEntities = entities.value.filter(entity => {
-      return entity.x < selectionBox.value.x + selectionBox.value.width &&
-             entity.x + entity.width > selectionBox.value.x &&
-             entity.y < selectionBox.value.y + selectionBox.value.height &&
-             entity.y + entity.height > selectionBox.value.y
-    })
-    
-    if (selectedEntities.length > 0) {
-      emit('selectionChange', selectedEntities)
-    }
-    
-    selectionBox.value.visible = false
-  }
-  
-  document.removeEventListener('mousemove', handleSelectionMouseMove)
-  document.removeEventListener('mouseup', handleSelectionMouseUp)
-}
-
-function handleDrop(event: DragEvent) {
-  event.preventDefault()
-  const type = event.dataTransfer?.getData('text/plain')
-  
-  if (type === 'entity') {
-    const rect = canvasContainer.value!.getBoundingClientRect()
-    const x = event.clientX - rect.left - 100
-    const y = event.clientY - rect.top - 60
-    
-    const entity: Entity = {
-      id: Date.now().toString(),
-      name: '新实体',
-      comment: '',
-      fields: [
-        {
-          entityId: Date.now().toString(),
-          id: Date.now().toString() + '_1',
-          name: 'id',
-          type: 'INT',
-          comment: '主键',
-          isPrimaryKey: true,
-          isRequired: true,
-          isUnique: true
-        }
-      ],
-      x: Math.max(0, x),
-      y: Math.max(0, y),
-      width: 200,
-      height: 60, // 最小高度，将由自动计算更新
-      backgroundColor: '#ffffff',
-      borderColor: '#24292e',
-      datasourceId: '',
-      entityType: EntityType.ENTITY
-    }
-    
-    store.addEntity(entity)
-  }
-}
-
-// 拖拽覆盖事件处理
-function handleDragOver(event: DragEvent) {
-  event.preventDefault()
-}
-
+// ------------------------------ 关系连线 开始 ------------------------------
 // 获取关系路径
 function getRelationPath(relationship: Relationship): string {
-  const fromEntity = entities.value.find(e => e.id === relationship.fromEntityId)
-  const toEntity = entities.value.find(e => e.id === relationship.toEntityId)
+  const fromEntity = props.entities.find(e => e.id === relationship.fromEntityId)
+  const toEntity = props.entities.find(e => e.id === relationship.toEntityId)
   
   if (!fromEntity || !toEntity) return ''
   
@@ -379,11 +428,10 @@ function getRelationPath(relationship: Relationship): string {
   
   return `M ${fromX} ${fromY} L ${toX} ${toY}`
 }
-
 // 获取关系标签位置
 function getRelationLabelPosition(relationship: Relationship) {
-  const fromEntity = entities.value.find(e => e.id === relationship.fromEntityId)
-  const toEntity = entities.value.find(e => e.id === relationship.toEntityId)
+  const fromEntity = props.entities.find(e => e.id === relationship.fromEntityId)
+  const toEntity = props.entities.find(e => e.id === relationship.toEntityId)
   
   if (!fromEntity || !toEntity) return{ x: 0, y: 0 }
   
@@ -397,7 +445,9 @@ function getRelationLabelPosition(relationship: Relationship) {
     y: (fromY + toY) / 2 - 5
   }
 }
+// ------------------------------ 关系连线 结束 ------------------------------
 
+// ------------------------------ 键盘事件处理 开始 ------------------------------
 // 缩放和键盘事件处理
 function handleWheel(event: WheelEvent) {
   event.preventDefault()
@@ -416,7 +466,6 @@ function handleWheel(event: WheelEvent) {
     }
   }
 }
-
 // 键盘事件处理
 function handleKeyDown(event: KeyboardEvent) {
   // 阻止浏览器默认快捷键
@@ -438,15 +487,25 @@ function handleKeyDown(event: KeyboardEvent) {
       case 'a':
         event.preventDefault()
         // 全选实体
-        emit('selectionChange', entities.value)
+        emit('selectionChange', props.entities)
         break
       case 'c':
+        event.preventDefault()
+        if(props.selectedEntities.length > 0) {
+          emit('copyEntity')
+        }
+        break
       case 'v':
-      case 'x':
+        event.preventDefault()
+        emit('pasteEntity')
+        break
       case 'z':
+        event.preventDefault()
+        emit('undo')
+        break
       case 'y':
         event.preventDefault()
-        // 这里可以添加复制、粘贴、剪切、撤销、重做功能
+        emit('redo')
         break
     }
   }
@@ -465,20 +524,19 @@ function handleKeyDown(event: KeyboardEvent) {
     emit('selectionChange', [])
   }
 }
-
-// 公开方法
+//快捷键
 function zoomIn() {
   emit('zoomChange', Math.min(props.zoomLevel * 1.2, 3))
 }
-
 function zoomOut() {
   emit('zoomChange', Math.max(props.zoomLevel / 1.2, 0.1))
 }
-
 function resetZoom() {
   emit('zoomChange', 1)
 }
+// ------------------------------ 键盘事件处理 结束 ------------------------------
 
+// ------------------------------ 触摸事件处理 开始 ------------------------------
 // 触摸事件处理
 function getTouchPos(touch: Touch): { x: number, y: number } {
   const rect = svgCanvas.value!.getBoundingClientRect()
@@ -487,13 +545,14 @@ function getTouchPos(touch: Touch): { x: number, y: number } {
     y: touch.clientY - rect.top
   }
 }
-
+// 获取触摸距离
 function getTouchDistance(touch1: Touch, touch2: Touch): number {
   const dx = touch1.clientX - touch2.clientX
   const dy = touch1.clientY - touch2.clientY
   return Math.sqrt(dx * dx + dy * dy)
 }
 
+// 触摸开始
 function handleTouchStart(event: TouchEvent) {
   const touches = event.touches
   
@@ -510,7 +569,7 @@ function handleTouchStart(event: TouchEvent) {
     currentZoom.value = props.zoomLevel
   }
 }
-
+// 触摸移动
 function handleTouchMove(event: TouchEvent) {
   const touches = event.touches
   
@@ -522,7 +581,6 @@ function handleTouchMove(event: TouchEvent) {
     emit('zoomChange', newZoom)
   }
 }
-
 // 触摸结束
 function handleTouchEnd(event: TouchEvent) {
   const touchDuration = Date.now() - touchStartTime.value
@@ -536,7 +594,14 @@ function handleTouchEnd(event: TouchEvent) {
         clientY: lastTouchPos.value.y,
         bubbles: true
       })
-      handleCanvasClick(syntheticEvent)
+      
+      // 检查触摸位置是否在 entity 上
+      const clickedEntity = getEntityAtTouchPosition(lastTouchPos.value.x, lastTouchPos.value.y)
+      if (clickedEntity) {
+        handleEntityClick(clickedEntity, syntheticEvent)
+      } else {
+        handleCanvasClick(syntheticEvent)
+      }
     }
     
     isTouching.value = false
@@ -544,54 +609,9 @@ function handleTouchEnd(event: TouchEvent) {
     touchEntity.value = null
   }
 }
+// ------------------------------ 触摸事件处理 结束 ------------------------------
 
-// svg触摸开始
-function handleSvgTouchStart(event: TouchEvent) {
-  if (event.touches.length === 1 && event.target === svgCanvas.value) {
-    // 在SVG画布上开始选择框
-    const touch = event.touches[0]
-    const pos = getTouchPos(touch)
-    
-    selectionBox.value = {
-      visible: true,
-      x: pos.x,
-      y: pos.y,
-      width: 0,
-      height: 0,
-      startX: pos.x,
-      startY: pos.y
-    }
-  }
-}
-
-// svg触摸移动
-function handleSvgTouchMove(event: TouchEvent) {
-  if (event.touches.length === 1 && selectionBox.value.visible) {
-    const touch = event.touches[0]
-    const pos = getTouchPos(touch)
-    
-    selectionBox.value.x = Math.min(selectionBox.value.startX, pos.x)
-    selectionBox.value.y = Math.min(selectionBox.value.startY, pos.y)
-    selectionBox.value.width = Math.abs(pos.x - selectionBox.value.startX)
-    selectionBox.value.height = Math.abs(pos.y - selectionBox.value.startY)
-  }
-}
-
-function handleSvgTouchEnd(_event: TouchEvent) {
-  if (selectionBox.value.visible) {
-    // 完成选择框选择
-    const selectedEntities = entities.value.filter(entity => {
-      return entity.x < selectionBox.value.x + selectionBox.value.width &&
-             entity.x + entity.width > selectionBox.value.x &&
-             entity.y < selectionBox.value.y + selectionBox.value.height &&
-             entity.y + entity.height > selectionBox.value.y
-    })
-    
-    emit('selectionChange', selectedEntities)
-    selectionBox.value.visible = false
-  }
-}
-
+// ------------------------------ 实体触摸(移动端：触摸拖拽) 开始 ------------------------------
 // 实体触摸开始
 function handleEntityTouchStart(entity: Entity, event: TouchEvent) {
   event.stopPropagation()
@@ -605,13 +625,12 @@ function handleEntityTouchStart(entity: Entity, event: TouchEvent) {
     lastTouchPos.value = pos
     
     // 设置拖拽起始位置
-    dragStartPos.value = {
-      x: pos.x - entity.x,
-      y: pos.y - entity.y
+    mouseDownPos = {
+      x: pos.x,
+      y: pos.y
     }
   }
 }
-
 // 实体触摸移动
 function handleEntityTouchMove(entity: Entity, event: TouchEvent) {
   if (event.touches.length === 1 && touchEntity.value === entity) {
@@ -619,8 +638,8 @@ function handleEntityTouchMove(entity: Entity, event: TouchEvent) {
     const pos = getTouchPos(touch)
     
     // 拖拽实体
-    const newX = pos.x - dragStartPos.value.x
-    const newY = pos.y - dragStartPos.value.y
+    const newX = pos.x - mouseDownPos.x
+    const newY = pos.y - mouseDownPos.y
     
     if (props.selectedEntities.length > 1 && isEntitySelected(entity)) {
       // 多选拖拽
@@ -640,9 +659,10 @@ function handleEntityTouchMove(entity: Entity, event: TouchEvent) {
     }
   }
 }
-
 // 实体触摸结束
 function handleEntityTouchEnd(entity: Entity, event: TouchEvent) {
+  event.preventDefault()
+  event.stopPropagation()
   const touchDuration = Date.now() - touchStartTime.value
   
   if (event.touches.length === 0) {
@@ -665,59 +685,10 @@ function handleEntityTouchEnd(entity: Entity, event: TouchEvent) {
     }
     
     touchEntity.value = null
+    mouseDownPos = { x: 0, y: 0 }
   }
 }
-
-// 计算实体的最小高度
-function calculateEntityHeight(entity: Entity): number {
-  // 头部高度30px + 每个字段20px，最小高度60px
-  const headerHeight = 30
-  const fieldHeight = 20
-  const minHeight = 60
-  
-  const calculatedHeight = headerHeight + entity.fields.length * fieldHeight
-  return Math.max(minHeight, calculatedHeight)
-}
-
-// 计算实体的最小宽度
-function calculateEntityWidth(entity: Entity): number {
-  // 基础最小宽度
-  const minWidth = 150
-  
-  // 根据实体名称长度计算宽度
-  const nameWidth = entity.name.length * 8 + 40
-  
-  // 根据字段内容计算宽度
-  let maxFieldWidth = 0
-  entity.fields.forEach(field => {
-    const fieldNameWidth = field.name.length * 7
-    const fieldTypeWidth = field.type.length * 6
-    const iconWidth = field.isPrimaryKey ? 25 : 8
-    const fieldWidth = iconWidth + fieldNameWidth + fieldTypeWidth + 50
-    maxFieldWidth = Math.max(maxFieldWidth, fieldWidth)
-  })
-  
-  return Math.max(minWidth, nameWidth, maxFieldWidth)
-}
-
-// 更新实体尺寸
-function updateEntitySize(entity: Entity) {
-  const width = calculateEntityWidth(entity)
-  const height = calculateEntityHeight(entity)
-  
-  // 始终更新尺寸，实体框大小完全由计算确定
-  entity.width = width
-  entity.height = height
-  
-  store.updateEntity(entity)
-}
-
-// 监听实体变化，自动更新尺寸
-watchEffect(() => {
-  entities.value.forEach(entity => {
-    updateEntitySize(entity)
-  })
-})
+// ------------------------------ 实体触摸(移动端：触摸拖拽) 结束 ------------------------------
 
 // 暴露方法给父组件
 defineExpose({
@@ -737,16 +708,7 @@ onMounted(() => {
         }
       })
     })
-    
     resizeObserver.observe(canvasContainer.value)
-    
-    // 初始化所有实体的尺寸
-  nextTick(() => {
-    entities.value.forEach(entity => {
-      updateEntitySize(entity)
-    })
-  })
-    
     onUnmounted(() => {
       resizeObserver.disconnect()
     })
