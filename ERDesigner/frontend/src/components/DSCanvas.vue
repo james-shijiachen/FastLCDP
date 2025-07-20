@@ -150,38 +150,22 @@ const selectionBox = ref({
   height: 0
 })
 
+// ------------------------------ 公用函数 开始 ------------------------------
 // 判断实体是否选中
 function isEntitySelected(entity: Entity): boolean {
   return props.selectedEntities.some(e => e.id === entity.id)
 }
 
-// 判断点击位置是否在某个 entity 上
-function getEntityAtPosition(clientX: number, clientY: number): Entity | null {
+// 将屏幕坐标转换为画布坐标（考虑缩放因子）
+function screenToCanvasCoords(clientX: number, clientY: number): { x: number, y: number } {
   const rect = svgCanvas.value!.getBoundingClientRect()
-  const clickX = clientX - rect.left
-  const clickY = clientY - rect.top
   
-  return props.entities.find(entity => {
-    return clickX >= entity.x && 
-           clickX <= entity.x + entity.width &&
-           clickY >= entity.y && 
-           clickY <= entity.y + entity.height
-  }) || null
+  return {
+    x: (clientX - rect.left) / props.zoomLevel,
+    y: (clientY - rect.top) / props.zoomLevel
+  }
 }
-
-// 判断触摸位置是否在某个 entity 上
-function getEntityAtTouchPosition(touchX: number, touchY: number): Entity | null {
-  const rect = svgCanvas.value!.getBoundingClientRect()
-  const clickX = touchX - rect.left
-  const clickY = touchY - rect.top
-  
-  return props.entities.find(entity => {
-    return clickX >= entity.x && 
-           clickX <= entity.x + entity.width &&
-           clickY >= entity.y && 
-           clickY <= entity.y + entity.height
-  }) || null
-}
+// ------------------------------ 公用函数 结束 ------------------------------
 
 // ------------------------------ 框选状态 开始 ------------------------------
 // 画布鼠标按下
@@ -189,15 +173,13 @@ function handleCanvasMouseDown(event: MouseEvent) {
   // 只允许左键
   if (event.button !== 0) return
   mouseDownPos = { x: event.clientX, y: event.clientY }
-  const rect = svgCanvas.value!.getBoundingClientRect()
-  const startX = event.clientX - rect.left
-  const startY = event.clientY - rect.top
+  const canvasCoords = screenToCanvasCoords(event.clientX, event.clientY)
   selectionBox.value = {
     visible: true,
-    startX,
-    startY,
-    x: startX,
-    y: startY,
+    startX: canvasCoords.x,
+    startY: canvasCoords.y,
+    x: canvasCoords.x,
+    y: canvasCoords.y,
     width: 0,
     height: 0
   }
@@ -207,13 +189,11 @@ function handleCanvasMouseDown(event: MouseEvent) {
 // 框选鼠标移动
 function handleSelectionBoxMouseMove(event: MouseEvent) {
   if (!selectionBox.value.visible) return
-  const rect = svgCanvas.value!.getBoundingClientRect()
-  const currX = event.clientX - rect.left
-  const currY = event.clientY - rect.top
-  const x = Math.min(selectionBox.value.startX, currX)
-  const y = Math.min(selectionBox.value.startY, currY)
-  const width = Math.abs(currX - selectionBox.value.startX)
-  const height = Math.abs(currY - selectionBox.value.startY)
+  const canvasCoords = screenToCanvasCoords(event.clientX, event.clientY)
+  const x = Math.min(selectionBox.value.startX, canvasCoords.x)
+  const y = Math.min(selectionBox.value.startY, canvasCoords.y)
+  const width = Math.abs(canvasCoords.x - selectionBox.value.startX)
+  const height = Math.abs(canvasCoords.y - selectionBox.value.startY)
   selectionBox.value = {
     ...selectionBox.value,
     x,
@@ -276,6 +256,17 @@ function handleCanvasRightClick(event: MouseEvent) {
     emit('canvasRightClick', event)
   }
 }
+// 判断点击位置是否在某个 entity 上
+function getEntityAtPosition(clientX: number, clientY: number): Entity | null {
+  const canvasCoords = screenToCanvasCoords(clientX, clientY)
+  
+  return props.entities.find(entity => {
+    return canvasCoords.x >= entity.x && 
+           canvasCoords.x <= entity.x + entity.width &&
+           canvasCoords.y >= entity.y && 
+           canvasCoords.y <= entity.y + entity.height
+  }) || null
+}
 // ------------------------------ 画布事件处理 结束 ------------------------------
 
 // ------------------------------ 实体事件处理 开始 ------------------------------
@@ -315,10 +306,11 @@ function handleEntityMouseDown(entity: Entity, event: MouseEvent) {
   draggingEntityIds.value = [entity.id]
   if(isEntitySelected(entity) || props.selectedEntities.length === 0) {  //如果当前实体没选中，但其他实体有选中，则不产生拖拽效果（必须选中当前节点），否则容易误操作
 
+    const canvasCoords = screenToCanvasCoords(event.clientX, event.clientY)
     dragEntity[entity.id] = { x: entity.x, y: entity.y }
     dragStartPos.value[entity.id] = { 
-      x: event.clientX - entity.x, 
-      y: event.clientY - entity.y 
+      x: canvasCoords.x - entity.x, 
+      y: canvasCoords.y - entity.y 
     }
 
     // 记录其他选中实体的初始位置
@@ -326,8 +318,8 @@ function handleEntityMouseDown(entity: Entity, event: MouseEvent) {
       if (e.id !== entity.id) {
         dragEntity[e.id] = { x: e.x, y: e.y }
         dragStartPos.value[e.id] = { 
-          x: event.clientX - e.x, 
-          y: event.clientY - e.y 
+          x: canvasCoords.x - e.x, 
+          y: canvasCoords.y - e.y 
         }
         draggingEntityIds.value.push(e.id)
       }
@@ -351,13 +343,14 @@ function onDragMove(event: MouseEvent) {
 
   // 使用 requestAnimationFrame 确保流畅
   animationFrameId = requestAnimationFrame(() => {
+    const canvasCoords = screenToCanvasCoords(event.clientX, event.clientY)
     draggingEntityIds.value.forEach(id => {
       const startPos = dragStartPos.value[id]
       if (startPos) {
         // 更新拖拽时的临时位置
         dragEntity[id] = {
-          x: event.clientX - startPos.x,
-          y: event.clientY - startPos.y
+          x: canvasCoords.x - startPos.x,
+          y: canvasCoords.y - startPos.y
         }
       }
     })
@@ -542,11 +535,7 @@ function resetZoom() {
 // ------------------------------ 触摸事件处理 开始 ------------------------------
 // 触摸事件处理
 function getTouchPos(touch: Touch): { x: number, y: number } {
-  const rect = svgCanvas.value!.getBoundingClientRect()
-  return {
-    x: touch.clientX - rect.left,
-    y: touch.clientY - rect.top
-  }
+  return screenToCanvasCoords(touch.clientX, touch.clientY)
 }
 // 获取触摸距离
 function getTouchDistance(touch1: Touch, touch2: Touch): number {
@@ -611,6 +600,17 @@ function handleTouchEnd(event: TouchEvent) {
     isMultiTouch.value = false
     touchEntity.value = null
   }
+}
+// 判断触摸位置是否在某个 entity 上
+function getEntityAtTouchPosition(touchX: number, touchY: number): Entity | null {
+  const canvasCoords = screenToCanvasCoords(touchX, touchY)
+  
+  return props.entities.find(entity => {
+    return canvasCoords.x >= entity.x && 
+           canvasCoords.x <= entity.x + entity.width &&
+           canvasCoords.y >= entity.y && 
+           canvasCoords.y <= entity.y + entity.height
+  }) || null
 }
 // ------------------------------ 触摸事件处理 结束 ------------------------------
 
