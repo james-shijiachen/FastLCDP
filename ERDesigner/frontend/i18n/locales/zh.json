@@ -25,7 +25,10 @@
     "document": "文档数据库",
     "category": "种类",
     "selectType": "请选择类型",
-    "selectCategory": "请选择种类"
+    "selectCategory": "请选择种类",
+    "view": "视图",
+    "newView": "新建视图",
+    "defaultView": "默认视图"
   },
   "entity": {
     "edit": "编辑实体",
@@ -38,6 +41,8 @@
     "namePlaceholder": "请输入实体名称",
     "comment": "注释",
     "commentPlaceholder": "请输入注释",
+    "parent": "父实体",
+    "noParent": "无父实体",
     "inheritance": "继承父表",
     "noInheritance": "无继承",
     "inheritanceNote": "选择父表后将继承其所有字段",
@@ -53,7 +58,13 @@
     "length": "长度",
     "precision": "精度",
     "scale": "小数位",
-    "removeField": "删除字段"
+    "removeField": "删除字段",
+    "source": "来源",
+    "nameRequired": "实体名称不能为空",
+    "nameMaxLength": "实体名称不能超过50个字符",
+    "namePattern": "实体名称必须以字母开头，只能包含字母、数字和下划线",
+    "entity1": "实体1",
+    "entity2": "实体2"
   },
   "common": {
     "cancel": "取消",
@@ -88,6 +99,7 @@
     "newDiagram": "新建图表",
     "saveDiagram": "保存",
     "exportDiagram": "导出",
+    "importDiagram": "导入",
     "undo": "撤销",
     "redo": "重做",
     "zoomIn": "放大",
@@ -99,11 +111,13 @@
     "pasteEntity": "粘贴实体",
     "deleteEntity": "删除实体",
     "colorEntity": "实体染色",
+    "colorEntityBorder": "实体边框染色",
     "colorRelation": "连线染色",
     "toggleGrid": "网格",
     "fullscreen": "全屏",
     "scrollLeft": "左滚动",
-    "scrollRight": "右滚动"
+    "scrollRight": "右滚动",
+    "menu": "菜单"
   },
   "panel": {
     "datasourceStructure": "数据源结构",
@@ -135,7 +149,17 @@
   },
   "relation": {
     "hint": "已选择",
-    "createRelation": "创建关系"
+    "createRelation": "创建关系",
+    "create": "创建关系",
+    "name": "关系名称",
+    "namePlaceholder": "请输入关系名称",
+    "type": "关系类型",
+    "oneToOne": "一对一",
+    "oneToMany": "一对多",
+    "manyToMany": "多对多",
+    "oneToOneDesc": "每个记录只能对应一个记录",
+    "oneToManyDesc": "一个记录可以对应多个记录",
+    "manyToManyDesc": "多个记录可以对应多个记录"
   },
   "field": {
     "new": "新字段",
@@ -146,9 +170,17 @@
     "diagramSaved": "图表已保存",
     "deleteEntitiesConfirm": "确定要删除选中的实体吗？",
     "deleteDatasourceConfirm": "确定要删除这个数据源吗？这将删除其下所有实体。",
-    "deleteEntityConfirm": "确定要删除这个实体吗？"
+    "deleteEntityConfirm": "确定要删除这个实体吗？",
+    "deleteViewConfirm": "确定要删除这个视图吗？",
+    "importSuccess": "导入成功",
+    "importInvalid": "文件格式无效"
   },
   "defaults": {
     "newEntity": "新实体"
+  },
+  "chat": {
+    "agent": "智能助手",
+    "placeholder": "输入消息...",
+    "demoReply": "这是一个演示回复。"
   }
 }

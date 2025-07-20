@@ -21,7 +21,7 @@
           <div class="form-group">
             <label for="datasource-view">{{ $t('datasource.view') }} *</label>
             <select id="datasource-view" v-model="formData.viewId">
-              <option v-if="formData.viewId === 'default' || formData.viewId === ''" value="default">Default</option>
+              <option v-if="formData.viewId === 'default' || formData.viewId === ''" value="default">{{ $t('datasource.defaultView') }}</option>
               <option v-else :value="formData.viewId">{{ formData.name }}</option>
               <option v-if="formData.viewId === 'default' || formData.viewId === ''" value="">{{ $t('datasource.newView') }}</option>
             </select>

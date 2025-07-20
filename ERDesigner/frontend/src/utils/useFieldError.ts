@@ -9,54 +9,56 @@ export interface FieldError {
 export function useFieldError(componentName: string) {
   const fieldErrors = ref<Record<string, string>>({})
 
-  // 监听字段错误事件
+  // Listen to field error events
   const handleFieldError = (event: CustomEvent) => {
     const { field, message, component } = event.detail as FieldError
     
-    // 只处理当前组件的错误
+    // Only handle errors for current component
     if (component === componentName) {
       fieldErrors.value[field] = message
     }
   }
 
-  // 清除字段错误
+  // Clear field error
   const clearFieldError = (field: string) => {
     if (fieldErrors.value[field]) {
       delete fieldErrors.value[field]
     }
   }
 
-  // 清除所有字段错误
+  // Clear all field errors
   const clearAllFieldErrors = () => {
     fieldErrors.value = {}
   }
 
-  // 设置字段错误
+  // Set field error
   const setFieldError = (field: string, message: string) => {
     fieldErrors.value[field] = message
   }
 
-  // 获取字段错误
+  // Get field error
   const getFieldError = (field: string): string => {
     return fieldErrors.value[field] || ''
   }
 
-  // 检查字段是否有错误
+  // Check if field has error
   const hasFieldError = (field: string): boolean => {
     return !!fieldErrors.value[field]
   }
 
-  // 检查是否有任何错误
+  // Check if there are any errors
   const hasAnyError = (): boolean => {
     return Object.keys(fieldErrors.value).length > 0
   }
 
+  // Listen to field error events on mount
   onMounted(() => {
-    window.addEventListener('field-error', handleFieldError as EventListener)
+    document.addEventListener('fieldError', handleFieldError as EventListener)
   })
 
+  // Remove event listener on unmount
   onUnmounted(() => {
-    window.removeEventListener('field-error', handleFieldError as EventListener)
+    document.removeEventListener('fieldError', handleFieldError as EventListener)
   })
 
   return {

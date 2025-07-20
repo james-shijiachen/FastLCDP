@@ -130,14 +130,14 @@ export class ErrorHandler {
         showMessage(message, 'warning')
         break
       case ErrorType.NETWORK:
-        showMessage(`网络错误: ${message}`, 'error')
+        showMessage(`Network error: ${message}`, 'error')
         break
       case ErrorType.BUSINESS:
         showMessage(message, 'error')
         break
       case ErrorType.SYSTEM:
-        showMessage(`系统错误: ${message}`, 'error')
-        console.error('系统错误:', errorInfo)
+        showMessage(`System error: ${message}`, 'error')
+        console.error('System error:', errorInfo)
         break
       default:
         showMessage(message, 'error')

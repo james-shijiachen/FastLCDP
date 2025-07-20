@@ -307,7 +307,7 @@ function loadLocale() {
 // 保存图表
 function saveDiagram() {
   // 实现保存逻辑
-  console.log('保存图表')
+  console.log('Save diagram')
   alert($t('messages.diagramSaved'))
 }
 // 导入图表
@@ -339,7 +339,7 @@ function importDiagram() {
 // 导出图表
 function exportDiagram() {
   // 实现导出逻辑
-  console.log('导出图表')
+  console.log('Export diagram')
 }
 // 撤销
 function undo() {
@@ -379,7 +379,7 @@ function toggleFullscreen() {
 }
 // 染色实体外框
 function colorEntityBorder() {
-  console.log('染色实体外框')
+  console.log('Color entity border')
 }
 // ------------------------------ 工具栏方法 end------------------------------
 

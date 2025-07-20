@@ -5,7 +5,12 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "eslint . --fix",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run",
+    "test:e2e": "start-server-and-test dev http://localhost:3001/DSDesigner cypress:run",
+    "test:e2e:open": "start-server-and-test dev http://localhost:3001/DSDesigner cypress:open"
   },
   "dependencies": {
     "axios": "^1.10.0",
@@ -16,13 +21,16 @@
     "vue-i18n": "^9.14.4"
   },
   "devDependencies": {
+    "@cypress/vite-dev-server": "^6.0.3",
     "@types/fabric": "^5.3.10",
     "@types/node": "^24.0.7",
     "@typescript-eslint/eslint-plugin": "^8.35.1",
     "@typescript-eslint/parser": "^8.35.1",
     "@vitejs/plugin-vue": "^6.0.0",
+    "cypress": "^14.5.2",
     "eslint": "^9.30.1",
     "eslint-plugin-vue": "^10.2.0",
+    "start-server-and-test": "^2.0.12",
     "typescript": "^5.8.3",
     "vite": "^7.0.0",
     "vue-tsc": "^2.0.0"

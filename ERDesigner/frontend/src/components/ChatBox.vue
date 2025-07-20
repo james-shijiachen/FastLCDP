@@ -1,7 +1,7 @@
 <template>
   <div class="chatbox-root" @wheel.prevent="handleModalWheel">
     <div class="chatbox-header">
-      <h3>Agent</h3>
+      <h3>{{ $t('chat.agent') }}</h3>
       <button class="chatbox-send-btn" @click="send">
         <svg width="20" height="20" viewBox="0 0 20 20"><path d="M2 10l15-7-4 7 4 7z" fill="#fff"/></svg>
       </button>
@@ -14,13 +14,16 @@
       </div>
     </div>
     <div class="chatbox-input-row">
-      <textarea v-model="input" class="chatbox-input" type="text" placeholder="Type a message..."/>
+      <textarea v-model="input" class="chatbox-input" type="text" :placeholder="$t('chat.placeholder')"/>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t: $t } = useI18n()
 const input = ref('')
 const messages = ref([
   { role: 'agent', content: 'Hi! How can I help you?' }
@@ -43,7 +46,7 @@ function send() {
   input.value = ''
   // 模拟 AI 回复
   setTimeout(() => {
-    messages.value.push({ role: 'agent', content: 'This is a demo reply.' })
+    messages.value.push({ role: 'agent', content: $t('chat.demoReply') })
     scrollToBottom()
   }, 600)
   scrollToBottom()

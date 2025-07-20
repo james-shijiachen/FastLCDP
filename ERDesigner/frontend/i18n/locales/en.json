@@ -25,7 +25,10 @@
     "document": "Document",
     "category": "Category",
     "selectType": "Select type",
-    "selectCategory": "Select category"
+    "selectCategory": "Select category",
+    "view": "View",
+    "newView": "New View",
+    "defaultView": "Default View"
   },
   "entity": {
     "edit": "Edit Entity",
@@ -53,7 +56,13 @@
     "length": "Length",
     "precision": "Precision",
     "scale": "Scale",
-    "removeField": "Remove Field"
+    "removeField": "Remove Field",
+    "source": "Source",
+    "nameRequired": "Entity name is required",
+    "nameMaxLength": "Entity name cannot exceed 50 characters",
+    "namePattern": "Entity name must start with a letter and can only contain letters, numbers, and underscores",
+    "entity1": "Entity 1",
+    "entity2": "Entity 2"
   },
   "common": {
     "cancel": "Cancel",
@@ -138,7 +147,17 @@
   },
   "relation": {
     "hint": "Selected",
-    "createRelation": "Create Relation"
+    "createRelation": "Create Relation",
+    "create": "Create Relation",
+    "name": "Relation Name",
+    "namePlaceholder": "Enter relation name",
+    "type": "Relation Type",
+    "oneToOne": "One to One",
+    "oneToMany": "One to Many",
+    "manyToMany": "Many to Many",
+    "oneToOneDesc": "Each record can only correspond to one record",
+    "oneToManyDesc": "One record can correspond to multiple records",
+    "manyToManyDesc": "Multiple records can correspond to multiple records"
   },
   "field": {
     "new": "New Field",
@@ -149,9 +168,17 @@
     "diagramSaved": "Diagram saved",
     "deleteEntitiesConfirm": "Are you sure you want to delete the selected entities?",
     "deleteDatasourceConfirm": "Are you sure you want to delete this datasource? This will delete all entities under it.",
-    "deleteEntityConfirm": "Are you sure you want to delete this entity?"
+    "deleteEntityConfirm": "Are you sure you want to delete this entity?",
+    "deleteViewConfirm": "Are you sure you want to delete this view?",
+    "importSuccess": "Import successful",
+    "importInvalid": "Invalid file format"
   },
   "defaults": {
     "newEntity": "New Entity"
+  },
+  "chat": {
+    "agent": "Agent",
+    "placeholder": "Type a message...",
+    "demoReply": "This is a demo reply."
   }
 }

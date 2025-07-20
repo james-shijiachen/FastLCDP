@@ -2,14 +2,14 @@
   <div class="modal-overlay">
     <div class="modal-content" @click.stop>
       <div class="modal-header">
-        <h3>创建关系</h3>
+        <h3>{{ $t('relation.create') }}</h3>
         <button @click="$emit('close')" class="close-btn">×</button>
       </div>
       
       <div class="modal-content">
         <div class="entities-info">
           <div class="entity-card">
-            <h4>{{ fromEntity?.name || '实体1' }}</h4>
+            <h4>{{ fromEntity?.name || $t('entity.entity1') }}</h4>
             <div class="entity-fields">
               <div 
                 v-for="field in fromEntity?.fields" 
@@ -30,7 +30,7 @@
           </div>
           
           <div class="entity-card">
-            <h4>{{ toEntity?.name || '实体2' }}</h4>
+            <h4>{{ toEntity?.name || $t('entity.entity2') }}</h4>
             <div class="entity-fields">
               <div 
                 v-for="field in toEntity?.fields" 
@@ -48,15 +48,15 @@
         
         <div class="relation-config">
           <div class="form-group">
-            <label>关系名称:</label>
+            <label>{{ $t('relation.name') }}:</label>
             <input 
               v-model="formData.name" 
-              placeholder="请输入关系名称"
+              :placeholder="$t('relation.namePlaceholder')"
             />
           </div>
           
           <div class="form-group">
-            <label>关系类型:</label>
+            <label>{{ $t('relation.type') }}:</label>
             <div class="relation-types">
               <label 
                 v-for="type in relationTypes" 
@@ -70,8 +70,8 @@
                   v-model="formData.relationType"
                 />
                 <div class="type-info">
-                  <div class="type-name">{{ type.label }}</div>
-                  <div class="type-desc">{{ type.description }}</div>
+                  <div class="type-name">{{ $t(type.labelKey) }}</div>
+                  <div class="type-desc">{{ $t(type.descKey) }}</div>
                   <div class="type-visual">{{ type.visual }}</div>
                 </div>
               </label>
@@ -79,14 +79,15 @@
           </div>
         </div>
       </div>
-        <button @click="$emit('close')" class="btn-secondary">取消</button>
-        <button @click="handleSave" class="btn-primary" :disabled="!canSave">创建关系</button>
+        <button @click="$emit('close')" class="btn-secondary">{{ $t('common.cancel') }}</button>
+        <button @click="handleSave" class="btn-primary" :disabled="!canSave">{{ $t('relation.create') }}</button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { Entity, Relationship } from '../types/entity'
 import { RelationshipType } from '../types/entity'
 
@@ -95,6 +96,7 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+const { t: $t } = useI18n()
 
 const emit = defineEmits<{
   save: [relationship: Relationship]
@@ -111,20 +113,20 @@ const formData = ref({
 const relationTypes = [
   {
     value: 'one-to-one',
-    label: '一对一',
-    description: '每个记录只能对应一个记录',
+    labelKey: 'relation.oneToOne',
+    descKey: 'relation.oneToOneDesc',
     visual: '1 ——— 1'
   },
   {
     value: 'one-to-many',
-    label: '一对多',
-    description: '一个记录可以对应多个记录',
+    labelKey: 'relation.oneToMany',
+    descKey: 'relation.oneToManyDesc',
     visual: '1 ——< ∞'
   },
   {
     value: 'many-to-many',
-    label: '多对多',
-    description: '多个记录可以对应多个记录',
+    labelKey: 'relation.manyToMany',
+    descKey: 'relation.manyToManyDesc',
     visual: '∞ >—< ∞'
   }
 ]

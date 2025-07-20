@@ -1,28 +1,28 @@
 import type { Relationship } from '@/types/entity'
 /**
- * 验证关系的完整性
+ * Validate relationship integrity
  */
 export function validateRelationship(relationship: Relationship): string[] {
   const errors: string[] = []
-  // 基本字段验证
+  // Basic field validation
   if (!relationship.id) {
-    errors.push('关系ID不能为空')
+    errors.push('Relationship ID cannot be empty')
   }
   if (!relationship.fromEntityId || !relationship.toEntityId) {
-    errors.push('关系必须指定源实体和目标实体')
+    errors.push('Relationship must specify source and target entities')
   }
   return errors
 }
 
 /**
- * 检查关系是否为自引用
+ * Check if relationship is self-referencing
  */
 export function isSelfReferencing(relationship: Relationship): boolean {
   return relationship.fromEntityId === relationship.toEntityId
 }
 
 /**
- * 生成数据库外键约束SQL
+ * Generate database foreign key constraint SQL
  */
 export function generateForeignKeySQL(relationship: Relationship): string {
   const constraintName = `fk_${relationship.fromEntityId}_${relationship.toEntityId}`
