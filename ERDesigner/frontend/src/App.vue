@@ -110,7 +110,7 @@
             :treeData="store.treeData"
             :selectedEntities="store.selectedEntities"
             :hidden="!sidebarVisible"
-            :is-mobile="isMobile"
+            :isMobile="isMobile"
             @contextmenu="showContextMenuFromTree"
             @createDatasource="showDatasourceModal = true"
             @editDatasource="handleEditDatasource"
@@ -120,6 +120,7 @@
             @deleteEntity="handleDeleteEntity"
             @doubleClick="handleDoubleClick"
             @selectEntity="handleSelectEntityFromTree"
+            @moveEntity="handleMoveEntity"
           />
         </div>
         <div class="sidebar-divider" @mousedown="startSidebarInnerResize"></div>
@@ -481,8 +482,11 @@ function handleCreateEntity(datasourceId: string, parentEntityId?: string) {
 function handleEntitySave(entity: Entity) {
   try {
     if (editingEntity.value && editingEntity.value.id) {
-      console.log("handleEntitySave", entity)
-      store.updateEntity(entity)
+      if(entity.datasourceId !== editingEntity.value.datasourceId){
+        ChildEntitiesMoveToDatasource(entity, entity.datasourceId || '')
+      }else{
+        store.updateEntity(entity)
+      }
     } else {
       store.addEntity(entity)
     }
@@ -492,17 +496,14 @@ function handleEntitySave(entity: Entity) {
     errorHandler.handleBusinessError(error instanceof Error ? error.message : String(error))
   }
 }
-
 // 树节点双击
 function handleDoubleClick(node: TreeNode) {
-  console.log("handleDoubleClick", node)
   if(node.type === TreeNodeType.ENTITY){
     handleEditEntity(node.id)
   }else if(node.type === TreeNodeType.DATASOURCE){
     handleEditDatasource(node.id)
   }
 }
-
 // 编辑实体（双击）
 function handleEntityDoubleClick(entity: Entity) {
   handleEditEntity(entity.id)
@@ -539,6 +540,37 @@ function deleteSelectedEntities() {
     store.selectedEntities = []
   }
   hideContextMenus()
+}
+// 获取当前实体的所有子实体ID（递归）
+function ChildEntitiesMoveToDatasource(parentEntity: Entity, datasourceId: string) {
+  if(parentEntity){
+    parentEntity.datasourceId = datasourceId
+    store.updateEntity(parentEntity)
+    const children = store.entities.filter(e => e.parentEntityId === parentEntity.id)
+    if(children.length > 0){
+      // 递归获取子实体的子实体
+      children.forEach(child => {
+        ChildEntitiesMoveToDatasource(child, datasourceId)
+      })
+    }
+  }
+}
+// 移动实体
+function handleMoveEntity(source: TreeNode, target: TreeNode) {
+  if (source && target) {
+    const sourceEntity = store.entities.find(e => e.id === source.id)
+    if(sourceEntity){
+      if(target.type === TreeNodeType.ENTITY){
+        sourceEntity.parentEntityId = target.id
+        if(sourceEntity.datasourceId !== target.datasourceId){
+          ChildEntitiesMoveToDatasource(sourceEntity, target.datasourceId || '')
+        }
+      }else if(target.type === TreeNodeType.DATASOURCE){
+        sourceEntity.parentEntityId = undefined
+        ChildEntitiesMoveToDatasource(sourceEntity, target.id)
+      }
+    }
+  }
 }
 
 // ------------------------------ 实体方法 end------------------------------
@@ -750,6 +782,7 @@ function handleKeyDown(event: KeyboardEvent) {
 /* 右侧数据库树面板（顶部） */
 .sidebar-top {
   width: 100%;
+  min-height: 150px;
   overflow: auto;
   transition: height 0.1s;
 }

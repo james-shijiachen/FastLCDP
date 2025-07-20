@@ -161,8 +161,6 @@ export interface TreeNode {
   children?: TreeNode[]
   entityType?: EntityType
   datasourceId?: string
-  icon?: string
-  expanded?: boolean  // 是否展开
 }
 
 // 选择状态接口

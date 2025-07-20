@@ -62,6 +62,7 @@ const emit = defineEmits<{
   'selectEntity': [entityId: string]
   'contextmenu': [event: MouseEvent, node: TreeNode, type: string]
   'doubleClick': [node: TreeNode]
+  'moveEntity': [source: TreeNode, target: TreeNode]
 }>()
 
 // 监听滚轮事件（屏蔽浏览器默认滚动）
@@ -75,9 +76,11 @@ function handleModalWheel(event: WheelEvent) {
 }
 
 // 拖拽节点（待实现）
-function handleNodeDrop(_: { sourceId: string, targetId: string }) {
-  // 这里处理数据结构变更（如调整 parentEntityId），并可调用 API 或 store 方法
-  // 例如：store.moveEntity(sourceId, targetId)
+function handleNodeDrop({ source, target }: { source: TreeNode, target: TreeNode }) {
+  console.log("handleNodeDrop", source, target)
+  if(source && target){
+    emit('moveEntity', source, target)
+  }
 }
 
 // 显示右键菜单

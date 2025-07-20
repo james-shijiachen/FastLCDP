@@ -1,11 +1,11 @@
 <template>
   <div :class="['tree-node', node.type === TreeNodeType.DATASOURCE ? 'datasource-node' : 'entity-node', { selected: selectedEntities.some(e => e.id === node.id) }]"
-  draggable="true"
-  @dragover.stop="onDragOver"
-  @dragenter.stop="onDragEnter"
-  @dragleave.stop="onDragLeave"
-  @drop.stop="onDrop"
-  >
+  :draggable="node.type === TreeNodeType.ENTITY"
+  @dragstart="onDragStart($event, node)"
+  @dragover.stop="onDragOver($event)"
+  @dragenter.stop="onDragEnter($event)"
+  @dragleave.stop="onDragLeave($event)"
+  @drop.stop="onDrop">
     <div :class="['node-content',{ 'drag-over': node.id === dragOverNodeId }]" @click="handleSelect" @dblclick="handleDoubleClick(node)" @contextmenu.prevent="handleContextMenu($event, node)">
       <span v-if="hasChildren" class="expand-icon" @click.stop="toggle">
         <svg width="12" height="12" viewBox="0 0 12 12">
@@ -45,10 +45,14 @@
         :key="child.id"
         :node="child"
         :selectedEntities="selectedEntities"
+        :dragOverNodeId="dragOverNodeId"
         @doubleClick="handleDoubleClick"
         @addEntity="$emit('addEntity', $event)"
         @selectEntity="$emit('selectEntity', $event)"
         @contextmenu.prevent="handleContextMenu"
+        @nodeDrop="$emit('nodeDrop', $event)"
+        @dragOverNode="(id: string) => emit('dragOverNode', id)"
+        @dragLeaveNode="(id: string) => emit('dragLeaveNode', id)"
       />
     </div>
   </div>
@@ -58,6 +62,9 @@
 import { ref, computed, watch } from 'vue'
 import type { TreeNode, Entity } from '../types/entity'
 import { TreeNodeType, EntityType } from '../types/entity'
+import { useDragStore } from '../stores/dragState'
+
+const dragStore = useDragStore()
 
 const props = defineProps<{
   node: TreeNode
@@ -97,37 +104,41 @@ function handleSelect() {
 }
 // 右键菜单
 function handleContextMenu(e: MouseEvent, node: TreeNode) {
-  if(node){
-    emit('contextmenu', e, node)
-  }else{
-    emit('contextmenu', e, props.node)
-  }
+  emit('contextmenu', e, node || props.node)
 }
-
+// 双击节点
 function handleDoubleClick(node: TreeNode) {
-  if(node){
-    emit('doubleClick', node)
-  }else{
-    emit('doubleClick', props.node)
+  emit('doubleClick', node || props.node)
+}
+// 拖拽开始
+function onDragStart(event: DragEvent, node: TreeNode) {
+  event.stopPropagation()
+  dragStore.startDrag(node)
+}
+function onDragOver(event: DragEvent) {
+  if (dragStore.canDropOn(props.node)) {
+    event.preventDefault() // 必须阻止默认行为
+    emit('dragOverNode', props.node.id)
   }
 }
-
-// 拖拽相关
-function onDragOver() {
-  emit('dragOverNode', props.node.id)
+function onDragEnter(event: DragEvent) {
+  if (dragStore.canDropOn(props.node)) {
+    event.preventDefault() // 必须阻止默认行为
+    emit('dragOverNode', props.node.id)
+  }
 }
-function onDragEnter() {
-  emit('dragOverNode', props.node.id)
-}
-function onDragLeave() {
+// 拖拽离开
+function onDragLeave(event: DragEvent) {
+  event.preventDefault() // 必须阻止默认行为
   emit('dragLeaveNode', props.node.id)
 }
 // 拖拽节点
-function onDrop(e: DragEvent) {
-  const sourceId = e.dataTransfer?.getData('text/plain')
-  if (sourceId && sourceId !== props.node.id) {
-    emit('nodeDrop', { sourceId, targetId: props.node.id })
+function onDrop() {
+  if (dragStore.draggingNode && dragStore.canDropOn(props.node)) {
+    emit('nodeDrop', { source: dragStore.draggingNode, target: props.node })
   }
+  emit('dragLeaveNode', props.node.id)
+  dragStore.endDrag()
 }
 </script>
 
@@ -221,13 +232,13 @@ function onDrop(e: DragEvent) {
   color: #fff;
 }
 .drag-over {
-  background: #dae7f9 !important;
+  background: #cde1f8 !important;
 }
 .dark-theme .node-content:hover {
   background: #2c2c2c !important;
 }
 .dark-theme .drag-over {
-  background: #2c2c2c !important;
+  background: #3c2959 !important;
 }
 /* 抽象类图标特殊样式（可选） */
 .abstract-icon svg {

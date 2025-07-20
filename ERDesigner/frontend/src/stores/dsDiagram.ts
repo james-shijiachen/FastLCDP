@@ -48,7 +48,7 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
     const tree: TreeNode[] = []
     const entityMap: Record<string, TreeNode> = {}
     const datasourceMap: Record<string, TreeNode> = {}
-    console.log("refreshTreeNode", refreshTreeNode.value)
+
     if(refreshTreeNode.value){
       // 构建所有实体节点
       entities.value.forEach(entity => {
@@ -58,8 +58,7 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
           type: TreeNodeType.ENTITY,
           entityType: entity.entityType,
           datasourceId: entity.datasourceId,
-          children: [],
-          icon: entity.entityType === EntityType.ABSTRACT ? 'abstract-entity' : 'entity'
+          children: []
         }
       })
 
@@ -69,8 +68,7 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
           id: ds.id,
           label: ds.name,
           type: TreeNodeType.DATASOURCE,
-          children: [],
-          icon: 'datasource'
+          children: []
         }
       })
 
@@ -92,7 +90,6 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
       // 汇总到树形结构
       Object.values(datasourceMap).forEach(dsNode => tree.push(dsNode))
     }
-    console.log("tree", tree)
     return tree
   })
 
