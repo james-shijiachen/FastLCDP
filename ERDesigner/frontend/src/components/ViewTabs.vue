@@ -148,13 +148,12 @@ watch(tabsContainer, checkScroll)
 
 /* 暗色主题 */
 .dark-theme .view-tabs-wrapper {
-  background: #1e1e1e;
-  border-right: 1px solid #333333;
+  background: #030303;
   border-bottom: 0.5px solid #333333; 
   box-shadow: 2px 0 4px rgba(0, 0, 0, 0.2);
 }
 .dark-theme .view-tab.active {
-  background: #404040;
+  background: #222222;
 }
 .dark-theme .view-tab.active {
   border-bottom: 2px solid #bb86fc;

@@ -33,7 +33,7 @@
         <div class="top-toolbar-group">
           <input
             type="checkbox"
-            class="checkbox"
+            class="theme-btn"
             id="checkbox"
             :checked="isDarkTheme"
             @change="toggleTheme"
@@ -122,8 +122,8 @@ onBeforeUnmount(() => {
   color: #fff;
 }
 .dark-theme .top-toolbar {
-  background: #1e1e1e;
-  border-bottom: 1px solid #333333;
+  background: #030303;
+  border-bottom: 0.5px solid #333333;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 .header-right {
@@ -207,16 +207,16 @@ onBeforeUnmount(() => {
   position: relative;
   margin-left: 5px;
 }
-.checkbox {
+.theme-btn {
   opacity: 0;
   width: 0;
   height: 0;
   position: absolute;
 }
-.checkbox:checked + .switch {
+.theme-btn:checked + .switch {
   background-color: #34C759;
 }
-.checkbox:checked + .switch .slider {
+.theme-btn:checked + .switch .slider {
   left: calc(50% - 27px/2 + 10px);
   top: calc(50% - 27px/2);
 }

@@ -14,7 +14,7 @@ export function useDraggableModal() {
     const rect = modalRef.value.getBoundingClientRect()
     const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft
     const scrollTop = window.pageYOffset || document.documentElement.scrollTop
-    const left = rect.left + scrollLeft + rect.width/2
+    const left = rect.left + scrollLeft
     const top = rect.top + scrollTop
 
     // 2. 记录拖拽起点
@@ -22,6 +22,11 @@ export function useDraggableModal() {
     startY = e.clientY
     startLeft = left
     startTop = top
+
+  // 3. 切换为像素定位，移除 transform
+  modalRef.value.style.left = `${left}px`
+  modalRef.value.style.top = `${top}px`
+  modalRef.value.style.transform = 'none'
 
     document.addEventListener('mousemove', onMouseMove)
     document.addEventListener('mouseup', onMouseUp)
@@ -33,7 +38,7 @@ export function useDraggableModal() {
     const deltaY = e.clientY - startY
     modalRef.value.style.left = `${startLeft + deltaX}px`
     modalRef.value.style.top = `${startTop + deltaY}px`
-    modalRef.value.style.transform = '' // 拖动后取消居中
+    modalRef.value.style.transform = 'none' // 拖动后取消居中
   }
 
   function onMouseUp() {
@@ -62,9 +67,9 @@ export function useDraggableModal() {
   // 可选：弹窗关闭时重置位置
   function resetPosition() {
     if (modalRef.value) {
-        modalRef.value.style.left = '50%'
-        modalRef.value.style.top = '20%'
-        modalRef.value.style.transform = 'translate(-50%, 0)'
+      modalRef.value.style.left = '50%'
+      modalRef.value.style.top = '50%'
+      modalRef.value.style.transform = 'translate(-50%, -50%)'
     }
   }
 

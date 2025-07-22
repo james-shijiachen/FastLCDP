@@ -1,11 +1,5 @@
 <template>
   <div class="chatbox-root" @wheel.prevent="handleModalWheel">
-    <div class="chatbox-header">
-      <h3>{{ $t('chat.agent') }}</h3>
-      <button class="chatbox-send-btn" @click="send">
-        <svg width="20" height="20" viewBox="0 0 20 20"><path d="M2 10l15-7-4 7 4 7z" fill="#fff"/></svg>
-      </button>
-    </div>
     <div class="chatbox-messages" ref="messagesRef">
       <div v-for="(msg, idx) in messages" :key="idx" :class="['chat-msg', msg.role]">
         <div class="msg-bubble">
@@ -15,6 +9,9 @@
     </div>
     <div class="chatbox-input-row">
       <textarea v-model="input" class="chatbox-input" type="text" :placeholder="$t('chat.placeholder')"/>
+      <button class="chatbox-send-btn" @click="send">
+        <svg width="20" height="20" viewBox="0 0 20 20"><path d="M2 10l15-7-4 7 4 7z" fill="#fff"/></svg>
+      </button>
     </div>
   </div>
 </template>
@@ -71,31 +68,10 @@ function scrollToBottom() {
   -ms-user-select: none;     /* IE10+/Edge */
 }
 .dark-theme .chatbox-root {
-  background: #1a1a1a;
+  background: #030303;
   color: #ffffff;
   height: 100%;
 }
-.chatbox-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 16px;
-  border-bottom: 1px solid #e1e4e8;
-  background: #f6f8fa;
-}
-.dark-theme .chatbox-header {
-  background: #2a2a2a;
-  border-bottom: 1px solid #404040;
-}
-.chatbox-header h3 {
-  margin: 0;
-  font-size: 20px;
-  color: #24292e;
-}
-.dark-theme .chatbox-header h3 {
-  color: #ffffff;
-}
-
 /* 消息气泡 */
 .chatbox-messages {
   flex: 1;
@@ -145,7 +121,7 @@ function scrollToBottom() {
   background: #fff;
 }
 .dark-theme .chatbox-input-row {
-  background: #1a1a1a;
+  background: #030303;
 }
 /* 发送按钮 */
 .chatbox-send-btn {

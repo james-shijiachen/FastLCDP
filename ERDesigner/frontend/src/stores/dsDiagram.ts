@@ -20,12 +20,6 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
   const refreshTreeNode = ref(true)
   const selectedEntities = ref<Entity[]>([])
   const selectedRelationships = ref<Relationship[]>([])
-  
-  // 画布状态
-  const zoom = ref(1)
-  const panX = ref(0)
-  const panY = ref(0)
-  const showGrid = ref(true)
 
   // 历史记录
   const history = ref<HistoryState[]>([])
@@ -35,13 +29,6 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
   const entityCount = computed(() => entities.value.length)
   const relationshipCount = computed(() => relationships.value.length)
   const datasourceCount = computed(() => datasources.value.length)
-
-  const canvasState = computed(() => ({
-    zoom: zoom.value,
-    panX: panX.value,
-    panY: panY.value,
-    showGrid: showGrid.value,
-  }))
 
   // 树形结构数据
   const treeData = computed(() => {
@@ -275,10 +262,6 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
     saveToHistory(OperationType.DELETE_RELATIONSHIP, '删除关系', { relationship: deletedRelationship }, undefined)
   }
 
-  function toggleGrid() {
-    showGrid.value = !showGrid.value
-  }
-
   // 历史记录操作
   function saveToHistory(type: OperationType, description: string, before?: any, after?: any) {
     const historyState: HistoryState = {
@@ -463,7 +446,13 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
         viewList = [{
           id: 'default',
           name: 'Default',
-          datasourceIds: ['default']
+          datasourceIds: ['default'],
+          canvasState: {
+            zoom: 1,
+            panX: 0,
+            panY: 0,
+            showGrid: true
+          }
         }]
       }
       
@@ -484,17 +473,12 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
     indexes,
     selectedEntities,
     selectedRelationships,
-    zoom,
-    panX,
-    panY,
-    showGrid,
     
     // 计算属性
     entityCount,
     relationshipCount,
     datasourceCount,
     treeData,
-    canvasState,
     
     // 数据源方法
     addDatasource,
@@ -518,9 +502,6 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
     addRelationship,
     updateRelationship,
     deleteRelationship,
-    
-    // 画布方法
-    toggleGrid,
     
     // 历史方法
     undo,

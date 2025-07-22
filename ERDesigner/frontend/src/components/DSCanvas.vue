@@ -7,23 +7,48 @@
     @keydown.prevent="handleKeyDown"
     @touchstart.prevent="handleTouchStart"
     @touchmove.prevent="handleTouchMove"
-    @touchend.prevent="handleTouchEnd"
-    tabindex="0">
+    @touchend.prevent="handleTouchEnd">
+
+    <!-- 固定网格层 -->
+    <svg class="grid-layer" width="100%" height="100%">
+      <!-- 网格背景 -->
+      <defs v-if="canvasState.showGrid">
+        <!-- 亮色主题3x3网格模式：一个大格包含9个小格 -->
+        <pattern 
+         id="grid"
+         :width="60 * canvasState.zoom" 
+         :height="60 * canvasState.zoom" 
+         patternUnits="userSpaceOnUse" >
+          <!-- 大格子边框 -->
+          <rect class="grid-border"
+            :x="0" 
+            :y="0" 
+            :width="60 * canvasState.zoom" 
+            :height="60 * canvasState.zoom" 
+            fill="none" 
+            stroke="#e2e7eb" 
+            :stroke-width="1 * canvasState.zoom"
+          />
+          
+          <!-- 内部3x3小格子 -->
+          <!-- 垂直分割线 -->
+          <line class="vertical-line" :x1="20 * canvasState.zoom" :y1="0" :x2="20 * canvasState.zoom" :y2="60 * canvasState.zoom" stroke="#e9eaed" :stroke-width="0.5 * canvasState.zoom"/>
+          <line class="vertical-line" :x1="40 * canvasState.zoom" :y1="0" :x2="40 * canvasState.zoom" :y2="60 * canvasState.zoom" stroke="#e9eaed" :stroke-width="0.5 * canvasState.zoom"/>
+          
+          <!-- 水平分割线 -->
+          <line class="horizontal-line" :x1="0" :y1="20 * canvasState.zoom" :x2="60 * canvasState.zoom" :y2="20 * canvasState.zoom" stroke="#e9eaed" :stroke-width="0.5 * canvasState.zoom"/>
+          <line class="horizontal-line" :x1="0" :y1="40 * canvasState.zoom" :x2="60 * canvasState.zoom" :y2="40 * canvasState.zoom" stroke="#e9eaed" :stroke-width="0.5 * canvasState.zoom"/>
+        </pattern>
+      </defs>
+      <rect v-if="canvasState.showGrid" width="100%" height="100%" fill="url(#grid)"/>
+    </svg>
     <svg
       ref="svgCanvas"
       class="canvas-svg"
-      :width="canvasWidth"
-      :height="canvasHeight"
-      :viewBox="`0 0 ${canvasWidth} ${canvasHeight}`"
+      width="100%"
+      height="100%"
+      :viewBox="`${canvasState.panX} ${canvasState.panY} ${canvasWidth} ${canvasHeight}`"
       @mousedown="handleCanvasMouseDown">
-      <!-- 网格背景 -->
-      <defs v-if="showGrid">
-        <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e1e4e8" stroke-width="0.5"/>
-        </pattern>
-      </defs>
-      <rect v-if="showGrid" width="100%" height="100%" fill="url(#grid)" />
-      
       <!-- 关系连线 -->
       <g class="relations-layer">
         <RelationLine
@@ -78,23 +103,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick, reactive } from 'vue'
+import { ref, onMounted, onUnmounted, reactive, computed } from 'vue'
 import { useDSDiagramStore } from '../stores/dsDiagram'
-import type { Entity, Relationship } from '../types/entity'
+import type { Entity, Relationship, CanvasState } from '../types/entity'
 import EntityNode from './EntityNode.vue'
 import RelationLine from './RelationLine.vue'
 import { useI18n } from 'vue-i18n'
 
 interface Props {
   entities?: Entity[]
-  zoomLevel?: number
-  showGrid?: boolean
+  canvasState?: CanvasState
   selectedEntities?: Entity[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  zoomLevel: 1,
-  showGrid: true,
+  canvasState: () => ({
+    zoom: 1,
+    panX: 0,
+    panY: 0,
+    showGrid: true
+  }),
   selectedEntities: () => [],
   entities: () => []
 })
@@ -105,7 +133,6 @@ const emit = defineEmits<{
   'canvasClick': [event: MouseEvent]
   'canvasRightClick': [event: MouseEvent]
   'selectionChange': [entities: Entity[]]
-  'zoomChange': [level: number]
   'hideContextMenu': []
   'copyEntity': []
   'pasteEntity': []
@@ -119,8 +146,6 @@ const store = useDSDiagramStore()
 // 响应式数据
 const canvasContainer = ref<HTMLDivElement>()
 const svgCanvas = ref<SVGSVGElement>()
-const canvasWidth = ref(2000)
-const canvasHeight = ref(2000)
 
 // 画布选择框拖拽状态
 const draggingEntityIds = ref<string[]>([])
@@ -158,12 +183,13 @@ function isEntitySelected(entity: Entity): boolean {
 
 // 将屏幕坐标转换为画布坐标（考虑缩放因子）
 function screenToCanvasCoords(clientX: number, clientY: number): { x: number, y: number } {
-  const rect = svgCanvas.value!.getBoundingClientRect()
-  
-  return {
-    x: (clientX - rect.left) / props.zoomLevel,
-    y: (clientY - rect.top) / props.zoomLevel
-  }
+  const svg = svgCanvas.value!
+  const rect = svg.getBoundingClientRect()
+  const viewBox = svg.viewBox.baseVal
+  // 计算鼠标在SVG中的相对位置
+  const x = ((clientX - rect.left) / rect.width) * viewBox.width + viewBox.x
+  const y = ((clientY - rect.top) / rect.height) * viewBox.height + viewBox.y
+  return { x, y }
 }
 // ------------------------------ 公用函数 结束 ------------------------------
 
@@ -241,6 +267,7 @@ function handleSelectionBoxMouseUp(_event: MouseEvent) {
 // 画布点击事件
 function handleCanvasClick(event: MouseEvent) {
   // 检查点击的是否是实体或实体的子元素
+  console.log(event.clientX, event.clientY)
   const target = event.target as Element
   const isEntityClick = target.closest('.entity') || target.closest('.entity-group')
   
@@ -390,6 +417,8 @@ function onDragEnd(_event: MouseEvent){
             selectedEntity.x = dragEntity[id].x
             selectedEntity.y = dragEntity[id].y
           }
+
+          console.log(id, dragEntity, dragEntity[id].x,  dragEntity[id].y, entity.x, entity.y,selectedEntity?.x, selectedEntity?.y)
         }
       })
     }
@@ -451,15 +480,12 @@ function handleWheel(event: WheelEvent) {
   if (event.ctrlKey || event.metaKey) {
     // 缩放
     const delta = event.deltaY > 0 ? 0.9 : 1.1
-    const newZoom = Math.max(0.1, Math.min(3, props.zoomLevel * delta))
-    emit('zoomChange', newZoom)
+    const newZoom = Math.max(0.1, Math.min(3, props.canvasState.zoom * delta))
+    zoomChange(newZoom)
   } else {
     // 平移画布
-    const container = canvasContainer.value
-    if (container) {
-      container.scrollLeft += event.deltaX
-      container.scrollTop += event.deltaY
-    }
+    props.canvasState.panX += event.deltaX / props.canvasState.zoom
+    props.canvasState.panY += event.deltaY / props.canvasState.zoom
   }
 }
 // 键盘事件处理
@@ -522,13 +548,54 @@ function handleKeyDown(event: KeyboardEvent) {
 }
 //快捷键
 function zoomIn() {
-  emit('zoomChange', Math.min(props.zoomLevel * 1.2, 3))
+  zoomChange(Math.min(props.canvasState.zoom * 1.2, 3))
 }
 function zoomOut() {
-  emit('zoomChange', Math.max(props.zoomLevel / 1.2, 0.1))
+  zoomChange(Math.max(props.canvasState.zoom / 1.2, 0.1))
 }
 function resetZoom() {
-  emit('zoomChange', 1)
+  const entities = props.entities
+  if (!entities.length) return
+
+  const PADDING = 40
+
+  const minX = Math.min(...entities.map(e => e.x))
+  const minY = Math.min(...entities.map(e => e.y))
+  const maxX = Math.max(...entities.map(e => e.x + e.width))
+  const maxY = Math.max(...entities.map(e => e.y + e.height))
+
+  const boxMinX = minX - PADDING
+  const boxMinY = minY - PADDING
+  const boxMaxX = maxX + PADDING
+  const boxMaxY = maxY + PADDING
+
+  const boxWidth = boxMaxX - boxMinX
+  const boxHeight = boxMaxY - boxMinY
+
+  const containerW = canvasContainer.value?.clientWidth || 1
+  const containerH = canvasContainer.value?.clientHeight || 1
+
+  let zoomLevel = Math.min(containerW / boxWidth, containerH / boxHeight)
+  if (zoomLevel > 1) zoomLevel = 1
+
+  const viewBoxWidth = containerW / zoomLevel
+  const viewBoxHeight = containerH / zoomLevel
+
+  const boxCenterX = (boxMinX + boxMaxX) / 2
+  const boxCenterY = (boxMinY + boxMaxY) / 2
+
+  const panX = boxCenterX - viewBoxWidth / 2
+  const panY = boxCenterY - viewBoxHeight / 2
+
+  props.canvasState.zoom = zoomLevel
+  props.canvasState.panX = panX
+  props.canvasState.panY = panY
+}
+function zoomChange(level: number) {
+  props.canvasState.zoom = level
+}
+function toggleGrid() {
+  props.canvasState.showGrid = !props.canvasState.showGrid
 }
 // ------------------------------ 键盘事件处理 结束 ------------------------------
 
@@ -558,7 +625,7 @@ function handleTouchStart(event: TouchEvent) {
     // 双指触摸（缩放）
     isMultiTouch.value = true
     initialPinchDistance.value = getTouchDistance(touches[0], touches[1])
-    currentZoom.value = props.zoomLevel
+    currentZoom.value = props.canvasState.zoom
   }
 }
 // 触摸移动
@@ -570,7 +637,7 @@ function handleTouchMove(event: TouchEvent) {
     const currentDistance = getTouchDistance(touches[0], touches[1])
     const scale = currentDistance / initialPinchDistance.value
     const newZoom = Math.max(0.1, Math.min(3, currentZoom.value * scale))
-    emit('zoomChange', newZoom)
+    zoomChange(newZoom)
   }
 }
 // 触摸结束
@@ -697,33 +764,67 @@ function handleEntityTouchEnd(entity: Entity, event: TouchEvent) {
 defineExpose({
   zoomIn,
   zoomOut,
-  resetZoom
+  resetZoom,
+  zoomChange,
+  toggleGrid
 })
 
 // 生命周期
+const containerSize = ref({ width: 0, height: 0 })
 onMounted(() => {
   if (canvasContainer.value) {
     const resizeObserver = new ResizeObserver(() => {
-      nextTick(() => {
-        if (canvasContainer.value) {
-          canvasWidth.value = canvasContainer.value.clientWidth
-          canvasHeight.value = canvasContainer.value.clientHeight
-        }
-      })
+      containerSize.value = {
+        width: canvasContainer.value!.clientWidth,
+        height: canvasContainer.value!.clientHeight
+      }
     })
     resizeObserver.observe(canvasContainer.value)
-    onUnmounted(() => {
-      resizeObserver.disconnect()
-    })
+    onUnmounted(() => resizeObserver.disconnect())
   }
 })
+
+const canvasWidth = computed(() =>
+ containerSize.value.width / props.canvasState.zoom
+)
+const canvasHeight = computed(() =>
+containerSize.value.height / props.canvasState.zoom
+)
 </script>
 <style scoped>
-.canvas-svg {
+.canvas-container {
+  position: relative;
   width: 100%;
   height: 100%;
-  transform-origin: 0 0;
-  transform: scale(var(--zoom-level, 1));
+}
+.dark-theme .canvas-container {
+  background: #030303;
+}
+.grid-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+.dark-theme .vertical-line{
+  stroke: #2a2a2a;
+}
+.dark-theme .horizontal-line{
+  stroke: #2a2a2a;
+}
+.dark-theme .grid-border{
+  stroke: #2a2a2a;
+}
+.canvas-svg{
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
 }
 .selection-box {
   pointer-events: none;

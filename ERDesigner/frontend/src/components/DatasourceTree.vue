@@ -141,10 +141,9 @@ function handleSelectEntity(node: TreeNode) {
   background: #fff;
 }
 .dark-theme .datasource-tree {
-  background: #1a1a1a;
+  background: #030303;
   color: #ffffff;
   height: 100%;
-  border-right: 1px solid #404040;
 }
 .tree-content {
   flex: 1;
@@ -152,7 +151,7 @@ function handleSelectEntity(node: TreeNode) {
   padding: 8px 0;
 }
 .dark-theme .tree-content {
-  background: #1a1a1a;
+  background: #030303;
 }
 .tree-nodes {
   padding: 0 8px;

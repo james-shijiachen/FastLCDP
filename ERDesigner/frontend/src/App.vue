@@ -14,7 +14,7 @@
       :is-mobile="isMobile"
       :is-dark-theme="isDarkTheme"
       :current-locale="currentLocale"
-      :zoomLevel="store.zoom"
+      :zoomLevel="currentCanvasState?.zoom"
       :sidebarVisible="sidebarVisible"
       :canPaste="canPaste"
       :isSelectedEntity="isSelectedEntity"
@@ -56,8 +56,7 @@
           />
         <DSCanvas 
           ref="canvasRef"
-          :zoomLevel="store.zoom"
-          :showGrid="showGrid"
+          :canvasState="currentCanvasState"
           :entities="visibleEntities"
           :selectedEntities="store.selectedEntities"
           @entityDoubleClick="handleEntityDoubleClick"
@@ -65,14 +64,11 @@
           @canvasClick="handleCanvasClick"
           @canvasRightClick="handleCanvasRightClick"
           @selectionChange="handleSelectionChange"
-          @zoomChange="handleZoomChange"
           @copyEntity="copyEntity"
           @pasteEntity="pasteEntity"
           @hideContextMenu="hideContextMenus"
           @undo="undo"
-          @redo="redo"
-          :style="{ '--zoom-level': store.zoom }"
-        />
+          @redo="redo"/>
         <!-- 右键菜单 -->
         <ContextMenu
           :show="contextMenu.show"
@@ -186,6 +182,7 @@ const visibleEntities = computed(() =>
   // 可见实体（只显示entity类型，不显示abstract类型）
   store.entities.filter(e => currentView.value?.datasourceIds.some(ds => ds === e.datasourceId) && e.entityType === EntityType.ENTITY)
 )
+const currentCanvasState = computed(() => currentView.value?.canvasState)  // 当前视图的画布状态
 const canvasRef = ref<InstanceType<typeof DSCanvas> | null>(null)  // 画布实例
 const showEntityModal = ref(false)  // 是否显示实体编辑模态框
 const showRelationModal = ref(false)  // 是否显示关系编辑模态框
@@ -193,7 +190,6 @@ const showDatasourceModal = ref(false)  // 是否显示数据源编辑模态框
 const editingEntity = ref<Entity | null>(null)  // 当前编辑的实体
 const parentEntity = ref<Entity | null>(null)   // 父实体(用于点击树+号新增实体时，显示父实体信息)
 const editingDatasource = ref<Datasource | null>(null)  // 当前编辑的数据源
-const showGrid = ref(true)  // 是否显示网格
 const canPaste = ref(false)  // 是否可以粘贴
 const copiedEntities = ref<Entity[]>([])  // 复制选中的实体(用于粘贴)
 const sidebarWidth = ref(240) //右侧数据库树面板宽度
@@ -226,6 +222,12 @@ function handleAddView(datasource: Datasource) {
     id: Date.now().toString(),
     name: datasource.name,
     datasourceIds: [datasource.id],
+    canvasState: {
+      zoom: 1,
+      panX: 0,
+      panY: 0,
+      showGrid: true
+    }
   }
   store.views.push(newView)
   activeViewId.value = newView.id
@@ -363,11 +365,11 @@ function resetZoom() {
 }
 // 缩放变化
 function handleZoomChange(level: number) {
-  store.zoom = level
+  canvasRef.value?.zoomChange(level)
 }
 // 切换网格
 function toggleGrid() {
-  showGrid.value = !showGrid.value
+  canvasRef.value?.toggleGrid()
 }
 // 切换全屏
 function toggleFullscreen() {
@@ -775,7 +777,6 @@ function handleKeyDown(event: KeyboardEvent) {
   height: 100%;
   min-height: 0;
   background: #fff;
-  border-left: 0.5px solid #d6d7d7;
   z-index: 1000;
   position: relative;
 }

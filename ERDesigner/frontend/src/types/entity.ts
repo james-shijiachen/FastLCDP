@@ -63,6 +63,7 @@ export interface View {
   id: string
   name: string
   datasourceIds: string[]
+  canvasState: CanvasState
 }
 
 // 数据源接口
@@ -176,7 +177,6 @@ export interface CanvasState {
   panX: number
   panY: number
   showGrid: boolean
-  gridSize: number
 }
 
 // 操作类型枚举

@@ -390,7 +390,7 @@ watch(toolbarRef, updateScrollBtns)
   gap: 15px;  /* 增加按钮之间的间距 */
   overflow-x: auto; /* 横向滚动 */
   background: #f5f7fa;
-  border-bottom: 0.5px solid #e4e7ed; 
+  border-bottom: 0.5px solid #d9dce1; 
   justify-content: flex-start;
   align-items: center; 
   width: 100%; 
@@ -511,8 +511,7 @@ watch(toolbarRef, updateScrollBtns)
 
 /* 暗色主题 */
 .dark-theme .toolbar {
-  background: #1e1e1e;
-  border-right: 1px solid #333333;
+  background: #030303;
   border-bottom: 0.5px solid #333333; 
   box-shadow: 2px 0 4px rgba(0, 0, 0, 0.2);
 }

@@ -9,22 +9,15 @@
     @touchend="e => $emit('touchend', entity, e)">
     <!-- 实体主体 -->
     <rect class="entity-rect"
-      :width="copyEntity.width"
-      :height="copyEntity.height"
+      :width="viewedEntity.width"
+      :height="viewedEntity.height"
       :fill="entity.backgroundColor || '#ffffff'"
       :stroke="selected ? '#0366d6' : (entity.borderColor || '#24292e')"
       :stroke-width="selected ? 3 : 1"
       rx="4"/>
-    <!-- 实体标题 -->
-    <rect class="entity-header"
-      :width="copyEntity.width"
-      height="30"
-      :fill="entity.backgroundColor || '#f6f8fa'"
-      :stroke="selected ? '#0366d6' : (entity.borderColor || '#24292e')"
-      :stroke-width="1"/>
     <!-- 实体名称 -->
     <text class="entity-name"
-      :x="copyEntity.width / 2"
+      :x="viewedEntity.width / 2"
       y="20"
       text-anchor="middle"
       font-weight="bold"
@@ -36,18 +29,27 @@
     <line class="header-separator"
       x1="0"
       y1="30"
-      :x2="copyEntity.width"
+      :x2="viewedEntity.width"
       y2="30"
       :stroke="entity.borderColor || '#24292e'"/>
     <!-- 字段列表 -->
     <g class="fields">
       <g class="field"
-        v-for="(field, index) in copyEntity.fields" 
+        v-for="(field, index) in viewedEntity.fields" 
         :key="field.id"
         :transform="`translate(0, ${30 + index * 20})`">
+        <line
+          v-if="index !== 0"
+          class="field-separator"
+          x1="0"
+          y1="0"
+          :x2="viewedEntity.width"
+          y2="0"
+          stroke="#d7d7d7"
+          stroke-width="1"/>
         <!-- 字段背景 -->
         <rect class="field-bg"
-          :width="copyEntity.width"
+          :width="viewedEntity.width"
           height="20"
           fill="transparent"/>
         <!-- 主键图标 -->
@@ -69,7 +71,7 @@
         </text>
         <!-- 字段类型 -->
         <text class="field-type" v-if="field.length && field.scale"
-          :x="copyEntity.width - 8"
+          :x="viewedEntity.width - 8"
           y="14"
           text-anchor="end"
           font-size="10"
@@ -77,7 +79,7 @@
           {{ field.type }}({{ field.length }},{{ field.scale }})
         </text>
         <text class="field-type" v-else-if="field.length"
-          :x="copyEntity.width - 8"
+          :x="viewedEntity.width - 8"
           y="14"
           text-anchor="end"
           font-size="10"
@@ -85,7 +87,7 @@
           {{ field.type }}({{ field.length }})
         </text>
         <text class="field-type" v-else
-          :x="copyEntity.width - 8"
+          :x="viewedEntity.width - 8"
           y="14"
           text-anchor="end"
           font-size="10"
@@ -109,7 +111,7 @@ const props = defineProps<{
   visibleEntities: Entity[]
 }>()
 
-const copyEntity = computed(() => {
+const viewedEntity = computed(() => {
   const entity = { ...props.entity }
   const allFields = props.entity.parentEntityId ? [...getAllParentFields(props.visibleEntities, props.entity.parentEntityId), ...props.entity.fields] : props.entity.fields
   entity.fields = allFields
@@ -202,6 +204,22 @@ function updateEntitySize(entity: Entity) {
 }
 .entity.selected {
   cursor: move;
+}
+.dark-theme .entity-rect {
+  fill: #010101;
+  stroke: #676767;
+}
+.dark-theme .header-separator{
+  stroke: #676767;
+}
+.dark-theme .field-name{
+  fill: #ffffff;
+}
+.dark-theme .field-separator{
+  stroke: #676767;
+}
+.dark-theme .entity-name{
+  fill:#ffffff
 }
 .entity, .entity * {
   user-select: none;
