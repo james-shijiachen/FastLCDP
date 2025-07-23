@@ -9,6 +9,7 @@
     @touchend="e => $emit('touchend', entity, e)">
     <!-- 实体主体 -->
     <rect class="entity-rect"
+      :class="{ selected }"
       :width="viewedEntity.width"
       :height="viewedEntity.height"
       :fill="entity.backgroundColor || '#ffffff'"
@@ -206,20 +207,20 @@ function updateEntitySize(entity: Entity) {
   cursor: move;
 }
 .dark-theme .entity-rect {
-  fill: #010101;
+  fill: #141313;
   stroke: #676767;
+}
+.dark-theme .entity-rect.selected {
+  stroke: #bb86fc;
 }
 .dark-theme .header-separator{
   stroke: #676767;
 }
-.dark-theme .field-name{
-  fill: #ffffff;
-}
 .dark-theme .field-separator{
-  stroke: #676767;
+  stroke: #2f2e2e;
 }
-.dark-theme .entity-name{
-  fill:#ffffff
+.dark-theme .field-name, .dark-theme .field-type, .dark-theme .entity-name {
+  fill: #ffffff;
 }
 .entity, .entity * {
   user-select: none;
@@ -229,11 +230,6 @@ function updateEntitySize(entity: Entity) {
 .entity-header {
   padding: 2px 4px;
   font-weight: bold;
-}
-.dark-theme .entity-header {
-  background: #2c2c2c;
-  border-bottom: 1px solid #444444;
-  color: #ffffff;
 }
 .field-type {
   font-size: 11px;

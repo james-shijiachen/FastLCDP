@@ -12,6 +12,8 @@ export enum Category {
   POSTGRESQL = 'POSTGRESQL',
   SQLSERVER = 'SQLSERVER',
   REDIS = 'REDIS',
+  MONGODB = 'MONGODB',
+  ELASTICSEARCH = 'ELASTICSEARCH',
   JSON = 'JSON',
   XML = 'XML'
 }
@@ -58,6 +60,32 @@ export enum IndexType {
   FULLTEXT = 'FULLTEXT'
 }
 
+// 数据源版本枚举
+export enum DatasourceVersion {
+  MYSQL_5_X = 'MYSQL_5_X',
+  MYSQL_8_X = 'MYSQL_8_X  ',
+  ORACLE_11_X = 'ORACLE_11_X',
+  ORACLE_12_X = 'ORACLE_12_X',
+  ORACLE_19_X = 'ORACLE_19_X',
+  ORACLE_21_X = 'ORACLE_21_X',
+  ORACLE_23_X = 'ORACLE_23_X',
+  ORACLE_25_X = 'ORACLE_25_X',
+  POSTGRESQL_10_X = 'POSTGRESQL_10_X',
+  POSTGRESQL_11_X = 'POSTGRESQL_11_X',
+  POSTGRESQL_12_X = 'POSTGRESQL_12_X',
+  POSTGRESQL_13_X = 'POSTGRESQL_13_X',
+  POSTGRESQL_14_X = 'POSTGRESQL_14_X',
+  POSTGRESQL_15_X = 'POSTGRESQL_15_X',
+  POSTGRESQL_16_X = 'POSTGRESQL_16_X',
+  SQLSERVER_2008_X = 'SQLSERVER_2008_X',
+  SQLSERVER_2012_X = 'SQLSERVER_2012_X',
+  SQLSERVER_2014_X = 'SQLSERVER_2014_X',
+  SQLSERVER_2016_X = 'SQLSERVER_2016_X',
+  SQLSERVER_2017_X = 'SQLSERVER_2017_X',
+  SQLSERVER_2019_X = 'SQLSERVER_2019_X',
+  SQLSERVER_2022_X = 'SQLSERVER_2022_X',
+}
+
 // 视图接口
 export interface View {
   id: string
@@ -71,12 +99,13 @@ export interface Datasource {
   // 基础配置
   id: string
   name: string
+  viewId?: string
   description?: string
   type?: DatasourceType
-  viewId?: string
+  category?: Category
+  version?: DatasourceVersion
 
   // 数据库高级配置
-  category?: Category
   connectionString?: string
   host?: string
   port?: number

@@ -10,15 +10,11 @@
           v-for="view in views"
           :key="view.id"
           :class="['view-tab', { active: view.id === activeViewId }]"
-          @click="$emit('update:activeViewId', view.id)"
-        >
+          @contextmenu.prevent="view.id === 'default' ? null : handleViewRightClick($event, view.id)"
+          @click="$emit('update:activeViewId', view.id)">
+          <component v-if="view.id === 'default'" :is="DefaultViewIcon" class="view-tab-icon" />
+          <component v-else :is="ViewIcon" class="view-tab-icon" />
           {{ view.name }}
-          <!-- 删除视图按钮(非默认视图) -->
-          <button
-            v-if="view.id !== 'default'"
-            class="delete-btn"
-            @click.stop="$emit('deleteView', view.id)"
-            title="删除视图">×</button>
         </div>
       </div>
       <button class="scroll-btn right" @click="scrollRight" v-show="showRightScroll">
@@ -31,12 +27,14 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, nextTick, onBeforeUnmount } from 'vue'
 import type { View } from '../types/entity'
+import DefaultViewIcon from '@/assets/DefaultViewIcon.vue'
+import ViewIcon from '@/assets/ViewIcon.vue'
 
 const props = defineProps<{
   views: View[]
   activeViewId: string
 }>()
-const emit = defineEmits(['update:activeViewId', 'deleteView'])
+const emit = defineEmits(['update:activeViewId', 'contextmenu'])
 
 const tabsContainer = ref<HTMLDivElement | null>(null)
 const showLeftScroll = ref(false)
@@ -72,6 +70,10 @@ function scrollRight() {
   }
 }
 
+function handleViewRightClick(event: MouseEvent, viewId: string) {
+  emit('contextmenu', event, viewId)
+}
+
 /* 挂载 */
 onMounted(() => {
   nextTick(checkScroll)
@@ -96,7 +98,7 @@ watch(tabsContainer, checkScroll)
   background: #f6f8fa;
   border-bottom: 1px solid #e1e4e8;
   position: relative;
-  height: 28px;
+  height: 30px;
   overflow: hidden;
 }
 .view-tabs-wrapper, .view-tabs-wrapper * {
@@ -119,17 +121,35 @@ watch(tabsContainer, checkScroll)
   padding: 4px 24px;
   cursor: pointer;
   border-bottom: 2px solid transparent;
-  margin-right: 4px;
+  margin-right: 2px;
   white-space: nowrap;
   flex-shrink: 0;
-  font-size: 14px;
-  border-radius: 4px 4px 0 0;
+  font-size: 15px;
+  font-family: 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+  font-weight: 600;
 }
 .view-tab.active {
-  border-bottom: 2px solid #409eff;
   font-weight: bold;
-  background: #fff;
+  background: #0366d6;
+  color: #fff;
 }
+.view-tab:active, .view-tab:hover {
+  background: #0451aa;
+  color: #fff;
+}
+.view-tab:hover:not(.active) {
+  background: #edeeee;
+  color: #000;
+  border-radius: 4px;
+}
+
+.view-tab-icon {
+    width: 18px;
+    height: 18px;
+    vertical-align: middle;
+    margin-right: 4px;
+  }
+
 .scroll-btn {
   width: var(--toolbar-icon-size);
   height: 100%;
@@ -153,9 +173,12 @@ watch(tabsContainer, checkScroll)
   box-shadow: 2px 0 4px rgba(0, 0, 0, 0.2);
 }
 .dark-theme .view-tab.active {
-  background: #222222;
+  font-weight: bold;
+  background: #341757;
+  color: #fff;
 }
-.dark-theme .view-tab.active {
-  border-bottom: 2px solid #bb86fc;
+.dark-theme .view-tab:hover:not(.active) {
+  background: #202020;
+  color: #fff;
 }
 </style>

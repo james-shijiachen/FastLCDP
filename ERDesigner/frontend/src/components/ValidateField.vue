@@ -1,9 +1,5 @@
 <template>
   <div class="form-group validate-field">
-    <label v-if="label" :for="fieldId" class="field-label">
-      <span>{{ label }}</span>
-      <span v-if="required" class="required">*</span>
-    </label>
     <div class="field-wrapper">
       <input
         v-if="type === 'text'"
@@ -15,8 +11,7 @@
         @keyup.enter="handleEnter"
         @input="handleInput"
         @blur="handleBlur"
-        @focus="handleFocus"
-      />
+        @focus="handleFocus"/>
       <textarea
         v-else-if="type === 'textarea'"
         :id="fieldId"
@@ -26,21 +21,7 @@
         :class="{ 'error': hasError }"
         @input="handleInput"
         @blur="handleBlur"
-        @focus="handleFocus"
-      />
-      <select
-        v-else-if="type === 'select'"
-        :id="fieldId"
-        :value="modelValue"
-        :class="{ 'error': hasError }"
-        @change="handleChange"
-        @blur="handleBlur"
-        @focus="handleFocus"
-      >
-        <option v-for="option in options" :key="option.value" :value="option.value">
-          {{ option.label }}
-        </option>
-      </select>
+        @focus="handleFocus"/>
     </div>
     <span v-if="errorMessage" class="error-message">{{ errorMessage }}</span>
   </div>
@@ -50,22 +31,16 @@
 import { computed } from 'vue'
 import { useFieldError } from '@/utils/useFieldError'
 
-interface Option {
-  value: string
-  label: string
-}
-
 interface Props {
   modelValue: string
   field: string
   component: string
-  type?: 'text' | 'textarea' | 'select'
+  type?: 'text' | 'textarea'
   inputType?: string
   label?: string
   placeholder?: string
   required?: boolean
   rows?: number
-  options?: Option[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -89,7 +64,7 @@ const emit = defineEmits<{
 const { getFieldError, hasFieldError, clearFieldError } = useFieldError(props.component)
 
 // 计算属性
-const fieldId = computed(() => `field-${props.field}`)
+const fieldId = computed(() => `${props.field}`)
 const errorMessage = computed(() => getFieldError(props.field))
 const hasError = computed(() => hasFieldError(props.field))
 
@@ -98,13 +73,6 @@ const handleInput = (event: Event) => {
   const target = event.target as HTMLInputElement | HTMLTextAreaElement
   emit('update:modelValue', target.value)
   emit('input', target.value)
-  clearFieldError(props.field)
-}
-
-const handleChange = (event: Event) => {
-  const target = event.target as HTMLSelectElement
-  emit('update:modelValue', target.value)
-  emit('change', target.value)
   clearFieldError(props.field)
 }
 
@@ -129,18 +97,6 @@ const handleEnter = (event: KeyboardEvent) => {
   margin-bottom: 18px;
 }
 
-.field-label {
-  white-space: nowrap;
-  font-weight: 500;
-  color: #333;
-  display: inline;
-}
-
-.required {
-  color: #ff4d4f;
-  margin-left: 2px;
-}
-
 .field-wrapper {
   position: relative;
 }
@@ -154,8 +110,15 @@ const handleEnter = (event: KeyboardEvent) => {
   padding: 8px 12px;
   border: 1px solid #d9d9d9;
   border-radius: 6px;
-  font-size: 14px;
-  transition: all 0.3s;
+  transition: all 0.3s !important;
+}
+
+.field-wrapper input {
+  font-size: 14px !important;
+}
+
+.field-wrapper textarea {
+  font-size: 13px !important;
 }
 
 .field-wrapper input:focus,

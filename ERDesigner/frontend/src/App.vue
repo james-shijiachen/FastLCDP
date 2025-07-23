@@ -51,8 +51,8 @@
         <ViewTabs
           :views="store.views"
           :activeViewId="activeViewId"
+          @contextmenu="activeViewId === 'default' ? null : handleViewRightClick($event, activeViewId)"
           @update:activeViewId="activeViewId = $event"
-          @deleteView="handleDeleteView"
           />
         <DSCanvas 
           ref="canvasRef"
@@ -89,6 +89,7 @@
           @editDatasource="handleEditDatasource"
           @deleteDatasource="handleDeleteDatasource"
           @createEntityFromTree="handleCreateEntity"
+          @deleteView="handleDeleteView"
         />
         <!-- 关系创建提示 -->
         <div v-if="store.selectedEntities.length === 2" class="relation-hint">
@@ -201,7 +202,7 @@ const contextMenu = ref({
   show: false,
   x: 0,
   y: 0,
-  type: '' as 'DATASOURCE' | 'ENTITY' | 'CANVAS',
+  type: '' as 'DATASOURCE' | 'ENTITY' | 'CANVAS' | 'VIEW',
   targetId: null as string | null
 })
 
@@ -215,6 +216,7 @@ function handleDeleteView(viewId: string) {
     store.deleteView(viewId)
   }
   activeViewId.value = 'default'
+  hideContextMenus()
 }
 // 添加视图
 function handleAddView(datasource: Datasource) {
@@ -443,6 +445,15 @@ function handleSelectAll(entities: Entity[]) {
 // 隐藏右键菜单
 function hideContextMenus() {
   contextMenu.value.show = false
+}
+// 视图右键菜单
+function handleViewRightClick(event: MouseEvent, viewId: string) {
+  event.preventDefault()
+  contextMenu.value.x = event.clientX
+  contextMenu.value.y = event.clientY
+  contextMenu.value.type = 'VIEW'
+  contextMenu.value.targetId = viewId
+  contextMenu.value.show = true
 }
 // 从树形菜单显示右键菜单
 function showContextMenuFromTree(event: MouseEvent, target: any, type: string) {
@@ -790,7 +801,6 @@ function handleKeyDown(event: KeyboardEvent) {
 /* 右侧数据库树面板（高度分割线） */
 .sidebar-divider {
   width: 100%;
-  height: 3px;
   cursor: ns-resize;
   z-index: 2;
   background: transparent;
@@ -802,6 +812,7 @@ function handleKeyDown(event: KeyboardEvent) {
   background: #2a2a2a;
 }
 .sidebar-divider:hover {
+  height: 2px;
   background: #e1e4e8;
 }
 /* 右侧数据库树面板（底部） */
@@ -828,14 +839,15 @@ function handleKeyDown(event: KeyboardEvent) {
   position: absolute;
   left: 0;
   top: 0;
-  width: 3px;
+  width: 1px;
   height: 100%;
   cursor: ew-resize;
   background: transparent;
-  z-index: 2;
+  z-index: 2000;
   transition: background 0.2s;
 }
 .resize-handle:hover {
+  width: 2px;
   background: #e1e4e8;
 }
 /* 关系创建提示 */

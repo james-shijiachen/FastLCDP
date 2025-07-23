@@ -1,7 +1,7 @@
 import { ref, onUnmounted, onMounted } from 'vue'
 
 export function useDraggableModal() {
-  const modalRef = ref<HTMLElement | null>(null)
+  const modalRef = ref<HTMLDivElement | null>(null)
   let startX = 0, startY = 0, startLeft = 0, startTop = 0
 
   function onHeaderMousedown(e: MouseEvent) {

@@ -8,8 +8,9 @@
     <div class="datasource-tree" @wheel.prevent="handleModalWheel">
       <div class="tree-header">
         <h3>{{ $t('datasource.structure') }}</h3>
-        <button class="btn btn-primary" @click="$emit('createDatasource')" :title="$t('datasource.newDatasource')">
-          {{ $t('datasource.newDatasource') }}
+        <button class="btn btn-primary btn-new-datasource" @click="$emit('createDatasource')" :title="$t('datasource.newDatasource')">
+          <component :is="DatabaseIcon" />
+          {{ $t('datasource.newDatasourceButton') }}
         </button>
       </div>
       <div class="tree-content" ref="treeContentRef">
@@ -39,6 +40,7 @@ import { useI18n } from 'vue-i18n'
 import type { TreeNode, Entity } from '../types/entity'
 import { TreeNodeType } from '../types/entity'
 import TreeNodeComponent from './TreeNode.vue'
+import DatabaseIcon from '@/assets/DatabaseIcon.vue'
 
 interface Props {
   treeData: TreeNode[]
@@ -145,6 +147,30 @@ function handleSelectEntity(node: TreeNode) {
   color: #ffffff;
   height: 100%;
 }
+.btn-new-datasource {
+  padding: 6px 20px;
+  font-size: 15px;
+  font-family: 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-radius: 6px;
+  border: none;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(79, 140, 255, 0.08);
+  transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+  cursor: pointer;
+  outline: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-new-datasource:active {
+  background: #2357d5;
+  box-shadow: 0 1px 4px rgba(79, 140, 255, 0.10);
+  transform: scale(0.98);
+}
+
 .tree-content {
   flex: 1;
   overflow-y: auto;
@@ -166,10 +192,11 @@ function handleSelectEntity(node: TreeNode) {
   padding: 12px 16px;
   border-bottom: 1px solid #e1e4e8;
   background: #f6f8fa;
+  height: 50px;
 }
 .dark-theme .tree-header {
-  background: #2a2a2a;
-  border-bottom: 1px solid #404040;
+  background: #1b1b1b;
+  border-bottom: 1px solid #1b1b1b;
 }
 .tree-header h3 {
   margin: 0;

@@ -93,9 +93,7 @@
         :y="selectionBox.y"
         :width="selectionBox.width"
         :height="selectionBox.height"
-        fill="rgba(3, 102, 214, 0.1)"
-        stroke="#0366d6"
-        stroke-width="1"
+        stroke-width="0.5"
         stroke-dasharray="5,5"
         class="selection-box"/>
     </svg>
@@ -109,6 +107,7 @@ import type { Entity, Relationship, CanvasState } from '../types/entity'
 import EntityNode from './EntityNode.vue'
 import RelationLine from './RelationLine.vue'
 import { useI18n } from 'vue-i18n'
+import { isDataView } from 'util/types'
 
 interface Props {
   entities?: Entity[]
@@ -827,7 +826,13 @@ containerSize.value.height / props.canvasState.zoom
   z-index: 2;
 }
 .selection-box {
+  stroke: #0366d6;
+  fill:rgba(3, 102, 214, 0.1);
   pointer-events: none;
+}
+.dark-theme .selection-box{
+  stroke: #bb86fc;
+  fill: rgba(67, 44, 96, 0.1);
 }
 @media (max-width: var(--mobile-breakpoint)) {
   .canvas-svg {

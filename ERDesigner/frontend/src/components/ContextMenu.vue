@@ -6,45 +6,51 @@
     @click.stop>
     <template v-if="type === 'CANVAS'">
       <div class="context-menu-item" @click="onCreateEntity">
-        <span class="icon">📦</span>
+        <span class="icon"><component :is="AddEntityIcon" /></span>
         {{ $t('contextMenu.addEntity') }}
       </div>
       <div class="context-menu-separator"></div>
       <div class="context-menu-item" @click="onPaste" :class="{ disabled: !canPaste }">
-        <span class="icon">📋</span>
+        <span class="icon"><component :is="PasteIcon" /></span>
         {{ $t('contextMenu.paste') }}
       </div>
       <div class="context-menu-item" @click="onSelectAll">
-        <span class="icon">⊞</span>
+        <span class="icon"><component :is="SelectAllIcon" /></span>
         {{ $t('contextMenu.selectAll') }}
       </div>
     </template>
     <template v-else-if="type === 'ENTITY'">
       <div class="context-menu-item" @click="onEditEntity" :class="{ disabled: isMultiSelect }">
-        <span class="icon">✏️</span>
+        <span class="icon"><component :is="EditIcon" /></span>
         {{ $t('contextMenu.edit') }}
       </div>
       <div class="context-menu-item" @click="onCopyEntity">
-        <span class="icon">📄</span>
+        <span class="icon"><component :is="CopyIcon" /></span>
         {{ $t('contextMenu.copy') }}
       </div>
       <div class="context-menu-item" @click="onDeleteEntity">
-        <span class="icon">🗑️</span>
+        <span class="icon"><component :is="DeleteIcon" /></span>
         {{ $t('contextMenu.delete') }}
       </div>
     </template>
     <template v-else-if="type === 'DATASOURCE'">
       <div class="context-menu-item" @click="onEditDatasource">
-        <span class="icon">✏️</span>
+        <span class="icon"><component :is="EditIcon" /></span>
         {{ $t('datasource.editDatasource') }}
       </div>
       <div class="context-menu-item" @click="onCreateEntityFromTree">
-        <span class="icon">➕</span>
+        <span class="icon"><component :is="AddEntityIcon" /></span>
         {{ $t('datasource.addEntity') }}
       </div>
-      <div class="context-menu-item danger" @click="onDeleteDatasource">
-        <span class="icon">🗑️</span>
+      <div class="context-menu-item" @click="onDeleteDatasource">
+        <span class="icon"><component :is="DeleteIcon" /></span>
         {{ $t('datasource.deleteDatasource') }}
+      </div>
+    </template>
+    <template v-else-if="type === 'VIEW'">
+      <div class="context-menu-item" @click="onDeleteView">
+        <span class="icon"><component :is="DeleteIcon" /></span>
+        {{ $t('view.deleteView') }}
       </div>
     </template>
   </div>
@@ -54,21 +60,31 @@
 import { defineProps, defineEmits } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { Entity } from '../types/entity'
+import AddEntityIcon from '@/assets/AddEntityIcon.vue'
+import PasteIcon from '@/assets/PasteIcon.vue'
+import SelectAllIcon from '@/assets/SelectAllIcon.vue'
+import CopyIcon from '@/assets/CopyIcon.vue'
+import DeleteIcon from '@/assets/DeleteIcon.vue'
+import EditIcon from '@/assets/EditIcon.vue'
+
 const props = defineProps<{
   show: boolean
   x: number
   y: number
   canPaste?: boolean
-  type: 'CANVAS' | 'ENTITY' | 'DATASOURCE'
+  type: 'CANVAS' | 'ENTITY' | 'DATASOURCE' | 'VIEW'
   targetId?: string
   entities?: Entity[]
   isMultiSelect?: boolean
 }>()
+
 const emit = defineEmits([
   'createEntity', 'paste', 'selectAll',
   'editEntity', 'copyEntity', 'deleteEntity',
-  'editDatasource', 'deleteDatasource', 'createEntityFromTree'
+  'editDatasource', 'deleteDatasource', 'createEntityFromTree',
+  'deleteView'
 ])
+
 const { t: $t } = useI18n()
 function onCreateEntity() { emit('createEntity') }
 function onPaste() { if (props.canPaste) emit('paste') }
@@ -79,6 +95,7 @@ function onDeleteEntity() { emit('deleteEntity', props.targetId) }
 function onEditDatasource() { emit('editDatasource', props.targetId) }
 function onDeleteDatasource() { emit('deleteDatasource', props.targetId) }
 function onCreateEntityFromTree() { emit('createEntityFromTree', props.targetId) }
+function onDeleteView() { emit('deleteView', props.targetId) }
 </script>
 
 <style scoped>

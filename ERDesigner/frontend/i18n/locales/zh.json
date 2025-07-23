@@ -4,9 +4,13 @@
     "toolbar": "顶部工具栏",
     "mobileMenu": "移动端菜单按钮"
   },
+  "view": {
+    "deleteView": "删除视图"
+  },
   "datasource": {
     "structure": "数据结构",
     "newDatasource": "新建数据源",
+    "newDatasourceButton": "新建",
     "noDatasource": "暂无数据源",
     "createFirst": "请先创建一个数据源",
     "editDatasource": "编辑数据源",
@@ -20,6 +24,7 @@
     "nameMaxLength": "数据源名称不能超过50个字符",
     "namePattern": "数据源名称必须以字母开头，只能包含字母、数字和下划线",
     "type": "类型",
+    "version": "数据源版本",
     "database": "关系型数据库",
     "nosql": "NoSQL数据库",
     "document": "文档数据库",
@@ -28,7 +33,39 @@
     "selectCategory": "请选择种类",
     "view": "视图",
     "newView": "新建视图",
-    "defaultView": "默认视图"
+    "defaultView": "默认视图",
+    "mysql": "MySQL",
+    "sqlite": "SQLite",
+    "oracle": "Oracle",
+    "postgresql": "PostgreSQL",
+    "sqlserver": "SQL Server",
+    "redis": "Redis",
+    "mongo": "MongoDB",
+    "elasticsearch": "Elasticsearch",
+    "json": "JSON",
+    "xml": "XML",
+    "mysql5": "MySQL 5.x",
+    "mysql8": "MySQL 8.x",
+    "oracle11": "Oracle 11g",
+    "oracle12": "Oracle 12c",
+    "oracle19": "Oracle 19c",
+    "oracle21": "Oracle 21c",
+    "oracle23": "Oracle 23c",
+    "oracle25": "Oracle 25c",
+    "postgresql10": "PostgreSQL 10.x",
+    "postgresql11": "PostgreSQL 11.x",
+    "postgresql12": "PostgreSQL 12.x",
+    "postgresql13": "PostgreSQL 13.x",
+    "postgresql14": "PostgreSQL 14.x",
+    "postgresql15": "PostgreSQL 15.x",
+    "postgresql16": "PostgreSQL 16.x",
+    "sqlserver2008": "SQL Server 2008",
+    "sqlserver2012": "SQL Server 2012",
+    "sqlserver2014": "SQL Server 2014",
+    "sqlserver2016": "SQL Server 2016",
+    "sqlserver2017": "SQL Server 2017",
+    "sqlserver2019": "SQL Server 2019",
+    "sqlserver2022": "SQL Server 2022"
   },
   "entity": {
     "edit": "编辑实体",
@@ -79,7 +116,8 @@
     "success": "成功",
     "error": "错误",
     "warning": "警告",
-    "info": "信息"
+    "info": "信息",
+    "noData": "暂无数据"
   },
   "export": {
     "title": "导出项目",

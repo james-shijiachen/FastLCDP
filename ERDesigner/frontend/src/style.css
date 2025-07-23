@@ -129,14 +129,14 @@ body {
 }
 
 .dark-theme .btn-primary {
-  background: #4299e1;
+  background: #341757;
   color: #ffffff;
-  border-color: #4299e1;
+  border-color: #341757;
 }
 
 .dark-theme .btn-primary:hover:not(:disabled) {
-  background: #3182ce;
-  border-color: #3182ce;
+  background: #472077;
+  border-color: #472077;
 }
 
 .dark-theme .btn-primary:disabled {
@@ -146,8 +146,8 @@ body {
 }
 
 .dark-theme .btn-primary:hover {
-  background: #0256c7;
-  border-color: #0256c7;
+  background: #472077;
+  border-color: #472077;
 }
 
 
@@ -181,7 +181,7 @@ body {
 }
 
 .form-group textarea {
-  resize: vertical;
+  resize: none;
   min-height: 60px;
 }
 
@@ -211,10 +211,6 @@ input:focus, textarea:focus {
   border-color: #d73a49;
 }
 
-.form-group textarea {
-  resize: vertical;
-  min-height: 60px;
-}
 .form-hint {
   display: block;
   margin-top: 4px;
@@ -311,7 +307,7 @@ input:focus, textarea:focus {
   transition: box-shadow 0.2s, transform 0.2s;
 }
 .dark-theme .modal-content {
-  background: #2a2a2a;
+  background: #171717;
   color: #e1e4e8;
 }
 .modal-title {
@@ -328,11 +324,7 @@ input:focus, textarea:focus {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px;
-  border-bottom: 1px solid #e1e4e8;
-}
-.dark-theme .modal-header {
-  border-bottom: 1px solid #b3b3b3;
+  padding: 20px 25px 10px 25px;
 }
 .modal-header h3 {
   margin: 0;
@@ -341,7 +333,7 @@ input:focus, textarea:focus {
   color: #24292e;
 }
 .modal-body {
-  padding: 18px;
+  padding: 20px 30px 10px 30px;
 }
 .dark-theme .modal-body {
   color: #e1e4e8;
@@ -350,7 +342,7 @@ input:focus, textarea:focus {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  padding: 18px;
+  padding: 10px 30px 10px 30px;
 }
 
 /* 图标样式 */

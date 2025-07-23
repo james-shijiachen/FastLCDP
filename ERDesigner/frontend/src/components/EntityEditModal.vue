@@ -9,64 +9,46 @@
         <button @click="$emit('close')" class="close-btn">×</button>
       </div>
       <div class="modal-body" ref="modalContentRef" @scroll="handleModalScroll">
-        <div class="form-group" :style="{flexDirection:'row', display:'flex'}">
-          <label>{{ $t('entity.type') }}</label>
-          <div class="radio-group" :style="{marginLeft:'15px'}">
-            <label class="radio-label">
-              <input type="radio" v-model="formData.entityType" value="ENTITY" />
-              {{ $t('entity.table') }}
-            </label>
-            <label class="radio-label">
-              <input type="radio" v-model="formData.entityType" value="ABSTRACT" />
-              {{ $t('entity.abstract') }}
-            </label>
-          </div>
-        </div>
-        <div class="form-row">
-          <ValidateField
-            v-model="formData.datasourceId"
-            field="entity.datasourceId"
-            component="EntityEditModal"
-            :label="$t('datasource.name')"
-            @focus="clearFieldError('entity.datasourceId')"
-            :required="true"
-            type="select"
-            :options="props.datasources.map(ds => ({ value: ds.id, label: ds.name }))"/>
-          <ValidateField
-            v-model="formData.parentEntityId"
-            field="entity.parentEntityId"
-            component="EntityEditModal"
-            :label="$t('entity.parent')"
-            @focus="clearFieldError('entity.parentEntityId')"
-            type="select"
-            :options="[
-              { value: '', label: $t('entity.noParent') },
-              ...availableParentEntities.map(entity => ({ value: entity.id, label: entity.name }))
-            ]"/>
-          <ValidateField
-            v-model="formData.name"
-            field="entity.name"
-            component="EntityEditModal"
-            :label="$t('entity.name')"
-            :placeholder="$t('entity.namePlaceholder')"
-            @enter="handleSave"
-            @input="validateName"
-            @blur="validateName"
-            @focus="clearFieldError('entity.name')"
-            :required="true"/>
-        </div>
-        <div class="form-group">
-          <label>{{ $t('entity.comment') }}:</label>
-          <textarea 
-            v-model="formData.comment" 
-            :placeholder="$t('entity.commentPlaceholder')" 
-            rows="3"></textarea>
-        </div>
-
+        <ValidateField
+          ref="nameInputRef"
+          v-model="formData.name"
+          field="entity.name"
+          component="EntityEditModal"
+          :label="$t('entity.name')"
+          :placeholder="$t('entity.name')"
+          @enter="handleSave"
+          @input="validateName"
+          @blur="validateName"
+          @focus="clearFieldError('entity.name')"
+          :required="true"/>
+        <RadioButton
+          v-model="formData.entityType"
+          field="entity.entityType"
+          component="EntityEditModal"
+          :label="$t('entity.type')"
+          :options="[{ value: 'ENTITY', label: $t('entity.table'), icon: AddEntityIcon }, { value: 'ABSTRACT', label: $t('entity.abstract'), icon: AbstractEntityIcon }]"/>
+        <RadioButton 
+          v-model="formData.datasourceId" 
+          field="entity.datasourceId" 
+          component="EntityEditModal" 
+          :label="$t('datasource.name')"
+          :options="props.datasources.map(ds => ({ value: ds.id, label: ds.name, icon: iconMap[ds.type || DatasourceType.DATABASE]}))"/>
+        <RadioButton 
+          v-model="formData.parentEntityId" 
+          field="entity.parentEntityId" 
+          component="EntityEditModal" 
+          :label="$t('entity.parent')"
+          :options="[{ value: '', label: $t('entity.noParent') },
+            ...availableParentEntities.map(entity => ({ value: entity.id, label: entity.name, icon: parentEntityIconMap[entity.entityType]}))]"/>
+        <ValidateField
+          v-model="formData.comment" 
+          field="entity.comment" 
+          type="textarea"
+          component="EntityEditModal" 
+          :label="$t('entity.comment')"
+          :placeholder="$t('entity.comment')"
+          @focus="clearFieldError('entity.comment')"/>
         <div class="fields-section">
-          <div class="section-header">
-            <h4>{{ $t('entity.fieldDefinition') }}</h4>
-          </div>
           <div class="fields-list-wrapper" ref="fieldsListWrapperRef">
             <table class="fields-table">
               <colgroup>
@@ -150,14 +132,30 @@
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { Entity, Field, Datasource } from '../types/entity'
-import { EntityType } from '../types/entity'
+import { EntityType, DatasourceType } from '../types/entity'
 import { useDraggableModal } from '@/utils/useDraggableModal'
-import { ValidateField } from '@/components'
+import { ValidateField, RadioButton } from '@/components'
 import { useFieldError } from '@/utils/useFieldError'
+import AbstractEntityIcon from '@/assets/AbstractEntityIcon.vue'
+import AddEntityIcon from '@/assets/AddEntityIcon.vue'
+import DatabaseIcon from '@/assets/DatabaseIcon.vue'
+import NoSQLIcon from '@/assets/NoSQLIcon.vue'
+import DocumentIcon from '@/assets/DocumentIcon.vue'
 
 const {clearFieldError, setFieldError, getFieldError } = useFieldError('EntityEditModal')
 const { t: $t } = useI18n()
 const { modalRef, onHeaderMousedown } = useDraggableModal()
+
+const iconMap = {
+  [DatasourceType.DATABASE]: DatabaseIcon,
+  [DatasourceType.NOSQL]: NoSQLIcon,
+  [DatasourceType.DOCUMENT]: DocumentIcon
+}
+
+const parentEntityIconMap = {
+  [EntityType.ENTITY]: AddEntityIcon,
+  [EntityType.ABSTRACT]: AbstractEntityIcon
+}
 
 interface Props {
   entity?: Entity | null
@@ -175,7 +173,7 @@ const emit = defineEmits<{
 }>()
 
 const modalContentRef = ref<HTMLDivElement | null>(null)
-const nameInputRef = ref<HTMLInputElement | null>(null)
+const nameInputRef = ref<HTMLDivElement | null>(null)
 const fieldsListWrapperRef = ref<HTMLDivElement | null>(null)
 const showHeaderName = ref(false)
 
@@ -310,9 +308,12 @@ function handleModalWheel(event: WheelEvent) {
 }
 // 监听modal滚动
 function handleModalScroll() {
+  console.log("handleModalScroll1", modalContentRef.value, nameInputRef.value)
   if (!modalContentRef.value || !nameInputRef.value) return
   const modalRect = modalContentRef.value.getBoundingClientRect()
-  const inputRect = nameInputRef.value.getBoundingClientRect()
+  const inputRect = (nameInputRef.value as any).getBoundingClientRect?.()
+  console.log("handleModalScroll2", modalRect, inputRect)
+  if (!inputRect) return
   // 判断输入框底部是否在 modal-content 顶部之上（即被滚动出去了）
   showHeaderName.value = inputRect.bottom < modalRect.top || inputRect.top > modalRect.bottom
 }
@@ -439,7 +440,7 @@ function handleSave() {
   background: #f6f8fa;
 }
 .fields-table textarea {
-  resize: none;
+  resize: none !important;
 }
 .fields-table input{
   white-space: nowrap;
