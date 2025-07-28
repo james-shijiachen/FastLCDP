@@ -5,7 +5,8 @@
     "mobileMenu": "Mobile Menu Button"
   },
   "view": {
-    "deleteView": "Delete View"
+    "deleteView": "Delete View",
+    "code": "Code"
   },
   "datasource": {
     "structure": "Structure",
@@ -233,5 +234,46 @@
     "agent": "Agent",
     "placeholder": "Type a message...",
     "demoReply": "This is a demo reply."
+  },
+  "code": {
+    "language": "Language",
+    "lines": "Lines",
+    "characters": "Characters",
+    "cursor": "Cursor",
+    "placeholder": "Enter your code here..."
+  },
+  "codeDesign": {
+    "title": "Code Designer",
+    "language": "Programming Language",
+    "selectLanguage": "Please select a programming language",
+    "code": "Code Content",
+    "codePlaceholder": "Enter your code...",
+    "lineNumber": "Line Number",
+    "cursorPosition": "Cursor Position",
+    "copy": "Copy Code",
+    "clear": "Clear Code",
+    "format": "Format",
+    "copySuccess": "Code copied to clipboard",
+    "clearConfirm": "Are you sure you want to clear all code?",
+    "languages": {
+      "javascript": "JavaScript",
+      "typescript": "TypeScript",
+      "python": "Python",
+      "java": "Java",
+      "csharp": "C#",
+      "cpp": "C++",
+      "c": "C",
+      "go": "Go",
+      "rust": "Rust",
+      "php": "PHP",
+      "ruby": "Ruby",
+      "sql": "SQL",
+      "html": "HTML",
+      "css": "CSS",
+      "json": "JSON",
+      "xml": "XML",
+      "yaml": "YAML",
+      "markdown": "Markdown"
+    }
   }
 }

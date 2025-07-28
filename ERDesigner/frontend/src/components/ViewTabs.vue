@@ -6,6 +6,10 @@
         </svg>
       </button>
       <div class="view-tabs" ref="tabsContainer">
+        <div key="code-design" :class="['view-tab', { active: activeViewId === 'code-design' }]" @click="$emit('update:activeViewId', 'code-design')">
+          <component :is="CodeDesignViewIcon"/>
+          {{ $t('view.code') }}
+        </div>
         <div
           v-for="view in views"
           :key="view.id"
@@ -29,6 +33,7 @@ import { ref, onMounted, watch, nextTick, onBeforeUnmount } from 'vue'
 import type { View } from '../types/entity'
 import DefaultViewIcon from '@/assets/DefaultViewIcon.vue'
 import ViewIcon from '@/assets/ViewIcon.vue'
+import CodeDesignViewIcon from '@/assets/CodeDesignViewIcon.vue'
 
 const props = defineProps<{
   views: View[]

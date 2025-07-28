@@ -99,10 +99,12 @@
                   <td>&nbsp;{{ field.extended === undefined || field.extended.entityId === '' ? '' 
                   : (entityNameCache[field.extended?.entityId] + '.' + fieldNameCache[field.extended?.fieldId]) }}</td>
                   <td class="td-foreign-key">
-                    <span class="span-foreign-key" v-for="foreignKeyInfo in getForeignKeyInfoForParentField(field)">
-                      {{foreignKeyInfo}}
-                    <button @click="removeForeignKeyByParentField(props.entity?.id || '', field.id)">X</button>
-                    </span>
+                    <button class="span-foreign-key" v-for="foreignKeyInfo in getForeignKeyInfoForParentField(field)">
+                      <span class="text">
+                        {{foreignKeyInfo}}
+                      </span>
+                      <span class="delete-btn" @click="removeForeignKeyByParentField(props.entity?.id || '', field.id)">X</span>
+                    </button>
                   </td>
                 </tr>
                 <tr class="field-row" 
@@ -145,13 +147,13 @@
                       : (entityNameCache[field.extended?.entityId] + '.' + fieldNameCache[field.extended?.fieldId]) }}
                   </td>
                   <td class="td-foreign-key">
-                    <span class="span-foreign-key" v-for="(ref) in field.foreignKey">
-                      <button>
+                    <button class="span-foreign-key" v-for="(ref) in field.foreignKey">
+                      <span class="text">
                         {{ ref.referencedEntityId === '' ? '' 
                         : (entityNameCache[ref.referencedEntityId] + '.' + fieldNameCache[ref.referencedFieldId]) }}
-                        <span class="followers" @click="removeForeignKeyByForeignKey(ref, index)">&nbsp; 65.7K </span>
-                      </button>
-                    </span>
+                      </span>
+                      <span class="delete-btn" @click="removeForeignKeyByForeignKey(ref, index)">X</span>
+                    </button>
                   </td>
                 </tr>
               </tbody>
@@ -813,6 +815,8 @@ onMounted(() => {
 .td-actions button {
   margin: 0 4px;
 }
+
+/* 外键相关样式 */
 .td-source-field,
 .td-foreign-key {
   text-align: left !important;
@@ -820,19 +824,60 @@ onMounted(() => {
   word-wrap: break-word;
   max-width: 200px;
 }
-
-.td-foreign-key > span:not(.span-foreign-key) {
-  display: block;
+.td-foreign-key .span-foreign-key {
+  width: 100%;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  border: none;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
   margin-bottom: 4px;
+  white-space: nowrap;
+  flex-wrap: nowrap;
+  min-width: 0;
 }
-
-.td-foreign-key > span:not(.span-foreign-key):last-child {
+.td-foreign-key .span-foreign-key .text {
+  width: 80%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background-color: #7d7d7d;
+  padding: 20px;
+}
+.td-foreign-key .span-foreign-key .delete-btn {
+  width: 20%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background-color: #d73a49;
+}
+.td-foreign-key .span-foreign-key .text:hover {
+  background-color: #979797;
+}
+.td-foreign-key .span-foreign-key .delete-btn:hover {
+  background-color: #bf2c3b;
+}
+.td-foreign-key .span-foreign-key:last-child {
   margin-bottom: 0;
 }
-
-.td-foreign-key .span-foreign-key {
-  white-space: nowrap !important;
-  display: flex !important;
+.dark-theme .td-foreign-key .span-foreign-key .text {
+  background-color: #3c3c3c;
+}
+.dark-theme .td-foreign-key .span-foreign-key .delete-btn {
+  background-color: #952732;
+}
+.dark-theme .td-foreign-key .span-foreign-key .text:hover {
+  background-color: #6c6c6c;
+}
+.dark-theme .td-foreign-key .span-foreign-key .delete-btn:hover {
+  background-color: #bf2c3b;
 }
 
 /* 添加按钮 */
@@ -858,48 +903,6 @@ onMounted(() => {
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
-
-.span-foreign-key{
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border: 1px solid #6f6e6e;
-  border-radius: 4px;
-  padding: 4px 8px;
-  white-space: nowrap;
-  flex-wrap: nowrap;
-  min-width: 0;
-}
-
-.span-foreign-key > span {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  margin-right: 8px;
-}
-
-.span-foreign-key > button {
-  height: 100%;
-  flex-shrink: 0;
-}
-
-.span-foreign-key button {
-  background: none;
-  border: none;
-  color: #d73a49;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: bold;
-  padding: 0;
-  margin: 0;
-  min-width: auto;
-}
-
-.span-foreign-key button:hover {
-  color: #cb2431;
-}
-
 
 @media (max-width: var(--mobile-breakpoint)) {
 

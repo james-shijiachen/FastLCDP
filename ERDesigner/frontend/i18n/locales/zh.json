@@ -5,7 +5,8 @@
     "mobileMenu": "移动端菜单按钮"
   },
   "view": {
-    "deleteView": "删除视图"
+    "deleteView": "删除视图",
+    "code": "代码"
   },
   "datasource": {
     "structure": "数据结构",
@@ -235,5 +236,46 @@
     "agent": "智能助手",
     "placeholder": "输入消息...",
     "demoReply": "这是一个演示回复。"
+  },
+  "code": {
+    "language": "语言",
+    "lines": "行数",
+    "characters": "字符数",
+    "cursor": "光标",
+    "placeholder": "请在此输入代码..."
+  },
+  "codeDesign": {
+    "title": "代码设计器",
+    "language": "编程语言",
+    "selectLanguage": "请选择编程语言",
+    "code": "代码内容",
+    "codePlaceholder": "请输入代码...",
+    "lineNumber": "行号",
+    "cursorPosition": "光标位置",
+    "copy": "复制代码",
+    "clear": "清空代码",
+    "format": "格式化",
+    "copySuccess": "代码已复制到剪贴板",
+    "clearConfirm": "确定要清空所有代码吗？",
+    "languages": {
+      "javascript": "JavaScript",
+      "typescript": "TypeScript",
+      "python": "Python",
+      "java": "Java",
+      "csharp": "C#",
+      "cpp": "C++",
+      "c": "C",
+      "go": "Go",
+      "rust": "Rust",
+      "php": "PHP",
+      "ruby": "Ruby",
+      "sql": "SQL",
+      "html": "HTML",
+      "css": "CSS",
+      "json": "JSON",
+      "xml": "XML",
+      "yaml": "YAML",
+      "markdown": "Markdown"
+    }
   }
 }

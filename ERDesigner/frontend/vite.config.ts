@@ -18,6 +18,20 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    assetsDir: 'assets'
+    assetsDir: 'assets',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          monaco: ['monaco-editor']
+        }
+      }
+    }
+  },
+  optimizeDeps: {
+    include: ['monaco-editor']
+  },
+  define: {
+    // Monaco Editor worker configuration
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development')
   }
 })

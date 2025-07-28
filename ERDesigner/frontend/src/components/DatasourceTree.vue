@@ -77,7 +77,7 @@ function handleModalWheel(event: WheelEvent) {
   }
 }
 
-// 拖拽节点（待实现）
+// 拖拽节点
 function handleNodeDrop({ source, target }: { source: TreeNode, target: TreeNode }) {
   if(source && target){
     emit('moveEntity', source, target)
@@ -115,11 +115,15 @@ function handleSelectEntity(node: TreeNode) {
 .datasource-panel {
   position: relative;
   background: #fff;
+  border-top: 1px solid #e0e0e0;
   display: flex;
   height: 100%;
   flex-direction: column;
   transition: transform 0.2s ease;
   z-index: 1000;
+}
+.dark-theme .datasource-panel {
+  border-top: 1px solid #2f2e2e;
 }
 .datasource-panel, .datasource-panel * {
   user-select: none;

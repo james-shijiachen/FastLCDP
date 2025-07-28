@@ -6,16 +6,30 @@
     "dev": "vite",
     "build": "vue-tsc && vite build",
     "preview": "vite preview",
-    "lint": "eslint . --fix",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
     "cypress:open": "cypress open",
     "cypress:run": "cypress run",
-    "test:e2e": "start-server-and-test dev http://localhost:3001/DSDesigner cypress:run",
-    "test:e2e:open": "start-server-and-test dev http://localhost:3001/DSDesigner cypress:open"
+    "cypress:run:headless": "cypress run --headless",
+    "e2e": "start-server-and-test dev http://localhost:3001/DSDesigner cypress:run",
+    "e2e:open": "start-server-and-test dev http://localhost:3001/DSDesigner cypress:open",
+    "test:e2e": "cypress run",
+    "test:e2e:debug": "CYPRESS_DEBUG=true cypress run",
+    "test:e2e:failure-only": "CYPRESS_SCREENSHOT_MODE=failure-only cypress run",
+    "test:e2e:no-screenshots": "CYPRESS_SCREENSHOT_MODE=none cypress run",
+    "test:e2e:ci": "CYPRESS_CI=true cypress run --headless",
+    "record:open": "cypress open --config experimentalStudio=true",
+    "record:example": "cypress run --spec 'cypress/e2e/recording-example.cy.ts' --headed --no-exit",
+    "record:studio": "cypress open --config experimentalStudio=true --config-file cypress.studio.config.ts"
   },
   "dependencies": {
+    "@monaco-editor/loader": "^1.5.0",
     "axios": "^1.10.0",
     "element-plus": "^2.10.3",
     "fabric": "^6.7.0",
+    "highlight.js": "^11.11.1",
+    "monaco-editor": "^0.52.2",
     "pinia": "^2.1.7",
     "vue": "^3.4.0",
     "vue-i18n": "^9.14.4"
@@ -33,6 +47,7 @@
     "start-server-and-test": "^2.0.12",
     "typescript": "^5.8.3",
     "vite": "^7.0.0",
+    "vite-plugin-svg-icons": "^2.0.1",
     "vue-tsc": "^2.0.0"
   }
 }

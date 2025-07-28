@@ -37,6 +37,14 @@
       @colorEntityBorder="colorEntityBorder"
       @dragCanvas="isDragMode = $event"/>
 
+    <!-- 视图标签 -->
+    <ViewTabs
+      :views="store.views"
+      :activeViewId="activeViewId"
+      @contextmenu="handleViewRightClick"
+      @update:activeViewId="activeViewId = $event"
+      />
+
     <!-- 主布局 -->
     <div class="main-layout">
       <!-- 移动端遮罩层 -->
@@ -47,14 +55,20 @@
       </div>
       <!-- 中央画布区域 -->
       <main class="canvas-container">
-        <!-- 视图标签 -->
-        <ViewTabs
-          :views="store.views"
-          :activeViewId="activeViewId"
-          @contextmenu="handleViewRightClick"
-          @update:activeViewId="activeViewId = $event"
-          />
+
+        <!-- 代码设计视图 -->
+        <CodeDesignView 
+          v-if="activeViewId === 'code-design'"
+          :code="codeContent"
+          :language="codeLanguage"
+          :isDarkTheme="isDarkTheme"
+          @update:code="codeContent = $event"
+          @update:language="codeLanguage = $event"
+          @save="handleCodeSave"
+        />
+        <!-- 默认画布视图 -->
         <DSCanvas 
+          v-else
           ref="canvasRef"
           :fieldUniqueCache="store.fieldUniqueCache"
           :canvasState="currentCanvasState"
@@ -177,7 +191,7 @@ import { ref, computed, onMounted, onUnmounted} from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useDSDiagramStore } from './stores/dsDiagram'
 import { DSCanvas, EntityEditModal, RelationEditModal, DatasourceTree, DatasourceEditModal, 
-  Toolbar, AppHeader, ContextMenu, ViewTabs} from './components'
+  Toolbar, AppHeader, ContextMenu, ViewTabs, CodeDesignView} from './components'
 import ChatBox from './components/ChatBox.vue'
 import type { Entity, Datasource, View, TreeNode } from './types/entity'
 import { EntityType, TreeNodeType } from './types/entity'
@@ -198,6 +212,10 @@ const isDragMode = ref(false)  // 是否拖拽画布
 // 响应式数据
 const activeViewId = ref<string>('default') // 当前激活视图ID
 const currentView = computed(() => store.views.find(v => v.id === activeViewId.value)) // 当前视图
+
+// 代码设计视图相关状态
+const codeContent = ref('')
+const codeLanguage = ref('json')
 // 可见实体（只显示entity类型，不显示abstract类型）
 const visibleEntities = computed(() =>
   store.entities.filter(e => currentView.value?.datasourceIds.some(ds => ds === e.datasourceId) && e.entityType === EntityType.ENTITY)
@@ -277,6 +295,15 @@ function addDatasourceToView(datasource: Datasource, view: View) {
   activeViewId.value = view.id
 }
 // ------------------------------ 视图方法 end------------------------------
+
+// ------------------------------ 代码设计视图方法 start------------------------------
+// 处理代码保存
+function handleCodeSave(code: string, language: string) {
+  codeContent.value = code
+  codeLanguage.value = language
+  console.log('Code saved:', { code, language })
+}
+// ------------------------------ 代码设计视图方法 end------------------------------
 
 // ------------------------------ 画布方法 start------------------------------
 // 画布点击
@@ -613,6 +640,8 @@ function handleMoveEntity(source: TreeNode, target: TreeNode) {
         sourceEntity.parentEntityId = target.id
         if(sourceEntity.datasourceId !== target.datasourceId){
           ChildEntitiesMoveToDatasource(sourceEntity, target.datasourceId || '')
+        }else{
+          store.updateEntity(sourceEntity)
         }
       }else if(target.type === TreeNodeType.DATASOURCE){
         sourceEntity.parentEntityId = undefined
