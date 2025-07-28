@@ -1,6 +1,7 @@
 <template>
   <g class="entity"
     :class="{ selected }"
+    :data-entity-id="entity.id"
     :transform="dragTransform || `translate(${entity.x}, ${entity.y})`"
     @dblclick.stop="$emit('dblclick', entity)"
     @mousedown="e => $emit('mousedown', entity, e)"
@@ -38,7 +39,8 @@
       <g class="field"
         v-for="(field, index) in viewedEntity.fields" 
         :key="field.id"
-        :transform="`translate(0, ${30 + index * 20})`">
+        :ref="el => setFieldRef(entity.id, field.id, el as HTMLElement)"
+        :transform="`translate(0, ${props.ENTITY_HEADER_HEIGHT + index * props.FIELD_HEIGHT})`">
         <line
           v-if="index !== 0"
           class="field-separator"
@@ -51,21 +53,24 @@
         <!-- 字段背景 -->
         <rect class="field-bg"
           :width="viewedEntity.width"
-          height="20"
+          :height="props.FIELD_HEIGHT"
           fill="transparent"/>
         <!-- 主键图标 -->
-        <text class="key-icon"
-          v-if="field.isPrimaryKey"
-          x="8"
-          y="14"
-          font-size="10"
-          fill="#f39c12">
-          🔑
-        </text>
+        <foreignObject v-if="field.isPrimaryKey" x="5.5" y="1" width="20" height="20">
+          <div>
+            <component :is="KeyIcon" style="width: 14px; height: 14px;" />
+          </div>
+        </foreignObject>
+        <!-- 唯一键图标 -->
+        <foreignObject v-else-if="field.isUnique" x="5.5" y="1" width="20" height="20">
+          <div>
+            <component :is="UniqueIcon" style="width: 14px; height: 14px;" />
+          </div>
+        </foreignObject>
         <!-- 字段名 -->
         <text class="field-name"
-          :x="field.isPrimaryKey ? 25 : 8"
-          y="14"
+          :x="field.isPrimaryKey || field.isUnique ? 25 : 8"
+          y="18"
           font-size="12"
           fill="#24292e">
           {{ field.name }}
@@ -73,7 +78,7 @@
         <!-- 字段类型 -->
         <text class="field-type" v-if="field.length && field.scale"
           :x="viewedEntity.width - 8"
-          y="14"
+          y="18"
           text-anchor="end"
           font-size="10"
           fill="#586069">
@@ -81,7 +86,7 @@
         </text>
         <text class="field-type" v-else-if="field.length"
           :x="viewedEntity.width - 8"
-          y="14"
+          y="18"
           text-anchor="end"
           font-size="10"
           fill="#586069">
@@ -89,7 +94,7 @@
         </text>
         <text class="field-type" v-else
           :x="viewedEntity.width - 8"
-          y="14"
+          y="18"
           text-anchor="end"
           font-size="10"
           fill="#586069">
@@ -102,99 +107,59 @@
 
 <script setup lang="ts">
 import type { Entity, Field } from '../types/entity'
-import { defineProps, defineEmits, computed, onMounted } from 'vue'
-
+import { defineProps, defineEmits, computed } from 'vue'
+import KeyIcon from '../assets/KeyIcon.vue'
+import UniqueIcon from '../assets/UniqueIcon.vue'
+import { getAllParentFields, updateEntitySize } from '@/utils/datasourceUtil'
 
 const props = defineProps<{
   entity: Entity
   selected: boolean
   dragTransform?: string
   visibleEntities: Entity[]
+  virtualEntities: Entity[]
+  allFieldsCache: Record<string, Field[]>
+  ENTITY_HEADER_HEIGHT: number
+  FIELD_HEIGHT: number
 }>()
+
+// 设置字段引用
+function setFieldRef(entityId: string, fieldId: string, el: HTMLElement | null) {
+  if (el) {
+    emit('setFieldRef', entityId, fieldId, el)
+  }
+}
 
 const viewedEntity = computed(() => {
   const entity = { ...props.entity }
-  const allFields = props.entity.parentEntityId ? [...getAllParentFields(props.visibleEntities, props.entity.parentEntityId), ...props.entity.fields] : props.entity.fields
+  const allEntities = [...props.visibleEntities, ...props.virtualEntities]
+  // 判断是否有父实体并且缓存中存在父实体的字段
+  let allFields = props.allFieldsCache[props.entity.id]
+  if (!allFields || allFields.length === 0) {
+    if (props.entity.parentEntityId) {
+      allFields = [...getAllParentFields(allEntities, props.entity.parentEntityId), ...entity.fields]
+    } else {
+      allFields = entity.fields
+    }
+    props.allFieldsCache[props.entity.id] = allFields
+  }
   entity.fields = allFields
   updateEntitySize(entity)
+  emit('updateEntitySize', entity)
   return entity
 })
 
 
-defineEmits([
+const emit = defineEmits([
   'dblclick',
   'contextmenu',
   'mousedown',
   'touchstart',
   'touchmove',
   'touchend',
+  'setFieldRef',
+  'updateEntitySize'
 ])
-
-// 递归获取所有父级字段
-function getAllParentFields(entities: Entity[], parentEntityId: string | undefined): Field[] {
-  const result: Field[] = [];
-  let currentParentId = parentEntityId;
-  while (currentParentId) {
-    const parent = entities.find(e => e.id === currentParentId);
-    if (parent) {
-      
-      // 设置来源信息，用于显示来源字段
-      parent.fields.forEach(field => {
-        field.extended = {
-          entityId: parent.id,
-          fieldId: field.id
-        }
-      })
-
-      // 先递归上级，再加本级，保证顺序
-      result.unshift(...parent.fields);
-      currentParentId = parent.parentEntityId;
-    } else {
-      break;
-    }
-  }
-  return result;
-}
-
-// 计算实体的最小高度
-function calculateEntityHeight(entity: Entity): number {
-  // 头部高度30px + 每个字段20px，最小高度60px
-  const headerHeight = 30
-  const fieldHeight = 20
-  const minHeight = 60
-  
-  const calculatedHeight = headerHeight + entity.fields.length * fieldHeight
-  return Math.max(minHeight, calculatedHeight)
-}
-// 计算实体的最小宽度
-function calculateEntityWidth(entity: Entity): number {
-  // 基础最小宽度
-  const minWidth = 150
-  
-  // 根据实体名称长度计算宽度
-  const nameWidth = entity.name.length * 8 + 40
-  
-  // 根据字段内容计算宽度
-  let maxFieldWidth = 0
-  entity.fields.forEach(field => {
-    const fieldNameWidth = field.name.length * 7
-    const fieldTypeWidth = field.type.length * 6
-    const iconWidth = field.isPrimaryKey ? 25 : 8
-    const fieldWidth = iconWidth + fieldNameWidth + fieldTypeWidth + 50
-    maxFieldWidth = Math.max(maxFieldWidth, fieldWidth)
-  })
-  return Math.max(minWidth, nameWidth, maxFieldWidth)
-}
-// 更新实体尺寸
-function updateEntitySize(entity: Entity) {
-  const width = calculateEntityWidth(entity)
-  const height = calculateEntityHeight(entity)
-  
-  // 始终更新尺寸，实体框大小完全由计算确定
-  entity.width = width
-  entity.height = height
-}
-
 </script>
 
 <style scoped>
@@ -245,10 +210,16 @@ function updateEntitySize(entity: Entity) {
   gap: 4px;
   pointer-events: none;
 }
+.key-icon {
+  color: #2a2a29;
+}
+.dark-theme .key-icon {
+  color: #ffffff;
+}
 
 @media (max-width: var(--mobile-breakpoint)) {
   .entity.selected .entity-rect {
-    filter: drop-shadow(0 0 8px rgba(3, 102, 214, 0.3));
+    filter: drop-shadow(0 0 12px rgba(3, 102, 214, 0.4));
   }
   .entity.multi-selected .entity-rect {
     stroke-dasharray: 5,5;
@@ -259,25 +230,18 @@ function updateEntitySize(entity: Entity) {
   .entity-name {
     user-select: none;
     pointer-events: none;
+    font-size: 15px;
   }
   .field {
     transition: all 0.1s ease;
+    min-height: 24px;
   }
   .field:hover .field-bg {
     fill: rgba(3, 102, 214, 0.05);
   }
-  .entity.selected .entity-rect {
-    filter: drop-shadow(0 0 12px rgba(3, 102, 214, 0.4));
-  }
-  .field {
-    min-height: 24px;
-  }
   .field-name,
   .field-type {
     font-size: 13px;
-  }
-  .entity-name {
-    font-size: 15px;
   }
 }
 </style>

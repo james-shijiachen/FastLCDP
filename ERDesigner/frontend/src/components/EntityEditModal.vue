@@ -32,7 +32,7 @@
           field="entity.datasourceId" 
           component="EntityEditModal" 
           :label="$t('datasource.name')"
-          :options="props.datasources.map(ds => ({ value: ds.id, label: ds.name, icon: iconMap[ds.type || DatasourceType.DATABASE]}))"/>
+          :options="props.datasources.map(ds => ({ value: ds.id, label: ds.name, icon: iconMap[ds.category || DatasourceType.DATABASE]}))"/>
         <RadioButton 
           v-model="formData.parentEntityId" 
           field="entity.parentEntityId" 
@@ -58,10 +58,13 @@
                   <col style="width: 80px;" /> <!-- 长度 -->
                   <col style="width: 80px;" /> <!-- 精度 -->
                   <col style="width: 20px;" />  <!-- 主键 -->
+                  <col style="width: 20px;" />  <!-- 自增 -->
                   <col style="width: 20px;" />  <!-- 必填 -->
+                  <col style="width: 20px;" />  <!-- 无符号 -->
                   <col style="width: 20px;" />  <!-- 唯一 -->
                   <col style="width: 300px;" /> <!-- 注释 -->
-                  <col style="width: 100px;" /> <!-- 来源 -->
+                  <col style="width: 100px;" /> <!-- 继承 -->
+                  <col style="width: 150px;" /> <!-- 关联 -->
               </colgroup>
               <thead class="fields-table-header">
                 <tr>
@@ -71,27 +74,52 @@
                   <th>{{ $t('entity.length') }}</th>
                   <th>{{ $t('entity.scale') }}</th>
                   <th>{{ $t('entity.primaryKey') }}</th>
+                  <th>{{ $t('entity.autoIncrement') }}</th>
                   <th>{{ $t('entity.required') }}</th>
                   <th>{{ $t('entity.unique') }}</th>
+                  <th>{{ $t('entity.unsigned') }}</th>
                   <th>{{ $t('entity.comment') }}</th>
-                  <th>{{ $t('entity.source') }}</th>
+                  <th>{{ $t('entity.extended') }}</th>
+                  <th>{{ $t('entity.foreignKey') }}</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-if="allParentField && allParentField.length > 0" v-for="field in allParentField" :key="field.id">
+                <tr class="field-row" v-if="allParentField && allParentField.length > 0" v-for="field in allParentField" :key="field.id">
                   <td></td>
                   <td><input :disabled="true" :value="field.name" /></td>
                   <td><input :disabled="true" :value="field.type" /></td>
                   <td><input :disabled="true" :value="field.length" /></td>
                   <td><input :disabled="true" :value="field.scale" /></td>
                   <td><input type="checkbox" :disabled="true" :checked="field.isPrimaryKey" /></td>
+                  <td><input type="checkbox" :disabled="true" :checked="field.isAutoIncrement" /></td>
                   <td><input type="checkbox" :disabled="true" :checked="field.isRequired" /></td>
                   <td><input type="checkbox" :disabled="true" :checked="field.isUnique" /></td>
+                  <td><input type="checkbox" :disabled="true" :checked="field.isUnsigned" /></td>
                   <td><textarea :disabled="true" :value="field.comment" /></td>
-                  <td>&nbsp;{{ field.extended?.entityId ? field.extended.entityId + '.' + field.extended.fieldId : '' }}</td>
+                  <td>&nbsp;{{ field.extended === undefined || field.extended.entityId === '' ? '' 
+                  : (entityNameCache[field.extended?.entityId] + '.' + fieldNameCache[field.extended?.fieldId]) }}</td>
+                  <td class="td-foreign-key">
+                    <span class="span-foreign-key" v-for="foreignKeyInfo in getForeignKeyInfoForParentField(field)">
+                      {{foreignKeyInfo}}
+                    <button @click="removeForeignKeyByParentField(props.entity?.id || '', field.id)">X</button>
+                    </span>
+                  </td>
                 </tr>
-                <tr v-for="(field, index) in formData.fields" :key="field.id">
-                  <td><button @click="removeField(index)" class="remove-btn" :title="$t('entity.removeField')">X</button></td>
+                <tr class="field-row" 
+                    v-for="(field, index) in formData.fields" 
+                    :key="field.id"
+                    draggable="true"
+                    @dragstart.stop="handleDragStart($event, index)"
+                    @dragover="handleDragOver($event)"
+                    @dragenter="handleDragEnter($event, index)"
+                    @dragleave="handleDragLeave($event)"
+                    @drop="handleDrop($event, index)"
+                    @dragend="handleDragEnd()"
+                    :class="{ 'dragging': draggedIndex === index, 'drag-over': dragOverIndex === index }">
+                  <td class="td-actions">
+                    <button @click="addField(index)" class="add-btn" :title="$t('entity.addField')">+</button>
+                    <button v-if="!field.foreignKey?.length" @click="removeField(index)" class="remove-btn" :title="$t('entity.removeField')">X</button>
+                  </td>
                   <td><input :title="field.name" v-model="field.name" :placeholder="$t('entity.fieldName')" /></td>
                   <td>
                     <select v-model="field.type">
@@ -106,11 +134,25 @@
                   </td>
                   <td><input v-model="field.length" v-model.number="field.length" /></td>
                   <td><input v-model="field.scale" v-model.number="field.scale" /></td>
-                  <td><input type="checkbox" v-model="field.isPrimaryKey" /></td>
-                  <td><input type="checkbox" v-model="field.isRequired" /></td>
-                  <td><input type="checkbox" v-model="field.isUnique" /></td>
+                  <td><input type="checkbox" v-model="field.isPrimaryKey" @change="handlePrimaryKeyChange(field)"/></td>
+                  <td><input type="checkbox" v-model="field.isAutoIncrement"/></td>
+                  <td><input type="checkbox" v-model="field.isRequired" :disabled="field.isPrimaryKey" /></td>
+                  <td><input type="checkbox" v-model="field.isUnique" :disabled="field.isPrimaryKey" /></td>
+                  <td><input type="checkbox" v-model="field.isUnsigned" /></td>
                   <td><textarea :title="field.comment" v-model="field.comment" rows="2"></textarea></td>
-                  <td>&nbsp;{{ field.extended?.entityId ? field.extended.entityId + '.' + field.extended.fieldId : '' }}</td>
+                  <td class="td-source-field">
+                      {{ field.extended === undefined || field.extended.entityId === '' ? '' 
+                      : (entityNameCache[field.extended?.entityId] + '.' + fieldNameCache[field.extended?.fieldId]) }}
+                  </td>
+                  <td class="td-foreign-key">
+                    <span class="span-foreign-key" v-for="(ref) in field.foreignKey">
+                      <button>
+                        {{ ref.referencedEntityId === '' ? '' 
+                        : (entityNameCache[ref.referencedEntityId] + '.' + fieldNameCache[ref.referencedFieldId]) }}
+                        <span class="followers" @click="removeForeignKeyByForeignKey(ref, index)">&nbsp; 65.7K </span>
+                      </button>
+                    </span>
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -118,7 +160,6 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" @click="addField" class="btn btn-primary">{{ $t('entity.addField') }}</button>
         <button @click="$emit('close')" class="btn btn-secondary">{{ $t('common.cancel') }}</button>
         <button @click="handleSave" class="btn btn-primary" :disabled="!canSave">
           {{ isEdit ? $t('common.save') : $t('common.create') }}
@@ -129,18 +170,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { Entity, Field, Datasource } from '../types/entity'
-import { EntityType, DatasourceType } from '../types/entity'
+import type { Entity, Field, Datasource, Relationship } from '../types/entity'
+import { EntityType, DatasourceType, DatasourceCategory } from '../types/entity'
 import { useDraggableModal } from '@/utils/useDraggableModal'
 import { ValidateField, RadioButton } from '@/components'
 import { useFieldError } from '@/utils/useFieldError'
 import AbstractEntityIcon from '@/assets/AbstractEntityIcon.vue'
 import AddEntityIcon from '@/assets/AddEntityIcon.vue'
 import DatabaseIcon from '@/assets/DatabaseIcon.vue'
-import NoSQLIcon from '@/assets/NoSQLIcon.vue'
-import DocumentIcon from '@/assets/DocumentIcon.vue'
+import SQLiteIcon from '@/assets/SQLiteIcon.vue'
+import OracleIcon from '@/assets/OracleIcon.vue'
+import PostgreSQLIcon from '@/assets/PostgreSQLIcon.vue'
+import SQLSERVERIcon from '@/assets/SQLServerIcon.vue'
+import RedisIcon from '@/assets/RedisIcon.vue'
+import MongoDBIcon from '@/assets/MongoDBIcon.vue'
+import ElasticsearchIcon from '@/assets/ElasticSearchIcon.vue'
+import JsonIcon from '@/assets/JsonIcon.vue'
+import XmlIcon from '@/assets/XMLIcon.vue'
+import { getChildEntityIds, getAllParentFields } from '@/utils/datasourceUtil'
+import { deepClone } from '@/utils/commons'
+import MySQLIcon from '@/assets/MySQLIcon.vue'
 
 const {clearFieldError, setFieldError, getFieldError } = useFieldError('EntityEditModal')
 const { t: $t } = useI18n()
@@ -148,8 +199,16 @@ const { modalRef, onHeaderMousedown } = useDraggableModal()
 
 const iconMap = {
   [DatasourceType.DATABASE]: DatabaseIcon,
-  [DatasourceType.NOSQL]: NoSQLIcon,
-  [DatasourceType.DOCUMENT]: DocumentIcon
+  [DatasourceCategory.SQLITE]: SQLiteIcon,
+  [DatasourceCategory.MYSQL]: MySQLIcon,
+  [DatasourceCategory.ORACLE]: OracleIcon,
+  [DatasourceCategory.POSTGRESQL]: PostgreSQLIcon,
+  [DatasourceCategory.SQLSERVER]: SQLSERVERIcon,
+  [DatasourceCategory.REDIS]: RedisIcon,
+  [DatasourceCategory.MONGODB]: MongoDBIcon,
+  [DatasourceCategory.ELASTICSEARCH]: ElasticsearchIcon,
+  [DatasourceCategory.JSON]: JsonIcon,
+  [DatasourceCategory.XML]: XmlIcon
 }
 
 const parentEntityIconMap = {
@@ -160,6 +219,9 @@ const parentEntityIconMap = {
 interface Props {
   entity?: Entity | null
   entities: Entity[]
+  entityNameCache: Record<string, string>
+  fieldNameCache: Record<string, string>
+  relationships: Relationship[]
   parentEntity?: Entity | null
   datasources: Datasource[]
   currentDatasourceId?: string
@@ -170,12 +232,19 @@ const props = defineProps<Props>()
 const emit = defineEmits<{
   save: [entity: Entity]
   close: []
+  deleteRelation: [relationshipId: string]
 }>()
 
 const modalContentRef = ref<HTMLDivElement | null>(null)
-const nameInputRef = ref<HTMLDivElement | null>(null)
+const nameInputRef = ref<InstanceType<typeof ValidateField> | null>(null)
 const fieldsListWrapperRef = ref<HTMLDivElement | null>(null)
+const currentParentEntity = ref<Entity | undefined>(props.parentEntity || undefined)
 const showHeaderName = ref(false)
+
+// 拖拽相关状态
+const draggedIndex = ref<number | null>(null)
+const dragOverIndex = ref<number | null>(null)
+const autoScrollTimer = ref<NodeJS.Timeout | null>(null)
 
 // 表单数据
 const formData = ref({
@@ -186,10 +255,11 @@ const formData = ref({
   entityType: props.entity?.entityType || 'ENTITY',
   parentEntityId: props.entity?.parentEntityId || props.parentEntity?.id || '',
   parentEntityName: props.parentEntity?.name || '',
-  fields: props.entity?.fields || [
+  fields: props.entity?.fields ? deepClone(props.entity.fields) : [
             {
-              entityId: '',
+              entityId: props.entity?.id || '',
               id: Date.now().toString(),
+              serialNo: 1,
               name: '',
               type: '',
               comment: '',
@@ -213,7 +283,7 @@ function validateName() {
     setFieldError('entity.name', $t('entity.nameRequired'))
   } else if (formData.value.name.length > 50) {
     setFieldError('entity.name', $t('entity.nameMaxLength'))
-  } else if (!/^[a-zA-Z][a-zA-Z0-9_]*$/.test(formData.value.name)) {
+  } else if (!/^[a-zA-Z]\w*$/.test(formData.value.name)) {
     setFieldError('entity.name', $t('entity.namePattern'))
   } else {
     clearFieldError('entity.name')
@@ -226,8 +296,39 @@ const canSave = computed(() => {
 })
 
 const allParentField = computed(() => {
-  return props.parentEntity ? getAllParentFields(props.entities, props.parentEntity.id) : props.entity && props.entity.parentEntityId ? getAllParentFields(props.entities, props.entity.parentEntityId) : []
+  // 获取父实体字段
+  if (currentParentEntity.value) {
+    return getAllParentFields(props.entities, currentParentEntity.value.id)
+  }
+  if (props.entity && props.entity.parentEntityId) {
+    return getAllParentFields(props.entities, props.entity.parentEntityId)
+  }
+  return []
 })
+
+// 主键变化时，唯一和必填都为true
+function handlePrimaryKeyChange(field: Field) {
+  if (field.isPrimaryKey) {
+    field.isUnique = true
+    field.isRequired = true
+  }
+}
+
+function getForeignKeyInfoForParentField(field: Field) {
+  let foreignKeyInfo: string[] = []
+  props.relationships.forEach((r) => {
+    if ((r.fromEntityId === props.entity?.id && r.fromFieldId === field.id)) {
+      const toEntityName = props.entityNameCache[r.toEntityId as string] || ''
+      const toFieldName = props.fieldNameCache[r.toFieldId as string] || ''
+      foreignKeyInfo.push(`${toEntityName}.${toFieldName}`)
+    }else if((r.toEntityId === props.entity?.id && r.toFieldId === field.id)){
+      const fromEntityName = props.entityNameCache[r.fromEntityId as string] || ''
+      const fromFieldName = props.fieldNameCache[r.fromFieldId as string] || ''
+      foreignKeyInfo.push(`${fromEntityName}.${fromFieldName}`)
+    }
+  })
+  return foreignKeyInfo
+}
 
 // 获取可选的父实体列表
 const availableParentEntities = computed(() => {
@@ -242,17 +343,6 @@ const availableParentEntities = computed(() => {
   })
 })
 
-// 获取当前实体的所有子实体ID（递归）
-function getChildEntityIds(datasourceEntities: Entity[], parentId: string): string[] {
-  const children = datasourceEntities.filter(e => e.parentEntityId === parentId)
-  const childIds = children.map(c => c.id)
-  
-  // 递归获取子实体的子实体
-  children.forEach(child => {
-    childIds.push(...getChildEntityIds(datasourceEntities, child.id))
-  })
-  return childIds
-}
 
 // 监听数据源ID变化，重置父实体ID
 watch(() => formData.value.datasourceId, (newDatasourceId, oldDatasourceId) => {
@@ -268,31 +358,16 @@ watch(() => formData.value.datasourceId, (newDatasourceId, oldDatasourceId) => {
   }
 })
 
-// 递归获取所有父级字段
-function getAllParentFields(entities: Entity[], parentEntityId: string | undefined): Field[] {
-  const result: Field[] = [];
-  let currentParentId = parentEntityId;
-  while (currentParentId) {
-    const parent = entities.find(e => e.id === currentParentId);
-    if (parent) {
-      
-      // 设置来源信息，用于显示来源字段
-      parent.fields.forEach(field => {
-        field.extended = {
-          entityId: parent.id,
-          fieldId: field.id
-        }
-      })
-
-      // 先递归上级，再加本级，保证顺序
-      result.unshift(...parent.fields);
-      currentParentId = parent.parentEntityId;
+// 监听formData表单中的父实体ID变化，如果有切换则更新继承字段列表
+watch(() => formData.value.parentEntityId, (newId) => {
+    if (newId) {
+      // 在 props.entities 中查找对应实体
+      currentParentEntity.value = props.entities.find(e => e.id === newId) || undefined
     } else {
-      break;
+      currentParentEntity.value = undefined
     }
   }
-  return result;
-}
+)
 
 // 监听滚轮事件（屏蔽浏览器默认滚动）
 function handleModalWheel(event: WheelEvent) {
@@ -306,6 +381,7 @@ function handleModalWheel(event: WheelEvent) {
     containerFields.scrollLeft += event.deltaX; // 横向滚动
   }
 }
+
 // 监听modal滚动
 function handleModalScroll() {
   console.log("handleModalScroll1", modalContentRef.value, nameInputRef.value)
@@ -317,11 +393,18 @@ function handleModalScroll() {
   // 判断输入框底部是否在 modal-content 顶部之上（即被滚动出去了）
   showHeaderName.value = inputRect.bottom < modalRect.top || inputRect.top > modalRect.bottom
 }
+
 // 添加字段
-function addField() {
+function addField(index: number) {
+  // 计算新字段的 serialNo（使用小数值避免重新计算所有字段）
+  const currentSerialNo = formData.value.fields[index].serialNo
+  const nextSerialNo = index + 1 < formData.value.fields.length ? formData.value.fields[index + 1].serialNo : currentSerialNo + 1
+  const newSerialNo = (currentSerialNo + nextSerialNo) / 2
+  
   const newField: Field = {
     entityId: formData.value.entityId,
     id: Date.now().toString(),
+    serialNo: newSerialNo,
     name: '',
     type: '',
     comment: '',
@@ -329,15 +412,217 @@ function addField() {
     isRequired: false,
     isUnique: false
   }
-  formData.value.fields.push(newField)
+  // 在指定位置的下一行插入新字段
+  formData.value.fields.splice(index + 1, 0, newField)
 }
+
 // 删除字段
 function removeField(index: number) {
-  formData.value.fields.splice(index, 1)
+  if(formData.value.fields.length >1 && confirm($t('messages.deleteFieldConfirm'))){
+    formData.value.fields.splice(index, 1)
+  }
 }
+
+// 删除外键引用
+// 删除外键引用
+function removeForeignKeyByForeignKey(foreignKeyRef: any, fieldIndex?: number ) {
+  if(!confirm($t('messages.deleteForeignKeyConfirm'))) {
+    return;
+  }
+
+  // 如果没有指定字段索引,直接删除关系
+  if(fieldIndex === undefined) {
+    emit('deleteRelation', foreignKeyRef.relationId);
+    return;
+  }
+
+  const field = formData.value.fields[fieldIndex];
+  if (!field.foreignKey?.length) {
+    return;
+  }
+
+  // 查找并删除外键引用
+  const refIndex = field.foreignKey.findIndex(ref => 
+    ref.referencedEntityId === foreignKeyRef.referencedEntityId && 
+    ref.referencedFieldId === foreignKeyRef.referencedFieldId
+  );
+
+  if (refIndex === -1) {
+    return;
+  }
+
+  // 删除外键引用
+  const relationId = field.foreignKey[refIndex].relationId;
+  field.foreignKey.splice(refIndex, 1);
+
+  // 删除关联实体的外键引用
+  const foreignKey = props.entities.find(e => e.id === foreignKeyRef.referencedEntityId)?.fields.find(f => f.id === foreignKeyRef.referencedFieldId)?.foreignKey
+  if(foreignKey && Array.isArray(foreignKey)){
+    const refIndex = foreignKey.findIndex(ref => 
+      ref.referencedEntityId === foreignKeyRef.referencedEntityId && 
+      ref.referencedFieldId === foreignKeyRef.referencedFieldId
+    )
+    foreignKey.splice(refIndex, 1)
+  }
+
+  emit('deleteRelation', relationId);
+}
+
+// 删除外键引用
+function removeForeignKeyByParentField(entityId: string, fieldId: string) {
+  if(!confirm($t('messages.deleteForeignKeyConfirm'))) {
+    return;
+  }
+  // 遍历关系列表找到对应的关系ID
+  props.relationships.forEach(r => {
+    if((r.fromEntityId === entityId && r.fromFieldId === fieldId) ||
+    (r.toEntityId === entityId && r.toFieldId === fieldId)){
+      emit('deleteRelation', r.id)
+    }
+  })
+}
+
+// 拖拽开始
+function handleDragStart(event: DragEvent, index: number) {
+  draggedIndex.value = index
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData('text/html', '')
+  }
+}
+
+// 拖拽经过
+function handleDragOver(event: DragEvent) {
+  event.preventDefault()
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'move'
+  }
+  
+  // 检测拖拽位置是否接近边界，触发自动滚动
+  const container = modalContentRef.value
+  if (!container) return
+  
+  const rect = container.getBoundingClientRect()
+  const scrollThreshold = 50 // 距离边界50px时开始滚动
+  const rowHeight = 50 // 表格行高度
+  const scrollDelay = 200 // 滚动间隔时间(毫秒)
+  
+  // 清除之前的定时器
+  if (autoScrollTimer.value) {
+    clearInterval(autoScrollTimer.value)
+    autoScrollTimer.value = null
+  }
+  
+  // 检测垂直方向
+  if (event.clientY - rect.top < scrollThreshold) {
+    // 接近顶部边界，向上滚动
+    autoScrollTimer.value = setInterval(() => {
+      const newScrollTop = Math.max(0, container.scrollTop - rowHeight)
+      if (newScrollTop === container.scrollTop) {
+        // 已经到顶部，停止滚动
+        if (autoScrollTimer.value) {
+          clearInterval(autoScrollTimer.value)
+          autoScrollTimer.value = null
+        }
+      } else {
+        container.scrollTop = newScrollTop
+      }
+    }, scrollDelay)
+  } else if (rect.bottom - event.clientY < scrollThreshold) {
+    // 接近底部边界，向下滚动
+    autoScrollTimer.value = setInterval(() => {
+      const maxScrollTop = container.scrollHeight - container.clientHeight
+      const newScrollTop = Math.min(maxScrollTop, container.scrollTop + rowHeight)
+      if (newScrollTop === container.scrollTop) {
+        // 已经到底部，停止滚动
+        if (autoScrollTimer.value) {
+          clearInterval(autoScrollTimer.value)
+          autoScrollTimer.value = null
+        }
+      } else {
+        container.scrollTop = newScrollTop
+      }
+    }, scrollDelay)
+  }
+}
+
+// 拖拽进入
+function handleDragEnter(event: DragEvent, index: number) {
+  event.preventDefault()
+  if (draggedIndex.value !== null && draggedIndex.value !== index) {
+    dragOverIndex.value = index
+  }
+}
+
+// 拖拽离开
+function handleDragLeave(event: DragEvent) {
+  // 只有当离开整个行时才清除dragOverIndex
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
+  const x = event.clientX
+  const y = event.clientY
+  
+  if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+    dragOverIndex.value = null
+  }
+}
+
+// 拖拽放置
+function handleDrop(event: DragEvent, dropIndex: number) {
+  event.preventDefault()
+  
+  if (draggedIndex.value === null || draggedIndex.value === dropIndex) {
+    return
+  }
+  
+  const draggedField = formData.value.fields[draggedIndex.value]
+  const fields = [...formData.value.fields]
+  
+  // 移除被拖拽的字段
+  fields.splice(draggedIndex.value, 1)
+  
+  // 在新位置插入字段
+  const insertIndex = draggedIndex.value < dropIndex ? dropIndex - 1 : dropIndex
+  fields.splice(insertIndex, 0, draggedField)
+  
+  // 更新字段数组
+  formData.value.fields = fields
+  
+  // 计算新的 serialNo（使用小数值）
+  const targetField = formData.value.fields[insertIndex]
+  const prevField = formData.value.fields[insertIndex - 1]
+  const nextField = formData.value.fields[insertIndex + 1]
+  
+  if (!prevField && !nextField) {
+    // 如果是唯一字段
+    targetField.serialNo = 1
+  } else if (!prevField) {
+    // 如果是第一个字段
+    targetField.serialNo = nextField.serialNo - 0.5
+  } else if (!nextField) {
+    // 如果是最后一个字段
+    targetField.serialNo = prevField.serialNo + 0.5
+  } else {
+    // 如果在中间
+    targetField.serialNo = (prevField.serialNo + nextField.serialNo) / 2
+  }
+  
+  dragOverIndex.value = null
+}
+
+// 拖拽结束
+function handleDragEnd() {
+  draggedIndex.value = null
+  dragOverIndex.value = null
+  
+  // 清除自动滚动定时器
+  if (autoScrollTimer.value) {
+    clearInterval(autoScrollTimer.value)
+    autoScrollTimer.value = null
+  }
+}
+
 // 保存实体
 function handleSave() {
-  console.log("handleSave", canSave.value, isValid.value)
   if (!canSave.value) return
   if(isValid.value) {
     const entity: Entity = {
@@ -355,10 +640,19 @@ function handleSave() {
       backgroundColor: props.entity?.backgroundColor || '#ffffff',
       borderColor: props.entity?.borderColor || '#24292e'
     }
-    console.log("handleSave", formData.value.parentEntityId, entity)
     emit('save', entity)
   }
 }
+
+// 组件挂载后自动聚焦到name输入框
+onMounted(() => {
+  // 使用nextTick确保DOM已经渲染完成
+  setTimeout(() => {
+    if (nameInputRef.value) {
+      nameInputRef.value.focus()
+    }
+  }, 100)
+})
 </script>
 
 <style scoped>
@@ -419,7 +713,7 @@ function handleSave() {
 
 /* 字段表格 */
 .fields-table {
-  min-width: 900px; /* 让表格内容撑开，超出时滚动 */
+  min-width: 1200px; /* 让表格内容撑开，超出时滚动 */
   border-collapse: collapse;
 }
 .fields-table-header {
@@ -435,9 +729,19 @@ function handleSave() {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-size: 14px;
+  height: 50px;
 }
 .fields-table th {
   background: #f6f8fa;
+}
+.dark-theme .fields-table th,
+.dark-theme .fields-table td {
+  border: 1px solid #333 !important;
+}
+.dark-theme .fields-table th {
+  background: #000000 !important;
+  color: #ffffff;
 }
 .fields-table textarea {
   resize: none !important;
@@ -447,13 +751,38 @@ function handleSave() {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.field-row:hover {
+  background: #eff6f9 !important;
+  transition: background 0.2s;
+}
+.dark-theme .field-row:hover {
+  background: #2a3350 !important;
+}
+
+/* 拖拽样式 */
+.field-row {
+  cursor: move;
+}
+.field-row.dragging {
+  opacity: 0.5;
+  background: #e3f2fd !important;
+}
+.field-row.drag-over {
+  border-top: 3px solid #2196f3;
+}
+.dark-theme .field-row.dragging {
+  background: #2a3350 !important;
+}
+.dark-theme .field-row.drag-over {
+  border-top: 3px solid #bb86fc;
+}
 
 /* 删除按钮 */
 .remove-btn {
   background: #d73a49;
   color: #fff;
   border: none;
-  padding: 6px 12px;
+  padding: 6px 10px;
   border-radius: 4px;
   font-size: 12px;
   cursor: pointer;
@@ -467,10 +796,110 @@ function handleSave() {
   color: #000000;
 }
 .dark-theme .remove-btn:hover {
-  background: #e91e63;
+  background: #cf6679;
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
+
+/* 操作按钮单元格 */
+.td-actions {
+  text-align: center;
+  height: 50px;
+  vertical-align: middle;
+  padding: 4px 8px;
+  box-sizing: border-box;
+}
+
+.td-actions button {
+  margin: 0 4px;
+}
+.td-source-field,
+.td-foreign-key {
+  text-align: left !important;
+  white-space: normal !important;
+  word-wrap: break-word;
+  max-width: 200px;
+}
+
+.td-foreign-key > span:not(.span-foreign-key) {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.td-foreign-key > span:not(.span-foreign-key):last-child {
+  margin-bottom: 0;
+}
+
+.td-foreign-key .span-foreign-key {
+  white-space: nowrap !important;
+  display: flex !important;
+}
+
+/* 添加按钮 */
+.add-btn {
+  background: #66bb6a;
+  color: #fff;
+  border: none;
+  padding: 4.5px 10px;
+  border-radius: 4px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.add-btn:hover {
+  background: #59a25d;
+}
+.dark-theme .add-btn {
+  background: #5ca860;
+  color: #000000;
+}
+.dark-theme .add-btn:hover {
+  background: #4caf50;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.span-foreign-key{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid #6f6e6e;
+  border-radius: 4px;
+  padding: 4px 8px;
+  white-space: nowrap;
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
+.span-foreign-key > span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: 8px;
+}
+
+.span-foreign-key > button {
+  height: 100%;
+  flex-shrink: 0;
+}
+
+.span-foreign-key button {
+  background: none;
+  border: none;
+  color: #d73a49;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 0;
+  margin: 0;
+  min-width: auto;
+}
+
+.span-foreign-key button:hover {
+  color: #cb2431;
+}
+
 
 @media (max-width: var(--mobile-breakpoint)) {
 

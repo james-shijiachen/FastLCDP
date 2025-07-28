@@ -63,7 +63,7 @@
 import { ref, computed, type Component} from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { Datasource } from '../types/entity'
-import { DatasourceType, Category, DatasourceVersion } from '../types/entity'
+import { DatasourceType, DatasourceCategory, DatasourceVersion } from '../types/entity'
 import { useDraggableModal } from '@/utils/useDraggableModal'
 import { ValidateField, RadioButton } from '@/components'
 import { useFieldError } from '@/utils/useFieldError'
@@ -142,6 +142,7 @@ const typeOptions = computed(() => {
   ];
   return options;
 })
+
 const categoryOptions = computed(() => {
   const type = formData.value.type;
   let options;
@@ -156,7 +157,7 @@ const categoryOptions = computed(() => {
   }else if(type === 'NOSQL'){
     options = [
       { value: 'REDIS', label: $t('datasource.redis'), icon: RedisIcon },
-      { value: 'MONGO', label: $t('datasource.mongo'), icon: MongoDBIcon },
+      { value: 'MONGODB', label: $t('datasource.mongo'), icon: MongoDBIcon },
       { value: 'ELASTICSEARCH', label: $t('datasource.elasticsearch'), icon: ElasticSearchIcon }
     ];
   }else if(type === 'DOCUMENT'){
@@ -167,6 +168,7 @@ const categoryOptions = computed(() => {
   }
   return options;
 })
+
 const versionOptions = computed(() => {
   const type = formData.value.type;
   const category = formData.value.category;
@@ -235,7 +237,7 @@ function handleSave() {
     viewId: formData.value.viewId,
     type: formData.value.type as DatasourceType,
     version: formData.value.version as DatasourceVersion,
-    category: formData.value.category as Category,
+    category: formData.value.category as DatasourceCategory,
     description: formData.value.description.trim()
   }
   emit('save', datasource)

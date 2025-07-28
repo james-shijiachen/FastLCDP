@@ -1,17 +1,18 @@
 <template>
-  <div class="radio-inputs" ref="radioInputs">
+  <div :class="['radio-inputs', { disabled: props.disabled }]" ref="radioInputs">
     <template v-for="(option, index) in options" :key="option.value">
-      <label class="radio" :ref="el => { if (option.value === modelValue) checkedRadio = el as HTMLElement }">
+      <label :class="['radio', { disabled: props.disabled }]" :ref="el => { if (option.value === modelValue) checkedRadio = el as HTMLElement }">
         <input
         :name="field"
         :value="option.value"
+        :disabled="props.disabled"
         type="radio"
         :checked="option.value === modelValue"
         @change="emit('update:modelValue', option.value)"
         />
-        <span class="radio-item">
+        <span :class="['radio-item', { disabled: props.disabled }]">
           <component v-if="option.icon && typeof option.icon !== 'string'" :is="option.icon" class="radio-icon" />
-          <img v-else-if="option.icon" :src="option.icon" class="radio-icon" />
+          <img v-else-if="option.icon" :src="option.icon" :alt="option.label" class="radio-icon" />
           {{ option.label }}
         </span>
       </label>
@@ -37,6 +38,7 @@ interface Props {
   modelValue: string
   component: string
   label: string
+  disabled?: boolean
   options?: Option[]
 }
 
@@ -164,6 +166,13 @@ onMounted(() => {
     transition: 
       background-color 0.5s ease, 
       font-weight 0.5s ease ;
+  }
+
+  .radio-inputs.disabled,
+  .radio.disabled .radio-item.disabled {
+    color: #999999 !important;
+    cursor: not-allowed !important;
+    font-weight: 400 !important;
   }
 
   .dark-theme .radio-inputs .radio-item {

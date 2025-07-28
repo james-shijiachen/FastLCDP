@@ -6,7 +6,8 @@ export enum DatasourceType {
 }
 
 // 数据库类型枚举
-export enum Category {
+export enum DatasourceCategory {
+  SQLITE = 'SQLITE',
   MYSQL = 'MYSQL',
   ORACLE = 'ORACLE',
   POSTGRESQL = 'POSTGRESQL',
@@ -20,10 +21,25 @@ export enum Category {
 
 // 关系类型枚举
 export enum RelationshipType {
+  HARD = 'HARD',
+  SOFT = 'SOFT',
+  VIRTUAL = 'VIRTUAL'
+}
+
+// 关联类型枚举
+export enum RelationshipCategory {
   ONE_TO_ONE = 'ONE_TO_ONE',
   ONE_TO_MANY = 'ONE_TO_MANY',
   MANY_TO_ONE = 'MANY_TO_ONE',
   MANY_TO_MANY = 'MANY_TO_MANY'
+}
+
+export enum CascadeOperation {
+  CASCADE = 'CASCADE',
+  NO_ACTION = 'NO_ACTION',
+  SET_NULL = 'SET_NULL',
+  SET_DEFAULT = 'SET_DEFAULT',
+  RESTRICT = 'RESTRICT'
 }
 
 // 实体类型枚举
@@ -35,9 +51,7 @@ export enum EntityType {
 // 树节点类型枚举
 export enum TreeNodeType {
   DATASOURCE = 'DATASOURCE',
-  ENTITY = 'ENTITY',
-  RELATIONSHIP = 'RELATIONSHIP',
-  INDEX = 'INDEX'
+  ENTITY = 'ENTITY'
 }
 
 // 字段类型枚举
@@ -102,7 +116,7 @@ export interface Datasource {
   viewId?: string
   description?: string
   type?: DatasourceType
-  category?: Category
+  category?: DatasourceCategory
   version?: DatasourceVersion
 
   // 数据库高级配置
@@ -118,6 +132,7 @@ export interface Datasource {
 export interface Field {
   entityId: string
   id: string
+  serialNo: number
   name: string
   type: FieldType | string
   length?: number
@@ -128,14 +143,16 @@ export interface Field {
   isRequired: boolean
   isUnique: boolean
   isAutoIncrement?: boolean
+  isUnsigned?: boolean
   extended?: {
     entityId: string // 来源的实体ID
     fieldId: string  // 来源的实体字段ID
   }
-  foreignKey?: {
-    referencedEntityId: string
-    referencedFieldId: string
-  }
+  foreignKey?: [{
+    relationId: string // 关联ID
+    referencedEntityId: string  // 关联的实体ID
+    referencedFieldId: string   // 关联的实体字段ID
+  }]
 }
 
 // 实体接口
@@ -163,12 +180,15 @@ export interface Relationship {
   fromEntityId: string
   toEntityId: string
   type: RelationshipType
+  category?: RelationshipCategory  
   fromFieldId?: string
   toFieldId?: string
-  comment?: string
+  x: number
+  y: number
   // 级联操作
-  cascadeDelete?: boolean  // 被关联实体删除时，是否级联删除，默认false
-  cascadeUpdate?: boolean  // 被关联实体更新时，是否级联更新，默认false
+  cascadeCreate?: boolean   // 针对JSON/XML，父实体创建时，子实体是否必须创建，默认false
+  cascadeDelete?: CascadeOperation  // 被关联实体删除时，是否级联删除，默认NO_ACTION
+  cascadeUpdate?: CascadeOperation  // 被关联实体更新时，是否级联更新，默认NO_ACTION
 }
 
 // 索引接口
@@ -190,6 +210,7 @@ export interface TreeNode {
   type: TreeNodeType
   children?: TreeNode[]
   entityType?: EntityType
+  datasourceCategory?: DatasourceCategory
   datasourceId?: string
 }
 
@@ -202,6 +223,8 @@ export interface SelectionState {
 
 // 画布状态接口
 export interface CanvasState {
+  MAX_ZOOM: number
+  MIN_ZOOM: number
   zoom: number
   panX: number
   panY: number

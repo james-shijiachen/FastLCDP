@@ -1,11 +1,15 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Entity, Relationship, Datasource, TreeNode, Index, View, HistoryState } from '../types/entity'
+import type { Entity, Relationship, Datasource, TreeNode, Index, View, HistoryState, Field } from '../types/entity'
 import { EntityType, TreeNodeType, OperationType } from '../types/entity'
 // import api from '@/api'
 
 // 常量定义
 const MAX_HISTORY_SIZE = 50
+const MAX_ZOOM = 3
+const MIN_ZOOM = 0.3
+const ENTITY_HEADER_HEIGHT = 30
+const FIELD_HEIGHT = 25
 
 export const useDSDiagramStore = defineStore('dsDiagram', () => {
   
@@ -16,6 +20,13 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
   const relationships = ref<Relationship[]>([])
   const indexes = ref<Index[]>([])
   
+  // 缓存
+  const datasourceNameCache = ref<Record<string, string>>({})
+  const entityNameCache = ref<Record<string, string>>({})
+  const fieldNameCache = ref<Record<string, string>>({})
+  const fieldUniqueCache = ref<Record<string, boolean>>({})
+  const allFieldsCache = ref<Record<string, Field[]>>({})
+
   // 选择状态
   const refreshTreeNode = ref(true)
   const selectedEntities = ref<Entity[]>([])
@@ -55,6 +66,7 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
           id: ds.id,
           label: ds.name,
           type: TreeNodeType.DATASOURCE,
+          datasourceCategory: ds.category,
           children: []
         }
       })
@@ -83,6 +95,7 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
   // 数据源操作
   function addDatasource(datasource: Datasource) {
     datasources.value.push(datasource)
+    datasourceNameCache.value[datasource.id] = datasource.name
     saveToHistory(OperationType.ADD_DATASOURCE, '添加数据源: ' + datasource.name, undefined, { datasource })
   }
 
@@ -91,6 +104,7 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
     if (index !== -1) {
       const oldDatasource = datasources.value[index]
       datasources.value[index] = { ...updatedDatasource }
+      datasourceNameCache.value[updatedDatasource.id] = updatedDatasource.name
       saveToHistory(OperationType.UPDATE_DATASOURCE, '更新数据源: ' + updatedDatasource.name, { datasource: oldDatasource }, { datasource: updatedDatasource })
     }
   }
@@ -102,6 +116,7 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
     
     const deletedDatasource = datasources.value.find(d => d.id === datasourceId)
     datasources.value = datasources.value.filter(d => d.id !== datasourceId)
+    delete datasourceNameCache.value[datasourceId]
     
     saveToHistory(OperationType.DELETE_DATASOURCE, '删除数据源', { datasource: deletedDatasource }, undefined)
   }
@@ -145,9 +160,37 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
       throw new Error('实体ID已存在')
     }
 
+    // 处理字段的serialNo - 先按serialNo排序，再重新编号
+    entity.fields.sort((a, b) => a.serialNo - b.serialNo)
+    entity.fields.forEach((field, index) => {
+      field.entityId = entity.id
+      field.serialNo = index + 1
+    })
+
+    // 缓存实体名称和字段名称
     entities.value.push(entity)
-    
+    entityNameCache.value[entity.id] = entity.name
+    entity.fields.forEach(field => {
+      fieldNameCache.value[field.id] = field.name
+      if (field.isPrimaryKey || field.isUnique) {
+        fieldUniqueCache.value[field.id] = true
+      }else{
+        fieldUniqueCache.value[field.id] = false
+      }
+    })
     saveToHistory(OperationType.ADD_ENTITY, '添加实体', undefined, { entity })
+  }
+
+  function updateEntitySize(updatedEntity: Entity) {
+    const index = entities.value.findIndex(e => e.id === updatedEntity.id)
+    if (index === -1) {
+      throw new Error('实体不存在')
+    }
+    const entity = entities.value[index]
+    if(entity){
+      entity.width = updatedEntity.width
+      entity.height = updatedEntity.height
+    }
   }
 
   function updateEntity(updatedEntity: Entity) {
@@ -156,6 +199,26 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
       throw new Error('实体不存在')
     }
     const oldEntity = entities.value[index]
+
+    // 处理字段的serialNo - 先按serialNo排序，再重新编号
+    updatedEntity.fields.sort((a, b) => a.serialNo - b.serialNo)
+    updatedEntity.fields.forEach((field, index) => {
+      field.entityId = updatedEntity.id
+      field.serialNo = index + 1
+    })
+
+    // 缓存实体名称和字段名称
+    entityNameCache.value[updatedEntity.id] = updatedEntity.name
+    updatedEntity.fields.forEach(field => {
+      fieldNameCache.value[field.id] = field.name
+      if (field.isPrimaryKey || field.isUnique) {
+        fieldUniqueCache.value[field.id] = true
+      }else{
+        fieldUniqueCache.value[field.id] = false
+      }
+    })
+    delete allFieldsCache.value[updatedEntity.id]
+
     entities.value[index] = updatedEntity
     saveToHistory(OperationType.UPDATE_ENTITY, '更新实体', { entity: oldEntity }, { entity: updatedEntity })
   }
@@ -178,6 +241,14 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
     }
     
     entities.value = entities.value.filter(e => e.id !== entityId)
+
+    // 删除缓存
+    delete entityNameCache.value[entityId]
+    deletedEntity?.fields.forEach(field => {
+      delete fieldNameCache.value[field.id]
+      delete fieldUniqueCache.value[field.id]
+    })
+    delete allFieldsCache.value[entityId]
     
     // 同时删除相关的关系
     relationships.value = relationships.value.filter(r => 
@@ -236,6 +307,45 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
   // 关系操作
   function addRelationship(relationship: Relationship) {
     relationships.value.push(relationship)
+
+    // 处理fromField的foreignKey
+    const fromEntity = entities.value.find(e => e.id === relationship.fromEntityId && e.datasourceId === relationship.datasourceId)
+    const fromField = fromEntity?.fields.find(f => f.id === relationship.fromFieldId)
+    if (fromField){
+      if (!fromField.foreignKey) {
+        fromField.foreignKey = [{
+          relationId: relationship.id,
+          referencedEntityId: relationship.toEntityId,
+          referencedFieldId: relationship.toFieldId || ''
+        }] 
+      } else {
+        fromField.foreignKey.push({
+          relationId: relationship.id,
+          referencedEntityId: relationship.toEntityId,
+          referencedFieldId: relationship.toFieldId || ''
+        })
+      }
+    }
+    
+    // 处理toField的foreignKey
+    const toEntity = entities.value.find(e => e.id === relationship.toEntityId && e.datasourceId === relationship.datasourceId)
+    const toField = toEntity?.fields.find(f => f.id === relationship.toFieldId)
+    if (toField){
+      if (!toField.foreignKey) {
+        toField.foreignKey = [{
+          relationId: relationship.id,
+          referencedEntityId: relationship.fromEntityId,
+          referencedFieldId: relationship.fromFieldId || ''
+        }] 
+      } else {
+        toField.foreignKey.push({ 
+          relationId: relationship.id,
+          referencedEntityId: relationship.fromEntityId,
+          referencedFieldId: relationship.fromFieldId || ''
+        })
+      }
+    }
+
     saveToHistory(OperationType.ADD_RELATIONSHIP, '添加关系', undefined, { relationship })
   }
 
@@ -249,12 +359,14 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
   }
 
   function deleteRelationship(relationshipId: string) {
+    console.log('deleteRelationship', relationshipId)
     const deletedRelationship = relationships.value.find(r => r.id === relationshipId)
     if (!deletedRelationship) {
       throw new Error('关系不存在')
     }
 
     relationships.value = relationships.value.filter(r => r.id !== relationshipId)
+    console.log('relationships.value', relationships.value);
     
     if (selectedRelationships.value.some(r => r.id === relationshipId)) {
       selectedRelationships.value = selectedRelationships.value.filter(r => r.id !== relationshipId)
@@ -448,6 +560,8 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
           name: 'Default',
           datasourceIds: ['default'],
           canvasState: {
+            MAX_ZOOM: MAX_ZOOM,
+            MIN_ZOOM: MIN_ZOOM,
             zoom: 1,
             panX: 0,
             panY: 0,
@@ -457,6 +571,9 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
       }
       
       datasources.value = [...list]
+      datasources.value.forEach(datasource => {
+        datasourceNameCache.value[datasource.id] = datasource.name
+      })
       views.value = [...viewList]
     } catch (error) {
       console.error('加载数据源失败:', error)
@@ -473,7 +590,20 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
     indexes,
     selectedEntities,
     selectedRelationships,
+
+    // 常量
+    MAX_ZOOM,
+    MIN_ZOOM,
+    ENTITY_HEADER_HEIGHT,
+    FIELD_HEIGHT,
     
+    //缓存
+    entityNameCache,
+    fieldNameCache,
+    datasourceNameCache,
+    fieldUniqueCache,
+    allFieldsCache,
+
     // 计算属性
     entityCount,
     relationshipCount,
@@ -493,6 +623,7 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
     // 实体方法
     addEntity,
     updateEntity,
+    updateEntitySize,
     deleteEntity,
     getEntityById,
     getEntityWithInheritedFields,

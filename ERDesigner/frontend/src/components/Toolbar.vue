@@ -116,6 +116,10 @@
             </g>
         </svg>
       </button>
+      <!-- 拖拽画布 -->
+      <button @click="dragCanvas" :title="$t('toolbar.dragCanvas')" :aria-label="$t('toolbar.dragCanvas')">
+        <component :is="isDragMode ? DragCanvasIcon : SelectionBoxIcon" />
+      </button>
       <div class="toolbar-separator"></div>
       <!-- 插入实体 -->
       <button @click="addEntity" :title="$t('toolbar.addEntity')" :aria-label="$t('toolbar.addEntity')">
@@ -207,6 +211,8 @@ import AddEntityIcon from '@/assets/AddEntityIcon.vue'
 import PasteIcon from '@/assets/PasteIcon.vue'
 import CopyIcon from '@/assets/CopyIcon.vue'
 import DeleteIcon from '@/assets/DeleteIcon.vue'
+import DragCanvasIcon from '@/assets/DragCanvasIcon.vue'
+import SelectionBoxIcon from '@/assets/SelectionBoxIcon.vue'
 
 const emit = defineEmits([
   'toggleSidebar',
@@ -229,7 +235,8 @@ const emit = defineEmits([
   'changeEntityFontColor',
   'colorEntity',
   'colorRelation',
-  'pasteEntity'
+  'pasteEntity',
+  'dragCanvas'
 ])
 const props = defineProps({
   sidebarVisible: Boolean,
@@ -259,6 +266,10 @@ function deleteEntity() { emit('deleteEntity') }
 function importDiagram() { emit('importDiagram') }
 function colorEntityBorder() { emit('colorEntityBorder') }
 function changeEntityFontColor() { emit('changeEntityFontColor') }
+function dragCanvas() { 
+  isDragMode.value = !isDragMode.value
+  emit('dragCanvas', isDragMode.value)
+}
 
 const toolbarRef = ref<HTMLElement | null>(null)
 const showLeftScroll = ref(false)
@@ -270,6 +281,7 @@ const zoomInputRef = ref<HTMLInputElement | null>(null)
 const zoomOptions = [50, 75, 100, 150, 200]
 const zoomButtonRef = ref<HTMLElement | null>(null)
 const dropdownStyle = ref({})
+const isDragMode = ref(false)
 
 /* 百分比设置下拉框 */
 function toggleDropdown() {

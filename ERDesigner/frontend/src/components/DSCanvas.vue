@@ -43,50 +43,44 @@
       <rect v-if="canvasState.showGrid" width="100%" height="100%" fill="url(#grid)"/>
     </svg>
     <svg
-      ref="svgCanvas"
       class="canvas-svg"
       width="100%"
       height="100%"
+      :style="{ cursor: props.isDragMode ? 'move' : 'default'}"
       :viewBox="`${canvasState.panX} ${canvasState.panY} ${canvasWidth} ${canvasHeight}`"
       @mousedown="handleCanvasMouseDown">
       <!-- 关系连线 -->
-      <g class="relations-layer">
-        <RelationLine
-          v-for="relationship in store.relationships"
-          :relation="relationship"
-          :key="relationship.id"
-          :relationship="relationship"
-          :path="getRelationPath(relationship)"
-          :label="relationship.name || ''"
-          :labelPosition="getRelationLabelPosition(relationship)"
-          marker-id="arrowhead"
-        />
-      </g>
-      
-      <!-- 箭头标记 -->
-      <defs>
-        <marker id="arrowhead" markerWidth="10" markerHeight="7" 
-                refX="9" refY="3.5" orient="auto">
-          <polygon points="0 0, 10 3.5, 0 7" fill="#666" />
-        </marker>
-      </defs>
-      
+      <RelationLine
+        v-for="relationship in props.relationships"
+        :key="relationship.id"
+        :ENTITY_HEADER_HEIGHT="props.ENTITY_HEADER_HEIGHT"
+        :FIELD_HEIGHT="props.FIELD_HEIGHT"
+        :relationLineType="`canvas`"
+        :fieldRefs="fieldRefs"
+        :relationship="relationship"
+        :dragEntity="dragEntity"
+        :visibleEntities="props.entities"
+        :allFieldsCache="props.allFieldsCache"
+        :fieldUniqueCache="props.fieldUniqueCache"/>  
       <!-- 实体 -->
-      <g class="entities-layer">
-        <EntityNode
-          v-for="entity in props.entities"
-          :key="entity.id"
-          :entity="entity"
-          :selected="isEntitySelected(entity)"
-          :visibleEntities="props.entities"
-          :dragTransform="draggingEntityIds.includes(entity.id) ? `translate(${dragEntity[entity.id]?.x || entity.x},${dragEntity[entity.id]?.y || entity.y})` : undefined"
-          @dblclick="handleEntityDoubleClick"
-          @mousedown="handleEntityMouseDown"
-          @touchstart="handleEntityTouchStart"
-          @touchmove="handleEntityTouchMove"
-          @touchend="handleEntityTouchEnd"/>
-      </g>
-
+      <EntityNode
+        v-for="entity in props.entities"
+        :key="entity.id"
+        :entity="entity"
+        :ENTITY_HEADER_HEIGHT="props.ENTITY_HEADER_HEIGHT"
+        :FIELD_HEIGHT="props.FIELD_HEIGHT"
+        :selected="isEntitySelected(entity)"
+        :visibleEntities="props.entities"
+        :virtualEntities="props.virtualEntities"
+        :allFieldsCache="props.allFieldsCache"
+        :dragTransform="draggingEntityIds.includes(entity.id) ? `translate(${dragEntity[entity.id]?.x || entity.x},${dragEntity[entity.id]?.y || entity.y})` : undefined"
+        @dblclick="handleEntityDoubleClick"
+        @mousedown="handleEntityMouseDown"
+        @touchstart="handleEntityTouchStart"
+        @touchmove="handleEntityTouchMove"
+        @setFieldRef="handleSetFieldRef"
+        @touchend="handleEntityTouchEnd"
+        @updateEntitySize="handleUpdateEntitySize"/>
       <rect
         v-if="selectionBox.visible"
         :x="selectionBox.x"
@@ -103,27 +97,30 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, reactive, computed } from 'vue'
 import { useDSDiagramStore } from '../stores/dsDiagram'
-import type { Entity, Relationship, CanvasState } from '../types/entity'
+import type { Entity, CanvasState, Relationship, Field } from '../types/entity'
 import EntityNode from './EntityNode.vue'
 import RelationLine from './RelationLine.vue'
 import { useI18n } from 'vue-i18n'
-import { isDataView } from 'util/types'
+import { screenToCanvasCoords } from '@/utils/datasourceUtil'
 
 interface Props {
+  isDragMode?: boolean
   entities?: Entity[]
-  canvasState?: CanvasState
+  relationships?: Relationship[]
+  virtualEntities?: Entity[]
+  canvasState: CanvasState
   selectedEntities?: Entity[]
+  allFieldsCache: Record<string, Field[]>
+  fieldUniqueCache: Record<string, boolean>
+  ENTITY_HEADER_HEIGHT: number
+  FIELD_HEIGHT: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  canvasState: () => ({
-    zoom: 1,
-    panX: 0,
-    panY: 0,
-    showGrid: true
-  }),
   selectedEntities: () => [],
-  entities: () => []
+  virtualEntities: () => [],
+  entities: () => [],
+  allFieldsCache: () => ({})
 })
 
 const emit = defineEmits<{
@@ -137,6 +134,7 @@ const emit = defineEmits<{
   'pasteEntity': []
   'undo': []
   'redo': []
+  'updateEntitySize': [entity: Entity]
 }>()
 
 const { t: $t } = useI18n()
@@ -144,7 +142,8 @@ const store = useDSDiagramStore()
 
 // 响应式数据
 const canvasContainer = ref<HTMLDivElement>()
-const svgCanvas = ref<SVGSVGElement>()
+//const fieldRefs = ref(new Map<string, HTMLElement>())
+const fieldRefs = reactive<Record<string, Record<string, HTMLElement>>>({})
 
 // 画布选择框拖拽状态
 const draggingEntityIds = ref<string[]>([])
@@ -180,16 +179,24 @@ function isEntitySelected(entity: Entity): boolean {
   return props.selectedEntities.some(e => e.id === entity.id)
 }
 
-// 将屏幕坐标转换为画布坐标（考虑缩放因子）
-function screenToCanvasCoords(clientX: number, clientY: number): { x: number, y: number } {
-  const svg = svgCanvas.value!
-  const rect = svg.getBoundingClientRect()
-  const viewBox = svg.viewBox.baseVal
-  // 计算鼠标在SVG中的相对位置
-  const x = ((clientX - rect.left) / rect.width) * viewBox.width + viewBox.x
-  const y = ((clientY - rect.top) / rect.height) * viewBox.height + viewBox.y
-  return { x, y }
+// 设置字段引用用于计算关系连线
+function handleSetFieldRef(entityId: string, fieldId: string, el: HTMLElement | null) {
+  if (el) {
+    if (!fieldRefs[entityId]) fieldRefs[entityId] = {}
+    if (fieldId) {
+      fieldRefs[entityId][fieldId] = el
+    }
+  } else {
+    if (fieldRefs[entityId]) {
+      delete fieldRefs[entityId][fieldId]
+    }
+  }
 }
+
+function handleUpdateEntitySize(entity: Entity) {
+  emit('updateEntitySize', entity)
+}
+
 // ------------------------------ 公用函数 结束 ------------------------------
 
 // ------------------------------ 框选状态 开始 ------------------------------
@@ -198,38 +205,46 @@ function handleCanvasMouseDown(event: MouseEvent) {
   // 只允许左键
   if (event.button !== 0) return
   mouseDownPos = { x: event.clientX, y: event.clientY }
-  const canvasCoords = screenToCanvasCoords(event.clientX, event.clientY)
-  selectionBox.value = {
-    visible: true,
-    startX: canvasCoords.x,
-    startY: canvasCoords.y,
-    x: canvasCoords.x,
-    y: canvasCoords.y,
-    width: 0,
-    height: 0
+  if(!props.isDragMode) {
+    const canvasCoords = screenToCanvasCoords(event.clientX, event.clientY)
+    selectionBox.value = {
+      visible: true,
+      startX: canvasCoords.x,
+      startY: canvasCoords.y,
+      x: canvasCoords.x,
+      y: canvasCoords.y,
+      width: 0,
+      height: 0
+    }
   }
   document.addEventListener('mousemove', handleSelectionBoxMouseMove)
   document.addEventListener('mouseup', handleSelectionBoxMouseUp)
 }
 // 框选鼠标移动
 function handleSelectionBoxMouseMove(event: MouseEvent) {
-  if (!selectionBox.value.visible) return
-  const canvasCoords = screenToCanvasCoords(event.clientX, event.clientY)
-  const x = Math.min(selectionBox.value.startX, canvasCoords.x)
-  const y = Math.min(selectionBox.value.startY, canvasCoords.y)
-  const width = Math.abs(canvasCoords.x - selectionBox.value.startX)
-  const height = Math.abs(canvasCoords.y - selectionBox.value.startY)
-  selectionBox.value = {
-    ...selectionBox.value,
-    x,
-    y,
-    width,
-    height
+  if(props.isDragMode) {
+    const dx = event.clientX - mouseDownPos.x
+    const dy = event.clientY - mouseDownPos.y
+    props.canvasState.panX -= dx
+    props.canvasState.panY -= dy
+    mouseDownPos = { x: event.clientX, y: event.clientY }
+  }else if (selectionBox.value.visible){
+    const canvasCoords = screenToCanvasCoords(event.clientX, event.clientY)
+    const x = Math.min(selectionBox.value.startX, canvasCoords.x)
+    const y = Math.min(selectionBox.value.startY, canvasCoords.y)
+    const width = Math.abs(canvasCoords.x - selectionBox.value.startX)
+    const height = Math.abs(canvasCoords.y - selectionBox.value.startY)
+    selectionBox.value = {
+      ...selectionBox.value,
+      x,
+      y,
+      width,
+      height
+    }
   }
 }
 // 框选鼠标抬起
 function handleSelectionBoxMouseUp(_event: MouseEvent) {
-  if (!selectionBox.value.visible) return
   const moved =
     Math.abs(_event.clientX - mouseDownPos.x) > 3 ||
     Math.abs(_event.clientY - mouseDownPos.y) > 3
@@ -257,6 +272,8 @@ function handleSelectionBoxMouseUp(_event: MouseEvent) {
     emit('selectionChange', selected)
     selectionBox.value.visible = false
   }
+
+  mouseDownPos = { x: 0, y: 0 }
   document.removeEventListener('mousemove', handleSelectionBoxMouseMove)
   document.removeEventListener('mouseup', handleSelectionBoxMouseUp)
 }
@@ -266,7 +283,6 @@ function handleSelectionBoxMouseUp(_event: MouseEvent) {
 // 画布点击事件
 function handleCanvasClick(event: MouseEvent) {
   // 检查点击的是否是实体或实体的子元素
-  console.log(event.clientX, event.clientY)
   const target = event.target as Element
   const isEntityClick = target.closest('.entity') || target.closest('.entity-group')
   
@@ -408,6 +424,9 @@ function onDragEnd(_event: MouseEvent){
         if (entity) {
           entity.x = dragEntity[id].x
           entity.y = dragEntity[id].y
+
+          console.log('dragEntity[id].x', dragEntity[id].x, 'dragEntity[id].y', dragEntity[id].y, entity.width, entity.height)
+
           store.updateEntity(entity)
 
           // 同步更新 selectedEntities 中的实体
@@ -416,15 +435,13 @@ function onDragEnd(_event: MouseEvent){
             selectedEntity.x = dragEntity[id].x
             selectedEntity.y = dragEntity[id].y
           }
-
-          console.log(id, dragEntity, dragEntity[id].x,  dragEntity[id].y, entity.x, entity.y,selectedEntity?.x, selectedEntity?.y)
         }
       })
     }
   }
 
   draggingEntityIds.value = []
-  Object.keys(dragEntity).forEach(key => delete dragEntity[key])
+  //Object.keys(dragEntity).forEach(key => delete dragEntity[key])
   mouseDownPos = { x: 0, y: 0 }
 
   if (animationFrameId) {
@@ -437,40 +454,6 @@ function onDragEnd(_event: MouseEvent){
 }
 // ------------------------------ 实体拖拽 结束 ------------------------------
 
-// ------------------------------ 关系连线 开始 ------------------------------
-// 获取关系路径
-function getRelationPath(relationship: Relationship): string {
-  const fromEntity = props.entities.find(e => e.id === relationship.fromEntityId)
-  const toEntity = props.entities.find(e => e.id === relationship.toEntityId)
-  
-  if (!fromEntity || !toEntity) return ''
-  
-  const fromX = fromEntity.x + fromEntity.width / 2
-  const fromY = fromEntity.y + fromEntity.height / 2
-  const toX = toEntity.x + toEntity.width / 2
-  const toY = toEntity.y + toEntity.height / 2
-  
-  return `M ${fromX} ${fromY} L ${toX} ${toY}`
-}
-// 获取关系标签位置
-function getRelationLabelPosition(relationship: Relationship) {
-  const fromEntity = props.entities.find(e => e.id === relationship.fromEntityId)
-  const toEntity = props.entities.find(e => e.id === relationship.toEntityId)
-  
-  if (!fromEntity || !toEntity) return{ x: 0, y: 0 }
-  
-  const fromX = fromEntity.x + fromEntity.width / 2
-  const fromY = fromEntity.y + fromEntity.height / 2
-  const toX = toEntity.x + toEntity.width / 2
-  const toY = toEntity.y + toEntity.height / 2
-  
-  return {
-    x: (fromX + toX) / 2,
-    y: (fromY + toY) / 2 - 5
-  }
-}
-// ------------------------------ 关系连线 结束 ------------------------------
-
 // ------------------------------ 键盘事件处理 开始 ------------------------------
 // 缩放和键盘事件处理
 function handleWheel(event: WheelEvent) {
@@ -479,12 +462,12 @@ function handleWheel(event: WheelEvent) {
   if (event.ctrlKey || event.metaKey) {
     // 缩放
     const delta = event.deltaY > 0 ? 0.9 : 1.1
-    const newZoom = Math.max(0.1, Math.min(3, props.canvasState.zoom * delta))
+    const newZoom = Math.max(props.canvasState.MIN_ZOOM, Math.min(props.canvasState.MAX_ZOOM, props.canvasState.zoom * delta))
     zoomChange(newZoom)
   } else {
     // 平移画布
-    props.canvasState.panX += event.deltaX / props.canvasState.zoom
-    props.canvasState.panY += event.deltaY / props.canvasState.zoom
+    props.canvasState.panX += event.deltaX
+    props.canvasState.panY += event.deltaY
   }
 }
 // 键盘事件处理
@@ -547,10 +530,10 @@ function handleKeyDown(event: KeyboardEvent) {
 }
 //快捷键
 function zoomIn() {
-  zoomChange(Math.min(props.canvasState.zoom * 1.2, 3))
+  zoomChange(Math.min(props.canvasState.zoom * 1.2, props.canvasState.MAX_ZOOM))
 }
 function zoomOut() {
-  zoomChange(Math.max(props.canvasState.zoom / 1.2, 0.1))
+  zoomChange(Math.max(props.canvasState.zoom / 1.2, props.canvasState.MIN_ZOOM))
 }
 function resetZoom() {
   const entities = props.entities
@@ -635,7 +618,7 @@ function handleTouchMove(event: TouchEvent) {
     // 双指缩放
     const currentDistance = getTouchDistance(touches[0], touches[1])
     const scale = currentDistance / initialPinchDistance.value
-    const newZoom = Math.max(0.1, Math.min(3, currentZoom.value * scale))
+    const newZoom = Math.max(props.canvasState.MIN_ZOOM, Math.min(props.canvasState.MAX_ZOOM, currentZoom.value * scale))
     zoomChange(newZoom)
   }
 }
@@ -797,7 +780,7 @@ containerSize.value.height / props.canvasState.zoom
   height: 100%;
 }
 .dark-theme .canvas-container {
-  background: #030303;
+  background: #101010;
 }
 .grid-layer {
   position: absolute;

@@ -6,9 +6,8 @@
 </template>
 <style scoped>
 .mongodb-icon {
-    width: 18px;
-    height: 18px;
+    width: 100%;
+    height: 100%;
     vertical-align: middle;
-    margin-right: 4px;
 }
 </style>

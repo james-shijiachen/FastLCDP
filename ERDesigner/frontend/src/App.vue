@@ -35,7 +35,7 @@
       @deleteEntity="deleteSelectedEntities"
       @importDiagram="importDiagram"
       @colorEntityBorder="colorEntityBorder"
-    />
+      @dragCanvas="isDragMode = $event"/>
 
     <!-- 主布局 -->
     <div class="main-layout">
@@ -51,19 +51,27 @@
         <ViewTabs
           :views="store.views"
           :activeViewId="activeViewId"
-          @contextmenu="activeViewId === 'default' ? null : handleViewRightClick($event, activeViewId)"
+          @contextmenu="handleViewRightClick"
           @update:activeViewId="activeViewId = $event"
           />
         <DSCanvas 
           ref="canvasRef"
+          :fieldUniqueCache="store.fieldUniqueCache"
           :canvasState="currentCanvasState"
           :entities="visibleEntities"
+          :virtualEntities="virtualEntities"
+          :relationships="visibleRelationships"
           :selectedEntities="store.selectedEntities"
+          :isDragMode="isDragMode"
+          :allFieldsCache="store.allFieldsCache"
+          :ENTITY_HEADER_HEIGHT="store.ENTITY_HEADER_HEIGHT"
+          :FIELD_HEIGHT="store.FIELD_HEIGHT"
           @entityDoubleClick="handleEntityDoubleClick"
           @entityRightClick="handleEntityRightClick"
           @canvasClick="handleCanvasClick"
           @canvasRightClick="handleCanvasRightClick"
           @selectionChange="handleSelectionChange"
+          @updateEntitySize="handleUpdateEntitySize"
           @copyEntity="copyEntity"
           @pasteEntity="pasteEntity"
           @hideContextMenu="hideContextMenus"
@@ -78,6 +86,7 @@
           :type="contextMenu.type"
           :targetId="contextMenu.targetId || undefined"
           :entities="visibleEntities"
+          :relationships="visibleRelationships"
           :isMultiSelect="isMultiSelect"
           @createEntity="createEntityAtPosition"
           @paste="pasteEntity"
@@ -133,14 +142,23 @@
       :parentEntity="parentEntity"
       :datasources="store.datasources"
       :entities="store.entities"
+      :relationships="store.relationships"
+      :entityNameCache="store.entityNameCache"
+      :fieldNameCache="store.fieldNameCache"
       :currentDatasourceId="currentDatasourceId || store.datasources[0]?.id" 
       @save="handleEntitySave"
+      @deleteRelation="handleDeleteRelation"
       @close="closeEntityModal"
     />
     <!-- 关系编辑模态框 -->
     <RelationEditModal 
       v-if="showRelationModal"
-      :entities="store.selectedEntities"
+      :ENTITY_HEADER_HEIGHT="store.ENTITY_HEADER_HEIGHT"
+      :FIELD_HEIGHT="store.FIELD_HEIGHT"
+      :entities="store.entities"
+      :fieldUniqueCache="store.fieldUniqueCache"
+      :selectedEntities="store.selectedEntities"
+      :relationships="visibleRelationships"
       @save="handleRelationSave"
       @close="closeRelationModal"
     />
@@ -175,15 +193,31 @@ const isMobile = computed(() => windowWidth.value <= 768) // 是否是移动端
 const isTablet = computed(() => windowWidth.value <= 1024 && windowWidth.value > 768) // 是否是平板
 const sidebarVisible = ref(!isMobile.value)  // 是否显示右侧数据库树面板
 const isDarkTheme = ref(false)  // 是否暗色主题
+const isDragMode = ref(false)  // 是否拖拽画布
 
 // 响应式数据
 const activeViewId = ref<string>('default') // 当前激活视图ID
-const currentView = computed(() => store.views.find(v => v.id === activeViewId.value))
+const currentView = computed(() => store.views.find(v => v.id === activeViewId.value)) // 当前视图
+// 可见实体（只显示entity类型，不显示abstract类型）
 const visibleEntities = computed(() =>
-  // 可见实体（只显示entity类型，不显示abstract类型）
   store.entities.filter(e => currentView.value?.datasourceIds.some(ds => ds === e.datasourceId) && e.entityType === EntityType.ENTITY)
 )
-const currentCanvasState = computed(() => currentView.value?.canvasState)  // 当前视图的画布状态
+// 可见关联（只显示当前视图下的关联）
+const visibleRelationships = computed(() =>
+  store.relationships.filter(r => currentView.value?.datasourceIds.some(ds => ds === r.datasourceId))
+)
+// 虚拟实体（用于在画布上给实体显示继承的字段信息）
+const virtualEntities = computed(() =>
+  store.entities.filter(e => currentView.value?.datasourceIds.some(ds => ds === e.datasourceId) && e.entityType === EntityType.ABSTRACT)
+)
+const currentCanvasState = computed(() => currentView.value?.canvasState || {
+  MAX_ZOOM: store.MAX_ZOOM,
+  MIN_ZOOM: store.MIN_ZOOM,
+  zoom: 1,
+  panX: 0,
+  panY: 0,
+  showGrid: true
+})  // 当前视图的画布状态,如果视图未定义则返回默认状态
 const canvasRef = ref<InstanceType<typeof DSCanvas> | null>(null)  // 画布实例
 const showEntityModal = ref(false)  // 是否显示实体编辑模态框
 const showRelationModal = ref(false)  // 是否显示关系编辑模态框
@@ -225,6 +259,8 @@ function handleAddView(datasource: Datasource) {
     name: datasource.name,
     datasourceIds: [datasource.id],
     canvasState: {
+      MAX_ZOOM: store.MAX_ZOOM,
+      MIN_ZOOM: store.MIN_ZOOM,
       zoom: 1,
       panX: 0,
       panY: 0,
@@ -585,7 +621,10 @@ function handleMoveEntity(source: TreeNode, target: TreeNode) {
     }
   }
 }
-
+// 实体大小更新
+function handleUpdateEntitySize(entity: Entity) {
+  store.updateEntitySize(entity)
+}
 // ------------------------------ 实体方法 end------------------------------
 
 // ------------------------------ 数据源方法 start------------------------------
@@ -655,6 +694,10 @@ function handleRelationSave(relation: any) {
   } catch (error) {
     errorHandler.handleBusinessError(error instanceof Error ? error.message : String(error))
   }
+}
+// 删除关系
+function handleDeleteRelation(relationId: string) {
+  store.deleteRelationship(relationId)
 }
 // 关闭关系编辑模态框
 function closeRelationModal() {
@@ -774,7 +817,7 @@ function handleKeyDown(event: KeyboardEvent) {
   height: 100%;
   min-height: 0;
   display: flex;
-  background: #f6f8fa;
+  background: #fff;
   flex-direction: column;
   overflow: hidden;
 }
@@ -790,6 +833,7 @@ function handleKeyDown(event: KeyboardEvent) {
   background: #fff;
   z-index: 1000;
   position: relative;
+  border-left: 1px solid #e1e4e8;
 }
 /* 右侧数据库树面板（顶部） */
 .sidebar-top {
@@ -806,6 +850,9 @@ function handleKeyDown(event: KeyboardEvent) {
   background: transparent;
   transition: background 0.2s;
   border-top: 1px solid #e1e4e8;
+}
+.dark-theme .sidebar-vertical {
+  border-left: none
 }
 .dark-theme .sidebar-divider {
   border-top: 1px solid #404040;
@@ -863,6 +910,9 @@ function handleKeyDown(event: KeyboardEvent) {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 100;
 }
+.dark-theme .relation-hint {
+  background: #341757;
+}
 .hint-content {
   display: flex;
   align-items: center;
@@ -877,6 +927,9 @@ function handleKeyDown(event: KeyboardEvent) {
   border-radius: 4px;
   font-size: 12px;
   cursor: pointer;
+}
+.dark-theme .create-relation-btn {
+  color: #341757;
 }
 .create-relation-btn:hover {
   background: #f6f8fa;

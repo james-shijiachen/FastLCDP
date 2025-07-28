@@ -14,26 +14,25 @@
         </svg>
       </span>
       <!-- 数据库图标 -->
-      <span v-if="node.type === TreeNodeType.DATASOURCE" class="node-icon datasource-icon">
-        <svg width="16" height="16" viewBox="0 0 16 16">
-          <path d="M8 1C5.5 1 3 1.5 3 2.5v11c0 1 2.5 1.5 5 1.5s5-.5 5-1.5v-11C13 1.5 10.5 1 8 1z" stroke="currentColor" stroke-width="1" fill="none"/>
-          <ellipse cx="8" cy="2.5" rx="5" ry="1.5" stroke="currentColor" stroke-width="1" fill="none"/>
-          <ellipse cx="8" cy="6" rx="5" ry="1.5" stroke="currentColor" stroke-width="1" fill="none"/>
-          <ellipse cx="8" cy="9.5" rx="5" ry="1.5" stroke="currentColor" stroke-width="1" fill="none"/>
-        </svg>
+      <span v-if="node.type === TreeNodeType.DATASOURCE" class="node-icon">
+        <component v-if="node.datasourceCategory === DatasourceCategory.MYSQL" :is="MysqlIcon" :class="['datasource-icon', { selected: selectedEntities.some(e => e.id === node.id) }]" />
+        <component v-else-if="node.datasourceCategory === DatasourceCategory.SQLITE" :is="SqliteIcon" :class="['datasource-icon', { selected: selectedEntities.some(e => e.id === node.id) }]" />
+        <component v-else-if="node.datasourceCategory === DatasourceCategory.ORACLE" :is="OracleIcon" :class="['datasource-icon', { selected: selectedEntities.some(e => e.id === node.id) }]" />
+        <component v-else-if="node.datasourceCategory === DatasourceCategory.POSTGRESQL" :is="PostgresqlIcon" :class="['datasource-icon', { selected: selectedEntities.some(e => e.id === node.id) }]" />
+        <component v-else-if="node.datasourceCategory === DatasourceCategory.SQLSERVER" :is="SqlServerIcon" :class="['datasource-icon', { selected: selectedEntities.some(e => e.id === node.id) }]" />
+        <component v-else-if="node.datasourceCategory === DatasourceCategory.REDIS" :is="RedisIcon" :class="['datasource-icon', { selected: selectedEntities.some(e => e.id === node.id) }]" />
+        <component v-else-if="node.datasourceCategory === DatasourceCategory.MONGODB" :is="MongodbIcon" :class="['datasource-icon', { selected: selectedEntities.some(e => e.id === node.id) }]" />
+        <component v-else-if="node.datasourceCategory === DatasourceCategory.ELASTICSEARCH" :is="ElasticsearchIcon" :class="['datasource-icon', { selected: selectedEntities.some(e => e.id === node.id) }]" />
+        <component v-else-if="node.datasourceCategory === DatasourceCategory.JSON" :is="JsonIcon" :class="['datasource-icon', { selected: selectedEntities.some(e => e.id === node.id) }]" />
+        <component v-else-if="node.datasourceCategory === DatasourceCategory.XML" :is="XmlIcon" :class="['datasource-icon', { selected: selectedEntities.some(e => e.id === node.id) }]" />
+        <component v-else :is="DatabaseIcon" />
       </span>
       <!-- 实体/表图标 -->
       <span v-if="node && node.type === TreeNodeType.ENTITY && node.entityType === EntityType.ABSTRACT" class="node-icon entity-icon abstract-icon">
-        <!-- 抽象类图标：虚线矩形（无A字） -->
-        <svg width="16" height="16" viewBox="0 0 16 16">
-          <rect x="2" y="4" width="12" height="8" stroke="currentColor" stroke-width="1" fill="none" stroke-dasharray="3,2"/>
-        </svg>
+        <component :is="AbstractEntityIcon" :class="['entity-icon', { selected: selectedEntities.some(e => e.id === node.id) }]" />
       </span>
       <span v-else-if="node && node.type === TreeNodeType.ENTITY" class="node-icon entity-icon">
-        <svg width="16" height="16" viewBox="0 0 16 16">
-          <rect x="2" y="4" width="12" height="8" stroke="currentColor" stroke-width="1" fill="none"/>
-          <line x1="2" y1="7" x2="14" y2="7" stroke="currentColor" stroke-width="1"/>
-        </svg>
+        <component :is="AddEntityIcon" :class="['entity-icon', { selected: selectedEntities.some(e => e.id === node.id) }]" />
       </span>
       <span class="node-label">{{ node.label }}</span>
       <span v-if="hasChildren" class="child-count">{{ node.children?.length }}/{{ totalDescendants }}</span>
@@ -41,7 +40,7 @@
     </div>
     <div v-if="expanded && hasChildren" class="child-nodes">
       <TreeNode
-        v-for="child in (node.children || []).filter(Boolean)"
+        v-for="child in sortedChildren"
         :key="child.id"
         :node="child"
         :selectedEntities="selectedEntities"
@@ -61,8 +60,21 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import type { TreeNode, Entity } from '../types/entity'
-import { TreeNodeType, EntityType } from '../types/entity'
+import { TreeNodeType, EntityType, DatasourceCategory } from '../types/entity'
 import { useDragStore } from '../stores/dragState'
+import AbstractEntityIcon from '@/assets/AbstractEntityIcon.vue'
+import AddEntityIcon from '@/assets/AddEntityIcon.vue'
+import MysqlIcon from '@/assets/MySQLIcon.vue'
+import OracleIcon from '@/assets/OracleIcon.vue'
+import PostgresqlIcon from '@/assets/PostgreSQLIcon.vue'
+import SqlServerIcon from '@/assets/SQLServerIcon.vue'
+import RedisIcon from '@/assets/RedisIcon.vue'
+import MongodbIcon from '@/assets/MongoDBIcon.vue'
+import ElasticsearchIcon from '@/assets/ElasticSearchIcon.vue'
+import JsonIcon from '@/assets/JsonIcon.vue'
+import XmlIcon from '@/assets/XMLIcon.vue'
+import DatabaseIcon from '@/assets/DatabaseIcon.vue'
+import SqliteIcon from '@/assets/SQLiteIcon.vue'
 
 const dragStore = useDragStore()
 
@@ -71,6 +83,7 @@ const props = defineProps<{
   selectedEntities: Entity[]
   dragOverNodeId?: string | null
 }>()
+
 const emit = defineEmits(['addEntity', 'selectEntity', 'contextmenu', 'nodeDrop', 'dragOverNode', 'dragLeaveNode', 'doubleClick'])
 
 const expanded = ref(false)
@@ -90,6 +103,15 @@ const totalDescendants = computed(() => {
   }
   return count(props.node)
 })
+
+// 排序子节点，优先显示虚拟实体，并按名称顺序排序
+const sortedChildren = computed(() =>
+  [...(props.node.children || [])].sort((a, b) => {
+    if (a.entityType === 'ABSTRACT' && b.entityType !== 'ABSTRACT') return -1;
+    if (a.entityType !== 'ABSTRACT' && b.entityType === 'ABSTRACT') return 1;
+    return a.label.localeCompare(b.label);
+  })
+)
 // 展开/折叠节点
 function toggle() {
   expanded.value = !expanded.value
@@ -148,15 +170,14 @@ function onDrop() {
 }
 /* 图标 */
 .entity-icon {
-  color: #28a745;
+  color: #5c5e5d;
 }
 .node-icon {
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 6px;
   color: #586069;
 }
 .expand-icon {
@@ -165,7 +186,7 @@ function onDrop() {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 4px;
+  margin-right: 2px;
   transition: transform 0.2s;
   color: #586069;
 }
@@ -229,6 +250,12 @@ function onDrop() {
 }
 .tree-node.selected > .node-content {
   background: #0366d6;
+  color: #fff;
+}
+.datasource-icon.selected {
+  color: #fff;
+}
+.entity-icon.selected {
   color: #fff;
 }
 .drag-over {

@@ -95,11 +95,11 @@ watch(tabsContainer, checkScroll)
 .view-tabs-wrapper {
   display: flex;
   align-items: center;
-  background: #f6f8fa;
-  border-bottom: 1px solid #e1e4e8;
+  background: #f5f7fa;
   position: relative;
-  height: 30px;
+  height: 40px;
   overflow: hidden;
+  border:none
 }
 .view-tabs-wrapper, .view-tabs-wrapper * {
   user-select: none;
@@ -120,35 +120,39 @@ watch(tabsContainer, checkScroll)
 .view-tab {
   padding: 4px 24px;
   cursor: pointer;
-  border-bottom: 2px solid transparent;
   margin-right: 2px;
+  margin-left: 2px;
+  margin-top: 6px;
   white-space: nowrap;
   flex-shrink: 0;
   font-size: 15px;
   font-family: 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
   font-weight: 600;
+  border-radius: 2px 2px 0 0;
+  border-top: 5px solid #d0d0d0;
+  border-left: 0.5px solid #d0d0d0;
+  border-right: 0.5px solid #d0d0d0;
 }
 .view-tab.active {
   font-weight: bold;
-  background: #0366d6;
-  color: #fff;
-}
-.view-tab:active, .view-tab:hover {
-  background: #0451aa;
-  color: #fff;
+  background: #fff;
+  color: #000;
+  border-top: 5px solid #0366d6;
+  border-left: 0.5px solid #0366d6;
+  border-right: 0.5px solid #0366d6;
 }
 .view-tab:hover:not(.active) {
-  background: #edeeee;
+  background: #fff;
+  border-top: 5px solid #82bcff;
   color: #000;
-  border-radius: 4px;
 }
 
 .view-tab-icon {
-    width: 18px;
-    height: 18px;
-    vertical-align: middle;
-    margin-right: 4px;
-  }
+  width: 18px;
+   height: 18px;
+  vertical-align: middle;
+  margin-right: 4px;
+}
 
 .scroll-btn {
   width: var(--toolbar-icon-size);
@@ -156,7 +160,7 @@ watch(tabsContainer, checkScroll)
   background: #dedede;
   border: none;
   cursor: pointer;
-  color: #409eff;
+  color: #0366d6;
   z-index: 1;
 }
 .scroll-btn.left {
@@ -169,16 +173,24 @@ watch(tabsContainer, checkScroll)
 /* 暗色主题 */
 .dark-theme .view-tabs-wrapper {
   background: #030303;
-  border-bottom: 0.5px solid #333333; 
   box-shadow: 2px 0 4px rgba(0, 0, 0, 0.2);
 }
 .dark-theme .view-tab.active {
   font-weight: bold;
-  background: #341757;
+  background: #101010;
   color: #fff;
+  border-top: 3px solid #7132bd;
+  border-left: 0.5px solid #7132bd;
+  border-right: 0.5px solid #7132bd;
+}
+.dark-theme .view-tab {
+  border-top: 3px solid #202020;
+  border-left: 0.5px solid #202020;
+  border-right: 0.5px solid #202020;
 }
 .dark-theme .view-tab:hover:not(.active) {
   background: #202020;
   color: #fff;
+  border-top: 3px solid #472077;
 }
 </style>

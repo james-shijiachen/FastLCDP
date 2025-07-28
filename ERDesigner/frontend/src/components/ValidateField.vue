@@ -3,6 +3,7 @@
     <div class="field-wrapper">
       <input
         v-if="type === 'text'"
+        ref="inputRef"
         :id="fieldId"
         :value="modelValue"
         :type="inputType"
@@ -14,6 +15,7 @@
         @focus="handleFocus"/>
       <textarea
         v-else-if="type === 'textarea'"
+        ref="inputRef"
         :id="fieldId"
         :value="modelValue"
         :placeholder="placeholder"
@@ -28,7 +30,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useFieldError } from '@/utils/useFieldError'
 
 interface Props {
@@ -60,6 +62,9 @@ const emit = defineEmits<{
   'enter': [event: KeyboardEvent]
 }>()
 
+// 输入框引用
+const inputRef = ref<HTMLInputElement | HTMLTextAreaElement | null>(null)
+
 // 使用字段错误处理
 const { getFieldError, hasFieldError, clearFieldError } = useFieldError(props.component)
 
@@ -87,6 +92,17 @@ const handleFocus = (event: FocusEvent) => {
 const handleEnter = (event: KeyboardEvent) => {
   emit('enter', event)
 }
+
+// 暴露focus方法给父组件
+const focus = () => {
+  if (inputRef.value) {
+    inputRef.value.focus()
+  }
+}
+
+defineExpose({
+  focus
+})
 </script>
 
 <style scoped>
@@ -142,4 +158,4 @@ const handleEnter = (event: KeyboardEvent) => {
   line-height: 1.4;
   margin-top: 2px;
 }
-</style> 
+</style>

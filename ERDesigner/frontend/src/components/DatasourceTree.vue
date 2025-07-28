@@ -79,7 +79,6 @@ function handleModalWheel(event: WheelEvent) {
 
 // 拖拽节点（待实现）
 function handleNodeDrop({ source, target }: { source: TreeNode, target: TreeNode }) {
-  console.log("handleNodeDrop", source, target)
   if(source && target){
     emit('moveEntity', source, target)
   }
