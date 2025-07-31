@@ -8,31 +8,28 @@
   @drop.stop="onDrop">
     <div :class="['node-content',{ 'drag-over': node.id === dragOverNodeId }]" @click="handleSelect" @dblclick="handleDoubleClick(node)" @contextmenu.prevent="handleContextMenu($event, node)">
       <span v-if="hasChildren" class="expand-icon" @click.stop="toggle">
-        <svg width="12" height="12" viewBox="0 0 12 12">
-          <polygon v-if="!expanded" points="4,3 9,6 4,9" fill="currentColor" />
-          <polygon v-else points="3,5 9,5 6,10" fill="currentColor" />
-        </svg>
+        <Icon name="expand" :class="['expand-icon', { 'expanded': expanded }]" />
       </span>
       <!-- 数据库图标 -->
       <span v-if="node.type === TreeNodeType.DATASOURCE" class="node-icon">
-        <component v-if="node.datasourceCategory === DatasourceCategory.MYSQL" :is="MysqlIcon" :class="['datasource-icon', { selected: selectedEntities.some(e => e.id === node.id) }]" />
-        <component v-else-if="node.datasourceCategory === DatasourceCategory.SQLITE" :is="SqliteIcon" :class="['datasource-icon', { selected: selectedEntities.some(e => e.id === node.id) }]" />
-        <component v-else-if="node.datasourceCategory === DatasourceCategory.ORACLE" :is="OracleIcon" :class="['datasource-icon', { selected: selectedEntities.some(e => e.id === node.id) }]" />
-        <component v-else-if="node.datasourceCategory === DatasourceCategory.POSTGRESQL" :is="PostgresqlIcon" :class="['datasource-icon', { selected: selectedEntities.some(e => e.id === node.id) }]" />
-        <component v-else-if="node.datasourceCategory === DatasourceCategory.SQLSERVER" :is="SqlServerIcon" :class="['datasource-icon', { selected: selectedEntities.some(e => e.id === node.id) }]" />
-        <component v-else-if="node.datasourceCategory === DatasourceCategory.REDIS" :is="RedisIcon" :class="['datasource-icon', { selected: selectedEntities.some(e => e.id === node.id) }]" />
-        <component v-else-if="node.datasourceCategory === DatasourceCategory.MONGODB" :is="MongodbIcon" :class="['datasource-icon', { selected: selectedEntities.some(e => e.id === node.id) }]" />
-        <component v-else-if="node.datasourceCategory === DatasourceCategory.ELASTICSEARCH" :is="ElasticsearchIcon" :class="['datasource-icon', { selected: selectedEntities.some(e => e.id === node.id) }]" />
-        <component v-else-if="node.datasourceCategory === DatasourceCategory.JSON" :is="JsonIcon" :class="['datasource-icon', { selected: selectedEntities.some(e => e.id === node.id) }]" />
-        <component v-else-if="node.datasourceCategory === DatasourceCategory.XML" :is="XmlIcon" :class="['datasource-icon', { selected: selectedEntities.some(e => e.id === node.id) }]" />
-        <component v-else :is="DatabaseIcon" />
+        <Icon :name="node.datasourceCategory === DatasourceCategory.MYSQL ? 'mysql' 
+        : node.datasourceCategory === DatasourceCategory.SQLITE ? 'sqlite' 
+        : node.datasourceCategory === DatasourceCategory.ORACLE ? 'oracle' 
+        : node.datasourceCategory === DatasourceCategory.POSTGRESQL ? 'postgresql' 
+        : node.datasourceCategory === DatasourceCategory.SQLSERVER ? 'sqlserver' 
+        : node.datasourceCategory === DatasourceCategory.REDIS ? 'redis' 
+        : node.datasourceCategory === DatasourceCategory.MONGODB ? 'mongodb' 
+        : node.datasourceCategory === DatasourceCategory.ELASTICSEARCH ? 'elasticsearch' 
+        : node.datasourceCategory === DatasourceCategory.JSON ? 'json' 
+        : node.datasourceCategory === DatasourceCategory.XML ? 'xml' 
+        : 'database'" :class="['datasource-icon', { selected: selectedEntities.some(e => e.id === node.id) }]" />
       </span>
       <!-- 实体/表图标 -->
       <span v-if="node && node.type === TreeNodeType.ENTITY && node.entityType === EntityType.ABSTRACT" class="node-icon entity-icon abstract-icon">
-        <component :is="AbstractEntityIcon" :class="['entity-icon', { selected: selectedEntities.some(e => e.id === node.id) }]" />
+        <Icon name="abstract-entity" :class="['entity-icon', { selected: selectedEntities.some(e => e.id === node.id) }]" />
       </span>
       <span v-else-if="node && node.type === TreeNodeType.ENTITY" class="node-icon entity-icon">
-        <component :is="AddEntityIcon" :class="['entity-icon', { selected: selectedEntities.some(e => e.id === node.id) }]" />
+        <Icon name="add-entity" :class="['entity-icon', { selected: selectedEntities.some(e => e.id === node.id) }]" />
       </span>
       <span class="node-label">{{ node.label }}</span>
       <span v-if="hasChildren" class="child-count">{{ node.children?.length }}/{{ totalDescendants }}</span>
@@ -62,19 +59,7 @@ import { ref, computed, watch } from 'vue'
 import type { TreeNode, Entity } from '../types/entity'
 import { TreeNodeType, EntityType, DatasourceCategory } from '../types/entity'
 import { useDragStore } from '../stores/dragState'
-import AbstractEntityIcon from '@/assets/AbstractEntityIcon.vue'
-import AddEntityIcon from '@/assets/AddEntityIcon.vue'
-import MysqlIcon from '@/assets/MySQLIcon.vue'
-import OracleIcon from '@/assets/OracleIcon.vue'
-import PostgresqlIcon from '@/assets/PostgreSQLIcon.vue'
-import SqlServerIcon from '@/assets/SQLServerIcon.vue'
-import RedisIcon from '@/assets/RedisIcon.vue'
-import MongodbIcon from '@/assets/MongoDBIcon.vue'
-import ElasticsearchIcon from '@/assets/ElasticSearchIcon.vue'
-import JsonIcon from '@/assets/JsonIcon.vue'
-import XmlIcon from '@/assets/XMLIcon.vue'
-import DatabaseIcon from '@/assets/DatabaseIcon.vue'
-import SqliteIcon from '@/assets/SQLiteIcon.vue'
+import Icon from '@/components/Icon.vue'
 
 const dragStore = useDragStore()
 
@@ -220,6 +205,7 @@ function onDrop() {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-left: 4px;
 }
 .child-nodes {
   margin-left: 20px;
@@ -266,10 +252,6 @@ function onDrop() {
 }
 .dark-theme .drag-over {
   background: #3c2959 !important;
-}
-/* 抽象类图标特殊样式（可选） */
-.abstract-icon svg {
-  opacity: 0.85;
 }
 .abstract-icon text {
   font-weight: bold;

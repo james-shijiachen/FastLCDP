@@ -114,6 +114,7 @@ interface Props {
   fieldUniqueCache: Record<string, boolean>
   ENTITY_HEADER_HEIGHT: number
   FIELD_HEIGHT: number
+  isSplitScreen: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -135,6 +136,8 @@ const emit = defineEmits<{
   'undo': []
   'redo': []
   'updateEntitySize': [entity: Entity]
+  'zoomChange': [level: number]
+  'setFocusPane': [pane: string]
 }>()
 
 const { t: $t } = useI18n()
@@ -215,6 +218,10 @@ function handleCanvasMouseDown(event: MouseEvent) {
       y: canvasCoords.y,
       width: 0,
       height: 0
+    }
+
+    if(props.isSplitScreen) {
+      emit('setFocusPane', 'canvas')
     }
   }
   document.addEventListener('mousemove', handleSelectionBoxMouseMove)
@@ -325,6 +332,10 @@ function handleEntityClick(entity: Entity, event: MouseEvent) {
   } else {
     emit('selectionChange', [entity])
   }
+
+  if(props.isSplitScreen) {
+    emit('setFocusPane', 'canvas')
+  }
 }
 // 实体双击事件
 function handleEntityDoubleClick(entity: Entity) {
@@ -343,6 +354,10 @@ function handleEntityRightClick(entity: Entity, event: MouseEvent) {
 function handleEntityMouseDown(entity: Entity, event: MouseEvent) {
   event.preventDefault()
   event.stopPropagation()
+
+  if(props.isSplitScreen) {
+    emit('setFocusPane', 'canvas')
+  }
 
   mouseDownPos = { x: event.clientX, y: event.clientY }
   draggingEntityIds.value = [entity.id]
@@ -530,10 +545,13 @@ function handleKeyDown(event: KeyboardEvent) {
 }
 //快捷键
 function zoomIn() {
-  zoomChange(Math.min(props.canvasState.zoom * 1.2, props.canvasState.MAX_ZOOM))
+  emit('zoomChange', Math.min(props.canvasState.zoom * 1.2, props.canvasState.MAX_ZOOM))
 }
 function zoomOut() {
-  zoomChange(Math.max(props.canvasState.zoom / 1.2, props.canvasState.MIN_ZOOM))
+  emit('zoomChange', Math.max(props.canvasState.zoom / 1.2, props.canvasState.MIN_ZOOM))
+}
+function zoomChange(level: number) {
+  emit('zoomChange', level)
 }
 function resetZoom() {
   const entities = props.entities
@@ -572,9 +590,6 @@ function resetZoom() {
   props.canvasState.zoom = zoomLevel
   props.canvasState.panX = panX
   props.canvasState.panY = panY
-}
-function zoomChange(level: number) {
-  props.canvasState.zoom = level
 }
 function toggleGrid() {
   props.canvasState.showGrid = !props.canvasState.showGrid
@@ -744,10 +759,7 @@ function handleEntityTouchEnd(entity: Entity, event: TouchEvent) {
 
 // 暴露方法给父组件
 defineExpose({
-  zoomIn,
-  zoomOut,
   resetZoom,
-  zoomChange,
   toggleGrid
 })
 

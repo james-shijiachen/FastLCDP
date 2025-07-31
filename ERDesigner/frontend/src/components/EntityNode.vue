@@ -55,16 +55,10 @@
           :width="viewedEntity.width"
           :height="props.FIELD_HEIGHT"
           fill="transparent"/>
-        <!-- 主键图标 -->
-        <foreignObject v-if="field.isPrimaryKey" x="5.5" y="1" width="20" height="20">
+        <!-- 主键图标 & 唯一键图标 -->
+        <foreignObject x="5.5" y="1" width="20" height="20">
           <div>
-            <component :is="KeyIcon" style="width: 14px; height: 14px;" />
-          </div>
-        </foreignObject>
-        <!-- 唯一键图标 -->
-        <foreignObject v-else-if="field.isUnique" x="5.5" y="1" width="20" height="20">
-          <div>
-            <component :is="UniqueIcon" style="width: 14px; height: 14px;" />
+            <Icon :name="field.isPrimaryKey ? 'key' : (field.isUnique ? 'unique' : '')" style="width: 14px; height: 14px;" />
           </div>
         </foreignObject>
         <!-- 字段名 -->
@@ -108,8 +102,7 @@
 <script setup lang="ts">
 import type { Entity, Field } from '../types/entity'
 import { defineProps, defineEmits, computed } from 'vue'
-import KeyIcon from '../assets/KeyIcon.vue'
-import UniqueIcon from '../assets/UniqueIcon.vue'
+import Icon from '@/components/Icon.vue'
 import { getAllParentFields, updateEntitySize } from '@/utils/datasourceUtil'
 
 const props = defineProps<{

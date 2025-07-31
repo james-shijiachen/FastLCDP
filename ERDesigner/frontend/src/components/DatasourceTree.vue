@@ -9,7 +9,7 @@
       <div class="tree-header">
         <h3>{{ $t('datasource.structure') }}</h3>
         <button class="btn btn-primary btn-new-datasource" @click="$emit('createDatasource')" :title="$t('datasource.newDatasource')">
-          <component :is="DatabaseIcon" />
+          <Icon name="database" style="width: 22px; height: 22px;" />
           {{ $t('datasource.newDatasourceButton') }}
         </button>
       </div>
@@ -40,7 +40,7 @@ import { useI18n } from 'vue-i18n'
 import type { TreeNode, Entity } from '../types/entity'
 import { TreeNodeType } from '../types/entity'
 import TreeNodeComponent from './TreeNode.vue'
-import DatabaseIcon from '@/assets/DatabaseIcon.vue'
+import Icon from '@/components/Icon.vue'
 
 interface Props {
   treeData: TreeNode[]
@@ -152,9 +152,9 @@ function handleSelectEntity(node: TreeNode) {
 }
 .btn-new-datasource {
   padding: 6px 20px;
-  font-size: 15px;
-  font-family: 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
-  font-weight: 600;
+  font-size: var(--font-size-md);
+  font-family: var(--font-family-ui);
+  font-weight: var(--font-weight-semibold);
   letter-spacing: 0.02em;
   border-radius: 6px;
   border: none;
@@ -198,7 +198,7 @@ function handleSelectEntity(node: TreeNode) {
   height: 50px;
 }
 .dark-theme .tree-header {
-  background: #1b1b1b;
+  background: #121212;
   border-bottom: 1px solid #1b1b1b;
 }
 .tree-header h3 {

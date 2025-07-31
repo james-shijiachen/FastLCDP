@@ -33,5 +33,9 @@ export default defineConfig({
   define: {
     // Monaco Editor worker configuration
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development')
-  }
+  },
+  worker: {
+    format: 'es'
+  },
+  assetsInclude: ['**/*.worker.js']
 })

@@ -159,7 +159,9 @@
     "colorRelationLine": "Color Relation Line",
     "dragCanvas": "Drag Canvas",
     "changeFontColor": "Change Font Color",
-    "menu": "Menu"
+    "menu": "Menu",
+    "formatCode": "Format Code",
+    "toggleSplitScreen": "Toggle Split Screen"
   },
   "panel": {
     "datasourceStructure": "Datasource Structure",

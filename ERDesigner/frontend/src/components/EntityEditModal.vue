@@ -26,7 +26,7 @@
           field="entity.entityType"
           component="EntityEditModal"
           :label="$t('entity.type')"
-          :options="[{ value: 'ENTITY', label: $t('entity.table'), icon: AddEntityIcon }, { value: 'ABSTRACT', label: $t('entity.abstract'), icon: AbstractEntityIcon }]"/>
+          :options="[{ value: 'ENTITY', label: $t('entity.table'), icon: 'add-entity' }, { value: 'ABSTRACT', label: $t('entity.abstract'), icon: 'abstract-entity' }]"/>
         <RadioButton 
           v-model="formData.datasourceId" 
           field="entity.datasourceId" 
@@ -179,43 +179,31 @@ import { EntityType, DatasourceType, DatasourceCategory } from '../types/entity'
 import { useDraggableModal } from '@/utils/useDraggableModal'
 import { ValidateField, RadioButton } from '@/components'
 import { useFieldError } from '@/utils/useFieldError'
-import AbstractEntityIcon from '@/assets/AbstractEntityIcon.vue'
-import AddEntityIcon from '@/assets/AddEntityIcon.vue'
-import DatabaseIcon from '@/assets/DatabaseIcon.vue'
-import SQLiteIcon from '@/assets/SQLiteIcon.vue'
-import OracleIcon from '@/assets/OracleIcon.vue'
-import PostgreSQLIcon from '@/assets/PostgreSQLIcon.vue'
-import SQLSERVERIcon from '@/assets/SQLServerIcon.vue'
-import RedisIcon from '@/assets/RedisIcon.vue'
-import MongoDBIcon from '@/assets/MongoDBIcon.vue'
-import ElasticsearchIcon from '@/assets/ElasticSearchIcon.vue'
-import JsonIcon from '@/assets/JsonIcon.vue'
-import XmlIcon from '@/assets/XMLIcon.vue'
 import { getChildEntityIds, getAllParentFields } from '@/utils/datasourceUtil'
 import { deepClone } from '@/utils/commons'
-import MySQLIcon from '@/assets/MySQLIcon.vue'
+
 
 const {clearFieldError, setFieldError, getFieldError } = useFieldError('EntityEditModal')
 const { t: $t } = useI18n()
 const { modalRef, onHeaderMousedown } = useDraggableModal()
 
 const iconMap = {
-  [DatasourceType.DATABASE]: DatabaseIcon,
-  [DatasourceCategory.SQLITE]: SQLiteIcon,
-  [DatasourceCategory.MYSQL]: MySQLIcon,
-  [DatasourceCategory.ORACLE]: OracleIcon,
-  [DatasourceCategory.POSTGRESQL]: PostgreSQLIcon,
-  [DatasourceCategory.SQLSERVER]: SQLSERVERIcon,
-  [DatasourceCategory.REDIS]: RedisIcon,
-  [DatasourceCategory.MONGODB]: MongoDBIcon,
-  [DatasourceCategory.ELASTICSEARCH]: ElasticsearchIcon,
-  [DatasourceCategory.JSON]: JsonIcon,
-  [DatasourceCategory.XML]: XmlIcon
+  [DatasourceType.DATABASE]: 'database',
+  [DatasourceCategory.SQLITE]: 'sqlite',
+  [DatasourceCategory.MYSQL]: 'mysql',
+  [DatasourceCategory.ORACLE]: 'oracle',
+  [DatasourceCategory.POSTGRESQL]: 'postgresql',
+  [DatasourceCategory.SQLSERVER]: 'sqlserver',
+  [DatasourceCategory.REDIS]: 'redis',
+  [DatasourceCategory.MONGODB]: 'mongodb',
+  [DatasourceCategory.ELASTICSEARCH]: 'elasticsearch',
+  [DatasourceCategory.JSON]: 'json',
+  [DatasourceCategory.XML]: 'xml'
 }
 
 const parentEntityIconMap = {
-  [EntityType.ENTITY]: AddEntityIcon,
-  [EntityType.ABSTRACT]: AbstractEntityIcon
+  [EntityType.ENTITY]: 'add-entity',
+  [EntityType.ABSTRACT]: 'abstract-entity'
 }
 
 interface Props {

@@ -60,29 +60,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, type Component} from 'vue'
+import { ref, computed} from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { Datasource } from '../types/entity'
 import { DatasourceType, DatasourceCategory, DatasourceVersion } from '../types/entity'
 import { useDraggableModal } from '@/utils/useDraggableModal'
 import { ValidateField, RadioButton } from '@/components'
 import { useFieldError } from '@/utils/useFieldError'
-import NewViewIcon from '@/assets/NewViewIcon.vue'
-import DefaultViewIcon from '@/assets/DefaultViewIcon.vue'
-import ViewIcon from '@/assets/ViewIcon.vue'
-import DatabaseIcon from '@/assets/DatabaseIcon.vue'
-import RedisIcon from '@/assets/RedisIcon.vue'
-import NoSQLIcon from '@/assets/NoSQLIcon.vue'
-import DocumentIcon from '@/assets/DocumentIcon.vue'
-import MySQLIcon from '@/assets/MySQLIcon.vue'
-import OracleIcon from '@/assets/OracleIcon.vue'
-import PostgreSQLIcon from '@/assets/PostgreSQLIcon.vue'
-import SQLServerIcon from '@/assets/SQLServerIcon.vue'
-import SQLiteIcon from '@/assets/SQLiteIcon.vue'
-import JsonIcon from '@/assets/JsonIcon.vue'
-import MongoDBIcon from '@/assets/MongoDBIcon.vue'
-import ElasticSearchIcon from '@/assets/ElasticSearchIcon.vue'
-import XMLIcon from '@/assets/XMLIcon.vue'
 
 const {clearFieldError, setFieldError, getFieldError } = useFieldError('DatasourceEditModal')
 const { t: $t } = useI18n()
@@ -119,15 +103,15 @@ const isValid = computed(() => {
 
 const viewOptions = computed(() => {
   const viewId = formData.value.viewId;
-  let options: { value: string, label: string, icon?: string | Component }[] = [];
+  let options: { value: string, label: string, icon?: string }[] = [];
   if(viewId === 'default' || viewId === ''){
     options = [
-      { value: 'default', label: $t('datasource.defaultView'), icon: DefaultViewIcon },
-      ({ value: '', label: $t('datasource.newView'), icon: NewViewIcon })
+      { value: 'default', label: $t('datasource.defaultView'), icon: 'default-view' },
+      ({ value: '', label: $t('datasource.newView'), icon: 'new-view' })
     ];
   }else{
     options = [
-      { value: formData.value.viewId, label: formData.value.name, icon: ViewIcon }
+      { value: formData.value.viewId, label: formData.value.name, icon: 'view' }
     ];
   }
   
@@ -136,9 +120,9 @@ const viewOptions = computed(() => {
 
 const typeOptions = computed(() => {
   const options = [
-    { value: 'DATABASE', label: $t('datasource.database'), icon: DatabaseIcon },
-    { value: 'NOSQL', label: $t('datasource.nosql'), icon: NoSQLIcon },
-    { value: 'DOCUMENT', label: $t('datasource.document'), icon: DocumentIcon }
+    { value: 'DATABASE', label: $t('datasource.database'), icon: 'database' },
+    { value: 'NOSQL', label: $t('datasource.nosql'), icon: 'nosql' },
+    { value: 'DOCUMENT', label: $t('datasource.document'), icon: 'document' }
   ];
   return options;
 })
@@ -148,22 +132,22 @@ const categoryOptions = computed(() => {
   let options;
   if(type === 'DATABASE' || type === ''){
     options = [
-    { value: 'SQLITE', label: $t('datasource.sqlite'), icon: SQLiteIcon },
-    { value: 'MYSQL', label: $t('datasource.mysql'), icon: MySQLIcon },
-    { value: 'ORACLE', label: $t('datasource.oracle'), icon: OracleIcon },
-    { value: 'POSTGRESQL', label: $t('datasource.postgresql'), icon: PostgreSQLIcon },
-    { value: 'SQLSERVER', label: $t('datasource.sqlserver'), icon: SQLServerIcon }
+    { value: 'SQLITE', label: $t('datasource.sqlite'), icon: 'sqlite' },
+    { value: 'MYSQL', label: $t('datasource.mysql'), icon: 'mysql' },
+    { value: 'ORACLE', label: $t('datasource.oracle'), icon: 'oracle' },
+    { value: 'POSTGRESQL', label: $t('datasource.postgresql'), icon: 'postgresql' },
+    { value: 'SQLSERVER', label: $t('datasource.sqlserver'), icon: 'sqlserver' }
     ];
   }else if(type === 'NOSQL'){
     options = [
-      { value: 'REDIS', label: $t('datasource.redis'), icon: RedisIcon },
-      { value: 'MONGODB', label: $t('datasource.mongo'), icon: MongoDBIcon },
-      { value: 'ELASTICSEARCH', label: $t('datasource.elasticsearch'), icon: ElasticSearchIcon }
+      { value: 'REDIS', label: $t('datasource.redis'), icon: 'redis' },
+      { value: 'MONGODB', label: $t('datasource.mongo'), icon: 'mongodb' },
+      { value: 'ELASTICSEARCH', label: $t('datasource.elasticsearch'), icon: 'elasticsearch' }
     ];
   }else if(type === 'DOCUMENT'){
     options = [
-      { value: 'JSON', label: $t('datasource.json'), icon: JsonIcon },
-      { value: 'XML', label: $t('datasource.xml'), icon: XMLIcon }
+      { value: 'JSON', label: $t('datasource.json'), icon: 'json' },
+      { value: 'XML', label: $t('datasource.xml'), icon: 'xml' }
     ];
   }
   return options;
@@ -175,34 +159,34 @@ const versionOptions = computed(() => {
   let options;
   if(type === 'DATABASE' && category === 'MYSQL'){
     options = [
-      { value: 'MYSQL_5_X', label: $t('datasource.mysql5'), icon: MySQLIcon },
-      { value: 'MYSQL_8_X', label: $t('datasource.mysql8'), icon: MySQLIcon },
+      { value: 'MYSQL_5_X', label: $t('datasource.mysql5'), icon: 'mysql' },
+      { value: 'MYSQL_8_X', label: $t('datasource.mysql8'), icon: 'mysql' },
   ]}else if(type === 'DATABASE' && category === 'ORACLE'){
     options = [
-      { value: 'ORACLE_11_X', label: $t('datasource.oracle11'), icon: OracleIcon },
-      { value: 'ORACLE_12_X', label: $t('datasource.oracle12'), icon: OracleIcon },
-      { value: 'ORACLE_19_X', label: $t('datasource.oracle19'), icon: OracleIcon },
-      { value: 'ORACLE_21_X', label: $t('datasource.oracle21'), icon: OracleIcon },
-      { value: 'ORACLE_23_X', label: $t('datasource.oracle23'), icon: OracleIcon },
-      { value: 'ORACLE_25_X', label: $t('datasource.oracle25'), icon: OracleIcon },
+      { value: 'ORACLE_11_X', label: $t('datasource.oracle11'), icon: 'oracle' },
+      { value: 'ORACLE_12_X', label: $t('datasource.oracle12'), icon: 'oracle' },
+      { value: 'ORACLE_19_X', label: $t('datasource.oracle19'), icon: 'oracle' },
+      { value: 'ORACLE_21_X', label: $t('datasource.oracle21'), icon: 'oracle' },
+      { value: 'ORACLE_23_X', label: $t('datasource.oracle23'), icon: 'oracle' },
+      { value: 'ORACLE_25_X', label: $t('datasource.oracle25'), icon: 'oracle' },
   ]}else if(type === 'DATABASE' && category === 'POSTGRESQL'){
     options = [
-      { value: 'POSTGRESQL_10_X', label: $t('datasource.postgresql10'), icon: PostgreSQLIcon },
-      { value: 'POSTGRESQL_11_X', label: $t('datasource.postgresql11'), icon: PostgreSQLIcon },
-      { value: 'POSTGRESQL_12_X', label: $t('datasource.postgresql12'), icon: PostgreSQLIcon },
-      { value: 'POSTGRESQL_13_X', label: $t('datasource.postgresql13'), icon: PostgreSQLIcon },
-      { value: 'POSTGRESQL_14_X', label: $t('datasource.postgresql14'), icon: PostgreSQLIcon },
-      { value: 'POSTGRESQL_15_X', label: $t('datasource.postgresql15'), icon: PostgreSQLIcon },
-      { value: 'POSTGRESQL_16_X', label: $t('datasource.postgresql16'), icon: PostgreSQLIcon },
+      { value: 'POSTGRESQL_10_X', label: $t('datasource.postgresql10'), icon: 'postgresql' },
+      { value: 'POSTGRESQL_11_X', label: $t('datasource.postgresql11'), icon: 'postgresql' },
+      { value: 'POSTGRESQL_12_X', label: $t('datasource.postgresql12'), icon: 'postgresql' },
+      { value: 'POSTGRESQL_13_X', label: $t('datasource.postgresql13'), icon: 'postgresql' },
+      { value: 'POSTGRESQL_14_X', label: $t('datasource.postgresql14'), icon: 'postgresql' },
+      { value: 'POSTGRESQL_15_X', label: $t('datasource.postgresql15'), icon: 'postgresql' },
+      { value: 'POSTGRESQL_16_X', label: $t('datasource.postgresql16'), icon: 'postgresql' },
   ]}else if(type === 'DATABASE' && category === 'SQLSERVER'){
     options = [
-      { value: 'SQLSERVER_2008_X', label: $t('datasource.sqlserver2008'), icon: SQLServerIcon },
-      { value: 'SQLSERVER_2012_X', label: $t('datasource.sqlserver2012'), icon: SQLServerIcon },
-      { value: 'SQLSERVER_2014_X', label: $t('datasource.sqlserver2014'), icon: SQLServerIcon },
-      { value: 'SQLSERVER_2016_X', label: $t('datasource.sqlserver2016'), icon: SQLServerIcon },
-      { value: 'SQLSERVER_2017_X', label: $t('datasource.sqlserver2017'), icon: SQLServerIcon },
-      { value: 'SQLSERVER_2019_X', label: $t('datasource.sqlserver2019'), icon: SQLServerIcon },
-      { value: 'SQLSERVER_2022_X', label: $t('datasource.sqlserver2022'), icon: SQLServerIcon }
+      { value: 'SQLSERVER_2008_X', label: $t('datasource.sqlserver2008'), icon: 'sqlserver' },
+      { value: 'SQLSERVER_2012_X', label: $t('datasource.sqlserver2012'), icon: 'sqlserver' },
+      { value: 'SQLSERVER_2014_X', label: $t('datasource.sqlserver2014'), icon: 'sqlserver' },
+      { value: 'SQLSERVER_2016_X', label: $t('datasource.sqlserver2016'), icon: 'sqlserver' },
+      { value: 'SQLSERVER_2017_X', label: $t('datasource.sqlserver2017'), icon: 'sqlserver' },
+      { value: 'SQLSERVER_2019_X', label: $t('datasource.sqlserver2019'), icon: 'sqlserver' },
+      { value: 'SQLSERVER_2022_X', label: $t('datasource.sqlserver2022'), icon: 'sqlserver' }
   ]}
   return options;
 })

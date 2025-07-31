@@ -1,7 +1,7 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
-import './style.css'
+import '@/styles/style.css'
 import { createI18n } from 'vue-i18n'
 import en from '../i18n/locales/en.json'
 import zh from '../i18n/locales/zh.json'

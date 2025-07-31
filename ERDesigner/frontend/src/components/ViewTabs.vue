@@ -6,8 +6,8 @@
         </svg>
       </button>
       <div class="view-tabs" ref="tabsContainer">
-        <div key="code-design" :class="['view-tab', { active: activeViewId === 'code-design' }]" @click="$emit('update:activeViewId', 'code-design')">
-          <component :is="CodeDesignViewIcon"/>
+        <div v-if="!isSplitScreen" key="code" :class="['view-tab', { active: activeViewId === 'code' }]" @click="$emit('update:activeViewId', 'code')">
+          <Icon name="code-view" width="18" height="18" />
           {{ $t('view.code') }}
         </div>
         <div
@@ -16,8 +16,7 @@
           :class="['view-tab', { active: view.id === activeViewId }]"
           @contextmenu.prevent="view.id === 'default' ? null : handleViewRightClick($event, view.id)"
           @click="$emit('update:activeViewId', view.id)">
-          <component v-if="view.id === 'default'" :is="DefaultViewIcon" class="view-tab-icon" />
-          <component v-else :is="ViewIcon" class="view-tab-icon" />
+          <Icon :name="view.id === 'default' ? 'default-view' : 'view'" class="view-tab-icon" />
           {{ view.name }}
         </div>
       </div>
@@ -31,12 +30,11 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, nextTick, onBeforeUnmount } from 'vue'
 import type { View } from '../types/entity'
-import DefaultViewIcon from '@/assets/DefaultViewIcon.vue'
-import ViewIcon from '@/assets/ViewIcon.vue'
-import CodeDesignViewIcon from '@/assets/CodeDesignViewIcon.vue'
+import Icon from '@/components/Icon.vue'
 
 const props = defineProps<{
-  views: View[]
+  views: View[],
+  isSplitScreen: boolean,
   activeViewId: string
 }>()
 const emit = defineEmits(['update:activeViewId', 'contextmenu'])
@@ -103,6 +101,7 @@ watch(tabsContainer, checkScroll)
   background: #f5f7fa;
   position: relative;
   height: 40px;
+  min-height: 40px;
   overflow: hidden;
   border:none
 }
@@ -130,9 +129,9 @@ watch(tabsContainer, checkScroll)
   margin-top: 6px;
   white-space: nowrap;
   flex-shrink: 0;
-  font-size: 15px;
-  font-family: 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
-  font-weight: 600;
+  font-size: var(--font-size-md);
+  font-family: var(--font-family-ui);
+  font-weight: var(--font-weight-semibold);
   border-radius: 2px 2px 0 0;
   border-top: 5px solid #d0d0d0;
   border-left: 0.5px solid #d0d0d0;
@@ -158,6 +157,33 @@ watch(tabsContainer, checkScroll)
   vertical-align: middle;
   margin-right: 4px;
 }
+
+.view-tabs-wrapper button {
+  padding: 0;
+  border: none;
+  background: none;
+  color: #212121;
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s, color 0.15s;
+}
+.view-tabs-wrapper button:hover {
+  transform: scale(1.12);
+  color: #409eff;
+  background: none;
+}
+.dark-theme .view-tabs-wrapper button{
+  color: #f4f3f3;
+}
+.dark-theme .view-tabs-wrapper button:hover{
+  transform: scale(1.12);
+  color: #409eff;
+  background: none;
+}
+
 
 .scroll-btn {
   width: var(--toolbar-icon-size);

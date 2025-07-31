@@ -18,8 +18,7 @@
                 :class="{ selected: formData.fromFieldId === field.id, disabled: hasRelation(fromEntity.id, field.id) || (toField && shouldDisableField(field, toField)) }"
                 @click="hasRelation(fromEntity.id, field.id) || (toField && shouldDisableField(field, toField)) ? null : selectFromField(field.id)">
                 <div class="field-left">
-                  <span v-if="field.isPrimaryKey" class="key-icon"><component :is="KeyIcon" /></span>
-                  <span v-else-if="field.isUnique" class="unique-icon"><component :is="UniqueIcon" /></span>
+                  <span class="icon"><Icon :name="field.isPrimaryKey ? 'key' : field.isUnique ? 'unique' : ''" /></span>
                   <span class="field-name">{{ field.name }}</span>
                 </div>
                 <div class="field-right">
@@ -50,8 +49,7 @@
                 :class="{ selected: formData.toFieldId === field.id, disabled: hasRelation(toEntity.id, field.id) || (fromField && shouldDisableField(field, fromField)) }"
                 @click="hasRelation(toEntity.id, field.id) || (fromField && shouldDisableField(field, fromField)) ? null : selectToField(field.id)">
                 <div class="field-left">
-                  <span v-if="field.isPrimaryKey" class="key-icon"><component :is="KeyIcon" /></span>
-                  <span v-else-if="field.isUnique" class="unique-icon"><component :is="UniqueIcon" /></span>
+                  <span class="icon"><Icon :name="field.isPrimaryKey ? 'key' : field.isUnique ? 'unique' : ''" /></span>
                   <span class="field-name">{{ field.name }}</span>
                 </div>
                 <div class="field-right">
@@ -125,11 +123,8 @@ import { useI18n } from 'vue-i18n'
 import type { Entity, Relationship, CascadeOperation, Field } from '../types/entity'
 import { RelationshipType, RelationshipCategory } from '../types/entity'
 import { ValidateField, RadioButton, RelationLine } from '@/components'
-import KeyIcon from '../assets/KeyIcon.vue'
-import UniqueIcon from '../assets/UniqueIcon.vue'
 import { getAllParentFields } from '@/utils/datasourceUtil'
-import SoftRelationIcon from '../assets/SoftRelationIcon.vue'
-import HardRelationIcon from '../assets/HardRelationIcon.vue'
+import Icon from '@/components/Icon.vue'
 
 interface Props {
   entities: Entity[]
@@ -281,12 +276,12 @@ const canSelectRelationCategories = computed(() => {
 const relationshipTypeOptions = [ {
   value: 'SOFT',
   label: $t('relation.soft'),
-  icon: SoftRelationIcon
+  icon: 'soft-relation'
 },
 {
   value: 'HARD',
   label: $t('relation.hard'),
-  icon: HardRelationIcon
+  icon: 'hard-relation'
 }]
 
 const cascadeOperationOptions = [{
@@ -426,6 +421,10 @@ function setFieldRef(entityId: string, fieldId: string, el: HTMLElement | null) 
 }
 .modal-footer {
   padding: 0px 30px 20px 30px;
+}
+.icon{
+  width: 16px;
+  height: 16px;
 }
 .entities-info {
   display: flex;
@@ -568,7 +567,6 @@ function setFieldRef(entityId: string, fieldId: string, el: HTMLElement | null) 
   background: #121212;
   transition: all 0.2s ease;
 }
-
 .dark-theme .relation-type-option:hover {
   border-color: #bb86fc;
   background: #2c2c2c;
@@ -591,10 +589,10 @@ function setFieldRef(entityId: string, fieldId: string, el: HTMLElement | null) 
   margin-bottom: 4px;
 }
 .type-visual {
-  font-size: 14px;
-  font-family: monospace;
+  font-size: var(--font-size-base);
+  font-family: var(--font-family-ui);
   color: #0366d6;
-  font-weight: bold;
+  font-weight: var(--font-weight-bold);
 }
 .dark-theme .type-name {
   color: #ffffff;

@@ -161,7 +161,9 @@
     "colorRelationLine": "连线染色",
     "changeFontColor": "字体染色",
     "dragCanvas": "拖拽画布",
-    "menu": "菜单"
+    "menu": "菜单",
+    "formatCode": "格式化代码",
+    "toggleSplitScreen": "切换分屏"
   },
   "panel": {
     "datasourceStructure": "数据源结构",

@@ -11,8 +11,7 @@
         @change="emit('update:modelValue', option.value)"
         />
         <span :class="['radio-item', { disabled: props.disabled }]">
-          <component v-if="option.icon && typeof option.icon !== 'string'" :is="option.icon" class="radio-icon" />
-          <img v-else-if="option.icon" :src="option.icon" :alt="option.label" class="radio-icon" />
+          <Icon :name="option.icon || ''" class="radio-icon" />
           {{ option.label }}
         </span>
       </label>
@@ -24,13 +23,14 @@
 </template>
 
 <script setup lang="ts">
-import { watchEffect, computed, onMounted, onBeforeUnmount, ref, nextTick, watch, type Component } from 'vue'
+import { watchEffect, computed, onMounted, onBeforeUnmount, ref, nextTick, watch } from 'vue'
 import { useFieldError } from '@/utils/useFieldError'
+import Icon from '@/components/Icon.vue'
 
 interface Option {
   value: string
   label: string
-  icon?: Component | string // 可以是图片路径或SVG组件
+  icon?: string // SVG组件名称
 }
 
 interface Props {
@@ -211,11 +211,6 @@ onMounted(() => {
     vertical-align: middle;
     margin-right: 4px;
     color: #666; /* 默认颜色 */
-  }
-
-  /* SVG 组件颜色控制 */
-  .radio-item svg {
-    color: inherit;
   }
 
   .radio-inputs input:checked ~ .radio-item .radio-icon {

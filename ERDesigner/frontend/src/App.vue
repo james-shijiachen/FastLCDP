@@ -1,26 +1,29 @@
 <template>
-  <div class="app-container" :class="{ 'dark-theme': isDarkTheme }">
+  <div class="app-container" :class="{ 'dark-theme': isDarkTheme }" :data-locale="currentLocale">
     <!-- 顶部导航栏 -->
     <AppHeader
-      :is-mobile="isMobile"
-      :is-dark-theme="isDarkTheme"
-      :current-locale="currentLocale"
+      :isMobile="isMobile"
+      :isDarkTheme="isDarkTheme"
+      :currentLocale="currentLocale"
       @toggleSidebar="toggleSidebar"
       @changeLanguage="changeLanguage"
       @toggleTheme="toggleTheme"
     />
     <!-- 工具栏 -->
     <Toolbar
-      :is-mobile="isMobile"
-      :is-dark-theme="isDarkTheme"
-      :current-locale="currentLocale"
-      :zoomLevel="currentCanvasState?.zoom"
-      :sidebarVisible="sidebarVisible"
+      :isMobile="isMobile"
+      :isDarkTheme="isDarkTheme"
+      :currentLocale="currentLocale"
+      :zoomLevel="!isSplitScreen || currentFocusPane === 'canvas' ? currentCanvasState?.zoom : codeCanvasState?.zoom"
       :canPaste="canPaste"
       :isSelectedEntity="isSelectedEntity"
-      @toggleSidebar="toggleSidebar"
+      :isSplitScreen="isSplitScreen"
+      :sidebarVisible="sidebarVisible"
+      :currentFocusPane="currentFocusPane"
+      :activeViewId="activeViewId"
       @saveDiagram="saveDiagram"
       @exportDiagram="exportDiagram"
+      @addDatasource="showDatasourceModal = true"
       @addEntity="createEntityAtPosition"
       @undo="undo"
       @redo="redo"
@@ -35,15 +38,10 @@
       @deleteEntity="deleteSelectedEntities"
       @importDiagram="importDiagram"
       @colorEntityBorder="colorEntityBorder"
+      @toggleSidebar="toggleSidebar"
+      @toggleSplitScreen="toggleSplitScreen"
+      @formatCode="formatCode"
       @dragCanvas="isDragMode = $event"/>
-
-    <!-- 视图标签 -->
-    <ViewTabs
-      :views="store.views"
-      :activeViewId="activeViewId"
-      @contextmenu="handleViewRightClick"
-      @update:activeViewId="activeViewId = $event"
-      />
 
     <!-- 主布局 -->
     <div class="main-layout">
@@ -53,44 +51,106 @@
         class="sidebar-overlay"
         @click="closeSidebar">
       </div>
-      <!-- 中央画布区域 -->
-      <main class="canvas-container">
 
-        <!-- 代码设计视图 -->
-        <CodeDesignView 
-          v-if="activeViewId === 'code-design'"
-          :code="codeContent"
-          :language="codeLanguage"
-          :isDarkTheme="isDarkTheme"
-          @update:code="codeContent = $event"
-          @update:language="codeLanguage = $event"
-          @save="handleCodeSave"
-        />
-        <!-- 默认画布视图 -->
-        <DSCanvas 
-          v-else
-          ref="canvasRef"
-          :fieldUniqueCache="store.fieldUniqueCache"
-          :canvasState="currentCanvasState"
-          :entities="visibleEntities"
-          :virtualEntities="virtualEntities"
-          :relationships="visibleRelationships"
-          :selectedEntities="store.selectedEntities"
-          :isDragMode="isDragMode"
-          :allFieldsCache="store.allFieldsCache"
-          :ENTITY_HEADER_HEIGHT="store.ENTITY_HEADER_HEIGHT"
-          :FIELD_HEIGHT="store.FIELD_HEIGHT"
-          @entityDoubleClick="handleEntityDoubleClick"
-          @entityRightClick="handleEntityRightClick"
-          @canvasClick="handleCanvasClick"
-          @canvasRightClick="handleCanvasRightClick"
-          @selectionChange="handleSelectionChange"
-          @updateEntitySize="handleUpdateEntitySize"
-          @copyEntity="copyEntity"
-          @pasteEntity="pasteEntity"
-          @hideContextMenu="hideContextMenus"
-          @undo="undo"
-          @redo="redo"/>
+
+
+      <!-- 中央画布区域 -->
+      <main class="canvas-container" :class="{ 'split-screen': isSplitScreen }">
+
+        <!-- 视图标签 -->
+        <ViewTabs
+          :views="store.views"
+          :activeViewId="activeViewId"
+          :isSplitScreen="isSplitScreen"
+          @contextmenu="handleViewRightClick"
+          @update:activeViewId="activeViewId = $event; setFocusPane('canvas')"/>
+
+        <!-- 分屏模式 -->
+        <template v-if="isSplitScreen">
+           <!-- 上半部分：其他视图 -->
+           <div class="split-top" :style="{ height: splitTopHeight + '%' }">
+            <DSCanvas 
+              ref="canvasRef"
+              :fieldUniqueCache="store.fieldUniqueCache"
+              :canvasState="currentCanvasState"
+              :entities="visibleEntities"
+              :virtualEntities="virtualEntities"
+              :relationships="visibleRelationships"
+              :selectedEntities="store.selectedEntities"
+              :isSplitScreen="isSplitScreen"
+              :isDragMode="isDragMode"
+              :allFieldsCache="store.allFieldsCache"
+              :ENTITY_HEADER_HEIGHT="store.ENTITY_HEADER_HEIGHT"
+              :FIELD_HEIGHT="store.FIELD_HEIGHT"
+              @setFocusPane="(pane: string) => { if(pane === 'canvas' || pane === 'code') setFocusPane(pane) }"
+              @entityDoubleClick="handleEntityDoubleClick"
+              @entityRightClick="handleEntityRightClick"
+              @canvasClick="handleCanvasClick"
+              @canvasRightClick="handleCanvasRightClick"
+              @selectionChange="handleSelectionChange"
+              @updateEntitySize="handleUpdateEntitySize"
+              @copyEntity="copyEntity"
+              @pasteEntity="pasteEntity"
+              @hideContextMenu="hideContextMenus"
+              @undo="undo"
+              @redo="redo"/>
+          </div>
+           <!-- 分屏调节手柄 -->
+           <div class="split-resize-handle" :class="{ resizing: isResizingSplit }" @mousedown="startSplitResize"></div>
+           <!-- 下半部分：代码视图 -->
+           <div class="split-bottom" :style="{ height: 100 - splitTopHeight + '%' }" @click="handleCodeClick">
+             <CodeDesignView 
+               ref="codeViewRef"
+               :code="codeContent"
+               :language="codeLanguage"
+               :theme="isDarkTheme ? 'custom-dark' : 'vs'"
+               :codeDesignStatus="!isSplitScreen ? currentCanvasState : codeCanvasState"
+               @update:code="codeContent = $event"
+               @update:language="codeLanguage = $event"
+               @save="handleCodeSave" />
+           </div>
+        </template>
+        <!-- 普通模式 -->
+        <template v-else>
+          <!-- 代码设计视图 -->
+          <CodeDesignView 
+            v-if="activeViewId === 'code'"
+            ref="codeViewRef"
+            :code="codeContent"
+            :language="codeLanguage"
+            :theme="isDarkTheme ? 'custom-dark' : 'vs'"
+            :codeDesignStatus="currentCanvasState"
+            @update:code="codeContent = $event"
+            @update:language="codeLanguage = $event"
+            @save="handleCodeSave"
+          />
+          <!-- 默认画布视图 -->
+          <DSCanvas 
+            v-else
+            ref="canvasRef"
+            :fieldUniqueCache="store.fieldUniqueCache"
+            :canvasState="currentCanvasState"
+            :entities="visibleEntities"
+            :virtualEntities="virtualEntities"
+            :relationships="visibleRelationships"
+            :selectedEntities="store.selectedEntities"
+            :isSplitScreen="isSplitScreen"
+            :isDragMode="isDragMode"
+            :allFieldsCache="store.allFieldsCache"
+            :ENTITY_HEADER_HEIGHT="store.ENTITY_HEADER_HEIGHT"
+            :FIELD_HEIGHT="store.FIELD_HEIGHT"
+            @entityDoubleClick="handleEntityDoubleClick"
+            @entityRightClick="handleEntityRightClick"
+            @canvasClick="handleCanvasClick"
+            @canvasRightClick="handleCanvasRightClick"
+            @selectionChange="handleSelectionChange"
+            @updateEntitySize="handleUpdateEntitySize"
+            @copyEntity="copyEntity"
+            @pasteEntity="pasteEntity"
+            @hideContextMenu="hideContextMenus"
+            @undo="undo"
+            @redo="redo"/>
+        </template>
         <!-- 右键菜单 -->
         <ContextMenu
           :show="contextMenu.show"
@@ -113,6 +173,7 @@
           @deleteDatasource="handleDeleteDatasource"
           @createEntityFromTree="handleCreateEntity"
           @deleteView="handleDeleteView"
+          @zoomChange="handleZoomChange"
         />
         <!-- 关系创建提示 -->
         <div v-if="store.selectedEntities.length === 2" class="relation-hint">
@@ -124,8 +185,8 @@
       </main>
       <!-- 右侧数据库树面板（上下布局） -->
       <div v-if="sidebarVisible" class="sidebar-vertical" :style="{ width: sidebarWidth + 'px' }">
-        <div class="resize-handle" @mousedown="startSidebarResize"></div>
-        <div class="sidebar-top" :style="{ height: `calc(100% - ${sidebarBottomHeight}px)` }">
+        <div class="resize-handle" :class="{ resizing: isResizingSidebar }" @mousedown="startSidebarResize"></div>
+        <div class="sidebar-top" :style="{ height: 100 - sidebarBottomHeight + '%' }">
           <DatasourceTree
             :treeData="store.treeData"
             :selectedEntities="store.selectedEntities"
@@ -143,8 +204,8 @@
             @moveEntity="handleMoveEntity"
           />
         </div>
-        <div class="sidebar-divider" @mousedown="startSidebarInnerResize"></div>
-        <div class="sidebar-bottom" :style="{ height: sidebarBottomHeight + 'px' }">
+        <div class="sidebar-divider" :class="{ resizing: isResizingChatBox }" @mousedown="startSidebarInnerResize"></div>
+        <div class="sidebar-bottom" :style="{ height: sidebarBottomHeight + '%' }">
           <ChatBox v-if="sidebarVisible" />
         </div>
       </div>
@@ -208,10 +269,28 @@ const isTablet = computed(() => windowWidth.value <= 1024 && windowWidth.value >
 const sidebarVisible = ref(!isMobile.value)  // 是否显示右侧数据库树面板
 const isDarkTheme = ref(false)  // 是否暗色主题
 const isDragMode = ref(false)  // 是否拖拽画布
+const isSplitScreen = ref(false) // 是否分屏模式
+const splitTopHeight = ref(50) // 上半部分高度百分比
+
+const isResizingSplit = ref(false)  // 是否正在调整(包上下屏)
+const isResizingSidebar = ref(false)  // 是否正在调整(侧屏左右调节)
+const isResizingChatBox = ref(false)  // 是否正在调整(侧屏上下调节)
+const currentFocusPane = ref<'canvas' | 'code'>('canvas')  // 当前焦点面板
+
+const codeCanvasState = ref({
+  MAX_ZOOM: store.MAX_ZOOM,
+  MIN_ZOOM: store.MIN_ZOOM,
+  zoom: 1,
+  panX: 0,
+  panY: 0,
+  showGrid: true
+})
 
 // 响应式数据
 const activeViewId = ref<string>('default') // 当前激活视图ID
-const currentView = computed(() => store.views.find(v => v.id === activeViewId.value)) // 当前视图
+const currentView = computed(() => 
+  store.views.find(v => v.id === activeViewId.value) || codeDesignView.value
+) // 当前视图
 
 // 代码设计视图相关状态
 const codeContent = ref('')
@@ -228,15 +307,10 @@ const visibleRelationships = computed(() =>
 const virtualEntities = computed(() =>
   store.entities.filter(e => currentView.value?.datasourceIds.some(ds => ds === e.datasourceId) && e.entityType === EntityType.ABSTRACT)
 )
-const currentCanvasState = computed(() => currentView.value?.canvasState || {
-  MAX_ZOOM: store.MAX_ZOOM,
-  MIN_ZOOM: store.MIN_ZOOM,
-  zoom: 1,
-  panX: 0,
-  panY: 0,
-  showGrid: true
-})  // 当前视图的画布状态,如果视图未定义则返回默认状态
+const currentCanvasState = computed(() => currentView.value?.canvasState || codeCanvasState)  // 当前视图的画布状态,如果视图未定义则返回默认状态
+
 const canvasRef = ref<InstanceType<typeof DSCanvas> | null>(null)  // 画布实例
+const codeViewRef = ref<InstanceType<typeof CodeDesignView> | null>(null)  // 代码视图实例
 const showEntityModal = ref(false)  // 是否显示实体编辑模态框
 const showRelationModal = ref(false)  // 是否显示关系编辑模态框
 const showDatasourceModal = ref(false)  // 是否显示数据源编辑模态框
@@ -246,8 +320,22 @@ const editingDatasource = ref<Datasource | null>(null)  // 当前编辑的数据
 const canPaste = ref(false)  // 是否可以粘贴
 const copiedEntities = ref<Entity[]>([])  // 复制选中的实体(用于粘贴)
 const sidebarWidth = ref(240) //右侧数据库树面板宽度
-const sidebarBottomHeight = ref(600) // 底部聊天框初始高度
+const sidebarBottomHeight = ref(60) // 底部聊天框初始高度
 const currentDatasourceId = ref<string | null>(null)  // 只有当点击树的+时，才需要告知当前数据库ID
+// 代码设计视图
+const codeDesignView = ref<View>({
+  id: 'code',
+  name: 'Code',
+  datasourceIds: [],
+  canvasState: {
+    MAX_ZOOM: store.MAX_ZOOM as number,
+    MIN_ZOOM: store.MIN_ZOOM as number,
+    zoom: 1,
+    panX: 0,
+    panY: 0,
+    showGrid: false
+  }
+})
 
 // 右键菜单
 const contextMenu = ref({
@@ -312,6 +400,11 @@ function handleCanvasClick(event: MouseEvent) {
     store.selectedEntities = []
   }
   hideContextMenus()
+  
+  // 分屏模式下设置焦点
+  if (isSplitScreen.value) {
+    setFocusPane('canvas')
+  }
 }
 // 画布右键菜单
 function handleCanvasRightClick(event: MouseEvent) {
@@ -320,6 +413,10 @@ function handleCanvasRightClick(event: MouseEvent) {
   contextMenu.value.y = event.clientY
   contextMenu.value.show = true
   contextMenu.value.type = 'CANVAS'
+
+  if(isSplitScreen.value){
+    currentFocusPane.value = 'canvas'
+  }
 }
 // 实体右键菜单
 function handleEntityRightClick(entity: Entity, event: MouseEvent) {
@@ -334,6 +431,10 @@ function handleEntityRightClick(entity: Entity, event: MouseEvent) {
   contextMenu.value.show = true
   contextMenu.value.type = 'ENTITY'
   contextMenu.value.targetId = entity.id
+
+  if(isSplitScreen.value){
+    currentFocusPane.value = 'canvas'
+  }
 }
 // 选择变化
 function handleSelectionChange(entities: Entity[]) {
@@ -418,11 +519,19 @@ function redo() {
 }
 // 放大
 function zoomIn() {
-  canvasRef.value?.zoomIn()
+  if(isSplitScreen.value && currentFocusPane.value === 'code') {
+    handleZoomChange(Math.min(codeCanvasState.value.zoom * 1.2, codeCanvasState.value.MAX_ZOOM))
+  }else{
+    handleZoomChange(Math.min(currentCanvasState.value.zoom * 1.2, currentCanvasState.value.MAX_ZOOM))
+  }
 }
 // 缩小
 function zoomOut() {
-  canvasRef.value?.zoomOut()
+  if(isSplitScreen.value && currentFocusPane.value === 'code') {
+    handleZoomChange(Math.max(codeCanvasState.value.zoom / 1.2, codeCanvasState.value.MIN_ZOOM))
+  }else{
+    handleZoomChange(Math.max(currentCanvasState.value.zoom / 1.2, currentCanvasState.value.MIN_ZOOM))
+  }
 }
 // 重置缩放
 function resetZoom() {
@@ -430,7 +539,15 @@ function resetZoom() {
 }
 // 缩放变化
 function handleZoomChange(level: number) {
-  canvasRef.value?.zoomChange(level)
+  if(isSplitScreen.value && currentFocusPane.value === 'code') {
+    codeCanvasState.value.zoom = level
+    codeViewRef.value?.focus()
+  }else{
+    currentCanvasState.value.zoom = level
+  }
+}
+function formatCode() {
+  codeViewRef.value?.formatCode()
 }
 // 切换网格
 function toggleGrid() {
@@ -475,6 +592,12 @@ function pasteEntity() {
     const offsetX = 20
     const offsetY = 20
     
+    if(currentView.value?.datasourceIds && currentView.value?.datasourceIds.length > 0) {
+      copiedEntities.value.forEach((entity) => {
+        entity.datasourceId = currentView.value?.datasourceIds[0]
+      })
+    }
+
     copiedEntities.value.forEach((entity, index) => {
       const newEntity: Entity = {
         ...entity,
@@ -583,6 +706,10 @@ function handleDoubleClick(node: TreeNode) {
 // 编辑实体（双击）
 function handleEntityDoubleClick(entity: Entity) {
   handleEditEntity(entity.id)
+  
+  if(isSplitScreen.value){
+    currentFocusPane.value = 'canvas'
+  }
 }
 // 编辑实体（树形菜单点击）
 function handleEditEntity(entityId: string) {
@@ -599,6 +726,7 @@ function handleDeleteEntity(entityId: string) {
   if (confirm($t('messages.deleteEntityConfirm'))) {
     store.deleteEntity(entityId)
   }
+  hideContextMenus()
 }
 // 从树中选择实体（树形菜单点击）
 function handleSelectEntityFromTree(entityId: string) {
@@ -665,7 +793,6 @@ function handleEditDatasource(datasourceId: string) {
     showDatasourceModal.value = true
   }
 }
-
 // 保存数据源（数据源编辑弹窗）
 function handleDatasourceSave(datasource: Datasource) {
   try {
@@ -734,6 +861,61 @@ function closeRelationModal() {
 }
 // ------------------------------ 关系方法 end------------------------------
 
+// ------------------------------ 分屏方法 start------------------------------
+// 切换分屏模式
+function toggleSplitScreen() {
+  isSplitScreen.value = !isSplitScreen.value
+  if(isSplitScreen.value && activeViewId.value === 'code'){
+    activeViewId.value = 'default'
+  }
+}
+
+// 焦点管理方法
+function setFocusPane(pane: 'canvas' | 'code') {
+  currentFocusPane.value = pane
+}
+
+// 处理代码面板点击事件
+function handleCodeClick() {
+  if (isSplitScreen.value) {
+    setFocusPane('code')
+  }
+}
+// 分屏调节相关方法
+function startSplitResize(e: MouseEvent) {
+  e.preventDefault()
+  isResizingSplit.value = true
+  
+  const startY = e.clientY
+  const startHeight = splitTopHeight.value
+  const containerRect = document.querySelector('.canvas-container')?.getBoundingClientRect()
+  
+  if (!containerRect) return
+  
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isResizingSplit.value) return
+    
+    const deltaY = e.clientY - startY
+    const containerHeight = containerRect.height
+    const deltaPercent = (deltaY / containerHeight) * 100
+    
+    let newHeight = startHeight + deltaPercent
+    newHeight = Math.max(20, Math.min(80, newHeight)) // 限制在20%-80%之间
+    
+    splitTopHeight.value = newHeight
+  }
+  
+  const handleMouseUp = () => {
+    isResizingSplit.value = false
+    document.removeEventListener('mousemove', handleMouseMove)
+    document.removeEventListener('mouseup', handleMouseUp)
+  }
+  
+  document.addEventListener('mousemove', handleMouseMove)
+  document.addEventListener('mouseup', handleMouseUp)
+}
+// ------------------------------ 分屏方法 end------------------------------
+
 // ------------------------------ 侧边栏方法 start------------------------------
 // 响应式方法（初始化侧边栏）
 function handleResize() {
@@ -755,32 +937,49 @@ function closeSidebar() {
 }
 // 调整右侧面板宽度（拖拽调整）
 function startSidebarResize(e: MouseEvent) {
+  isResizingSidebar.value = true
   const startX = e.clientX
   const startWidth = sidebarWidth.value
   function onMouseMove(ev: MouseEvent) {
+    if (!isResizingSidebar.value) return
     const newWidth = Math.max(160, Math.min(500, startWidth - (ev.clientX - startX)))
     sidebarWidth.value = newWidth
   }
   function onMouseUp() {
+    isResizingSidebar.value = false
     window.removeEventListener('mousemove', onMouseMove)
     window.removeEventListener('mouseup', onMouseUp)
   }
   window.addEventListener('mousemove', onMouseMove)
   window.addEventListener('mouseup', onMouseUp)
 }
-// 调整右侧chatbox底部高度（拖拽调整）
+// 调整右侧DatasourceTree底部高度（拖拽调整）
 function startSidebarInnerResize(e: MouseEvent) {
+  e.preventDefault()
+  isResizingChatBox.value = true
+
   const startY = e.clientY
   const startHeight = sidebarBottomHeight.value
-  function onMouseMove(ev: MouseEvent) {
+  const containerRect = document.querySelector('.sidebar-vertical')?.getBoundingClientRect()
+  if (!containerRect) return
+
+  const onMouseMove = (ev: MouseEvent) => {
+    if (!isResizingChatBox.value) return
+
     const delta = ev.clientY - startY
-    const newHeight = Math.max(200, Math.min(600, startHeight - delta))
+    const containerHeight = containerRect.height
+    const deltaPercent = (delta / containerHeight) * 100
+    let newHeight = startHeight - deltaPercent
+    newHeight = Math.max(20, Math.min(80, newHeight)) // 限制在20%-80%之间
     sidebarBottomHeight.value = newHeight
   }
-  function onMouseUp() {
+
+  const onMouseUp = () => {
+    isResizingChatBox.value = false
     window.removeEventListener('mousemove', onMouseMove)
     window.removeEventListener('mouseup', onMouseUp)
   }
+
   window.addEventListener('mousemove', onMouseMove)
   window.addEventListener('mouseup', onMouseUp)
 }
@@ -831,7 +1030,7 @@ function handleKeyDown(event: KeyboardEvent) {
   display: flex;
   flex-direction: column;
   background: #f5f5f5;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-family-ui);
 }
 /* 主布局 */
 .main-layout {
@@ -874,22 +1073,27 @@ function handleKeyDown(event: KeyboardEvent) {
 /* 右侧数据库树面板（高度分割线） */
 .sidebar-divider {
   width: 100%;
-  cursor: ns-resize;
-  z-index: 2;
-  background: transparent;
+  height: 2px;
+  background: #e1e4e8;
+  cursor: row-resize;
+  position: relative;
+  z-index: 1000;
   transition: background 0.2s;
-  border-top: 1px solid #e1e4e8;
 }
 .dark-theme .sidebar-vertical {
   border-left: none
 }
 .dark-theme .sidebar-divider {
-  border-top: 1px solid #404040;
-  background: #2a2a2a;
+  background: #404040;
 }
-.sidebar-divider:hover {
-  height: 2px;
-  background: #e1e4e8;
+.sidebar-divider:hover,
+.sidebar-divider.resizing {
+  background: #007acc;
+  height: 6px;
+}
+.dark-theme .sidebar-divider:hover,
+.dark-theme .sidebar-divider.resizing {
+  background: #7950ac;
 }
 /* 右侧数据库树面板（底部） */
 .sidebar-bottom {
@@ -910,6 +1114,42 @@ function handleKeyDown(event: KeyboardEvent) {
   background: rgba(0, 0, 0, 0.5);
   z-index: 999;
 }
+/* 分屏模式样式 */
+.canvas-container.split-screen {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.split-top {
+  overflow: hidden;
+  position: relative;
+}
+.split-bottom {
+  overflow: hidden;
+  position: relative;
+}
+.split-resize-handle {
+  height: 2px;
+  background: #e2e8f0;
+  cursor: row-resize;
+  position: relative;
+  z-index: 10;
+  transition: background 0.2s;
+}
+.split-resize-handle:hover,
+.split-resize-handle.resizing {
+  background: #007acc;
+  height: 6px;
+}
+
+.dark-theme .split-resize-handle {
+  background: #404040;
+}
+
+.dark-theme .split-resize-handle:hover,
+.dark-theme .split-resize-handle.resizing {
+  background: #7950ac;
+}
 /* 调整右侧数据库树面板宽度（拖拽调整） */
 .resize-handle {
   position: absolute;
@@ -917,14 +1157,22 @@ function handleKeyDown(event: KeyboardEvent) {
   top: 0;
   width: 1px;
   height: 100%;
-  cursor: ew-resize;
+  cursor: col-resize;
   background: transparent;
   z-index: 2000;
   transition: background 0.2s;
 }
-.resize-handle:hover {
-  width: 2px;
-  background: #e1e4e8;
+.dark-theme .resize-handle {
+  background: #404040;
+}
+.resize-handle:hover,
+.resize-handle.resizing {
+  background: #007acc;
+  width: 6px;
+}
+.dark-theme .resize-handle:hover,
+.dark-theme .resize-handle.resizing {
+  background: #7950ac;
 }
 /* 关系创建提示 */
 .relation-hint {

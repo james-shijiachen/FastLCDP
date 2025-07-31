@@ -6,50 +6,50 @@
     @click.stop>
     <template v-if="type === 'CANVAS'">
       <div class="context-menu-item" @click="onCreateEntity">
-        <span class="icon"><component :is="AddEntityIcon" /></span>
+        <span class="icon"><Icon name="add-entity"/></span>
         {{ $t('contextMenu.addEntity') }}
       </div>
       <div class="context-menu-separator"></div>
       <div class="context-menu-item" @click="onPaste" :class="{ disabled: !canPaste }">
-        <span class="icon"><component :is="PasteIcon" /></span>
+        <span class="icon"><Icon name="paste"/></span>
         {{ $t('contextMenu.paste') }}
       </div>
       <div class="context-menu-item" @click="onSelectAll">
-        <span class="icon"><component :is="SelectAllIcon" /></span>
+        <span class="icon"><Icon name="select-all"/></span>
         {{ $t('contextMenu.selectAll') }}
       </div>
     </template>
     <template v-else-if="type === 'ENTITY'">
       <div class="context-menu-item" @click="onEditEntity" :class="{ disabled: isMultiSelect }">
-        <span class="icon"><component :is="EditIcon" /></span>
+        <span class="icon"><Icon name="edit"/></span>
         {{ $t('contextMenu.edit') }}
       </div>
       <div class="context-menu-item" @click="onCopyEntity">
-        <span class="icon"><component :is="CopyIcon" /></span>
+        <span class="icon"><Icon name="copy"/></span>
         {{ $t('contextMenu.copy') }}
       </div>
       <div class="context-menu-item" @click="onDeleteEntity">
-        <span class="icon"><component :is="DeleteIcon" /></span>
+        <span class="icon"><Icon name="delete"/></span>
         {{ $t('contextMenu.delete') }}
       </div>
     </template>
     <template v-else-if="type === 'DATASOURCE'">
       <div class="context-menu-item" @click="onEditDatasource">
-        <span class="icon"><component :is="EditIcon" /></span>
+        <span class="icon"><Icon name="edit"/></span>
         {{ $t('datasource.editDatasource') }}
       </div>
       <div class="context-menu-item" @click="onCreateEntityFromTree">
-        <span class="icon"><component :is="AddEntityIcon" /></span>
+        <span class="icon"><Icon name="add-entity"/></span>
         {{ $t('datasource.addEntity') }}
       </div>
       <div class="context-menu-item" @click="onDeleteDatasource">
-        <span class="icon"><component :is="DeleteIcon" /></span>
+        <span class="icon"><Icon name="delete"/></span>
         {{ $t('datasource.deleteDatasource') }}
       </div>
     </template>
     <template v-else-if="type === 'VIEW'">
       <div class="context-menu-item" @click="onDeleteView">
-        <span class="icon"><component :is="DeleteIcon" /></span>
+        <span class="icon"><Icon name="delete"/></span>
         {{ $t('view.deleteView') }}
       </div>
     </template>
@@ -60,12 +60,7 @@
 import { defineProps, defineEmits } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { Entity } from '../types/entity'
-import AddEntityIcon from '@/assets/AddEntityIcon.vue'
-import PasteIcon from '@/assets/PasteIcon.vue'
-import SelectAllIcon from '@/assets/SelectAllIcon.vue'
-import CopyIcon from '@/assets/CopyIcon.vue'
-import DeleteIcon from '@/assets/DeleteIcon.vue'
-import EditIcon from '@/assets/EditIcon.vue'
+import Icon from '@/components/Icon.vue'
 
 const props = defineProps<{
   show: boolean
@@ -147,6 +142,8 @@ function onDeleteView() { emit('deleteView', props.targetId) }
   margin: 4px 0;
 }
 .icon {
+  width: 16px;
+  height: 16px;
   margin-right: 8px;
 }
 /* 暗色主题 */
