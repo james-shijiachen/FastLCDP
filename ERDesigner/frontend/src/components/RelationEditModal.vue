@@ -1,9 +1,9 @@
 <template>
   <div class="modal-overlay">
-    <div class="modal-content" @click.stop>
-      <div class="modal-header">
-        <h3>{{ $t('relation.createRelation') }}</h3>
-        <button @click="$emit('close')" class="close-btn">×</button>
+    <div class="modal-content" ref="modalRef"  @click.stop @wheel.prevent="handleModalWheel">
+      <div class="modal-header" @mousedown="onHeaderMousedown">
+        <h3>{{ relationship ? $t('relation.editRelation') : $t('relation.createRelation') }}</h3>
+        <button @click="$emit('close')" @mousedown="hideRelationLines" class="close-btn">×</button>
       </div>
       <div class="modal-body">
         <div class="entities-info">
@@ -13,12 +13,13 @@
               <div 
                 v-for="field in fromEntityFields" 
                 :key="field.id"
-                :ref="el => setFieldRef(fromEntity.id, field.id, el as HTMLElement)"
+                :ref="el => setFieldRef(field.entityId, field.id, el as HTMLElement)"
                 class="field-option"
-                :class="{ selected: formData.fromFieldId === field.id, disabled: hasRelation(fromEntity.id, field.id) || (toField && shouldDisableField(field, toField)) }"
-                @click="hasRelation(fromEntity.id, field.id) || (toField && shouldDisableField(field, toField)) ? null : selectFromField(field.id)">
+                :class="{ selected: formData.fromFieldId === field.id, disabled: hasRelation(field.entityId, field.id) || (toField && shouldDisableField(field, toField)) }"
+                @click="hasRelation(field.entityId, field.id) || (toField && shouldDisableField(field, toField)) ? null : selectFromField(field.id)">
                 <div class="field-left">
-                  <span class="icon"><Icon :name="field.isPrimaryKey ? 'key' : field.isUnique ? 'unique' : ''" /></span>
+                  <span v-if="field.isPrimaryKey || field.isUnique" class="icon"><Icon :name="field.isPrimaryKey ? 'key' : field.isUnique ? 'unique' : ''" /></span>
+                  <span v-if="!field.isPrimaryKey && field.isRequired" class="icon"><Icon name="required" /></span>
                   <span class="field-name">{{ field.name }}</span>
                 </div>
                 <div class="field-right">
@@ -30,6 +31,7 @@
             </div>
           </div>
           <RelationLine
+            v-if="showRelationLines"
             v-for="relationship in allRelationShips"
             :key="relationship.id"
             :ENTITY_HEADER_HEIGHT="props.ENTITY_HEADER_HEIGHT"
@@ -44,12 +46,13 @@
               <div 
                 v-for="field in toEntityFields" 
                 :key="field.id"
-                :ref="el => setFieldRef(toEntity.id, field.id, el as HTMLElement)"
+                :ref="el => setFieldRef(field.entityId, field.id, el as HTMLElement)"
                 class="field-option"
-                :class="{ selected: formData.toFieldId === field.id, disabled: hasRelation(toEntity.id, field.id) || (fromField && shouldDisableField(field, fromField)) }"
-                @click="hasRelation(toEntity.id, field.id) || (fromField && shouldDisableField(field, fromField)) ? null : selectToField(field.id)">
+                :class="{ selected: formData.toFieldId === field.id, disabled: hasRelation(field.entityId, field.id) || (fromField && shouldDisableField(field, fromField)) }"
+                @click="hasRelation(field.entityId, field.id) || (fromField && shouldDisableField(field, fromField)) ? null : selectToField(field.id)">
                 <div class="field-left">
-                  <span class="icon"><Icon :name="field.isPrimaryKey ? 'key' : field.isUnique ? 'unique' : ''" /></span>
+                  <span v-if="field.isPrimaryKey || field.isUnique" class="icon"><Icon :name="field.isPrimaryKey ? 'key' : field.isUnique ? 'unique' : ''" /></span>
+                  <span v-if="!field.isPrimaryKey && field.isRequired" class="icon"><Icon name="required" /></span>
                   <span class="field-name">{{ field.name }}</span>
                 </div>
                 <div class="field-right">
@@ -108,9 +111,9 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button @click="$emit('close')" class="btn btn-secondary">{{ $t('common.cancel') }}</button>
+        <button @click="$emit('close')" @mousedown="hideRelationLines" class="btn btn-secondary">{{ $t('common.cancel') }}</button>
         <button @click="handleSave" class="btn btn-primary" :disabled="!canSave">
-          {{ $t('relation.create') }}
+          {{ isEdit ? $t('common.save') : $t('common.create') }}
         </button>
       </div>
     </div>
@@ -121,12 +124,14 @@
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { Entity, Relationship, CascadeOperation, Field } from '../types/entity'
+import { useDraggableModal } from '@/utils/useDraggableModal'
 import { RelationshipType, RelationshipCategory } from '../types/entity'
 import { ValidateField, RadioButton, RelationLine } from '@/components'
 import { getAllParentFields } from '@/utils/datasourceUtil'
 import Icon from '@/components/Icon.vue'
 
 interface Props {
+  relationship?: Relationship
   entities: Entity[]
   selectedEntities: Entity[]
   relationships: Relationship[]
@@ -135,8 +140,12 @@ interface Props {
   FIELD_HEIGHT: number
 }
 
+const { modalRef, onHeaderMousedown } = useDraggableModal()
 const props = defineProps<Props>()
 const { t: $t } = useI18n()
+
+// 控制RelationLine组件的显示状态
+const showRelationLines = ref(true)
 
 const emit = defineEmits<{
   save: [relationship: Relationship]
@@ -144,15 +153,18 @@ const emit = defineEmits<{
 }>()
 
 const formData = ref({
-  id: Date.now().toString(),
-  name: '',
-  fromFieldId: '',
-  toFieldId: '',
-  cascadeUpdate: 'NO_ACTION' as CascadeOperation | '',
-  cascadeDelete: 'NO_ACTION' as CascadeOperation | '',
-  cascadeCreate: false,
-  relationCategory: '' as RelationshipCategory | '',
-  relationType: 'SOFT' as RelationshipType
+  id: props.relationship?.id || Date.now().toString(),
+  name: props.relationship?.name || '',
+  fromFieldId: props.relationship?.fromFieldId || '',
+  toFieldId: props.relationship?.toFieldId || '',
+  fromEntityId: props.relationship?.fromEntityId || '',
+  toEntityId: props.relationship?.toEntityId || '',
+  datasourceId: props.relationship?.datasourceId || '',
+  cascadeUpdate: props.relationship?.cascadeUpdate || 'NO_ACTION' as CascadeOperation | '',
+  cascadeDelete: props.relationship?.cascadeDelete || 'NO_ACTION' as CascadeOperation | '',
+  cascadeCreate: props.relationship?.cascadeCreate || false,
+  relationCategory: props.relationship?.category || '' as RelationshipCategory | '',
+  relationType: props.relationship?.type || 'SOFT' as RelationshipType
 })
 
 const relationCategories = [{
@@ -177,9 +189,30 @@ const relationCategories = [{
   }
 ]
 
+// 是否为编辑模式
+const isEdit = computed(() => !!props.relationship)
 const fieldRefs = ref<Record<string, Record<string, HTMLElement>>>({})
-const fromEntity = computed(() => props.selectedEntities[0])
-const toEntity = computed(() => props.selectedEntities[1])
+const fromEntity = computed(() => {
+  if (props.relationship) {
+    // 安全地访问 relationship 和 fromEntityId,避免未定义错误
+    return props.entities.find(entity => entity.id === props.relationship?.fromEntityId) 
+  } else if (props.selectedEntities.length === 2) {
+    return props.selectedEntities[0]
+  }else {
+    return undefined
+  }
+})
+
+const toEntity = computed(() => {
+  if (props.relationship) {
+    // 安全地访问 relationship 和 toEntityId,避免未定义错误
+    return props.entities.find(entity => entity.id === props.relationship?.toEntityId)
+  } else if (props.selectedEntities.length === 2) {
+    return props.selectedEntities[1]
+  } else {
+    return undefined
+  }
+})
 const allRelationShips = computed(() => {
   const allRelationShips = 
     props.relationships.filter(
@@ -191,15 +224,13 @@ const allRelationShips = computed(() => {
   const newRelationship: Relationship = {
     id: formData.value.id,
     name: formData.value.name.trim(),
-    fromEntityId: fromEntity.value.id,
-    toEntityId: toEntity.value.id,
+    fromEntityId: fromEntity.value ? fromEntity.value.id : '',
+    toEntityId: toEntity.value ? toEntity.value.id : '',
     fromFieldId: formData.value.fromFieldId,
     toFieldId: formData.value.toFieldId,
     type: formData.value.relationType as RelationshipType,
     category: formData.value.relationCategory as RelationshipCategory,
-    datasourceId: fromEntity.value.datasourceId,
-    x: 0,
-    y: 0
+    datasourceId: fromEntity.value ? fromEntity.value.datasourceId : ''
   }
   return [...allRelationShips, newRelationship]
 })
@@ -219,6 +250,7 @@ const toEntityFields = computed(() => {
   }
   return toEntity.value.fields
 })
+
 // 获取fromEntity选中的字段
 const fromField = computed(() => fromEntityFields.value.find(field => field.id === formData.value.fromFieldId))
 // 获取toEntity选中的字段
@@ -329,6 +361,15 @@ watch([fromEntity, toEntity], ([from, to]) => {
   }
 }, { immediate: true })
 
+// 监听滚轮事件（屏蔽浏览器默认滚动）
+function handleModalWheel(event: WheelEvent) {
+  event.stopPropagation();
+  const containerModal = modalRef.value;
+  if (containerModal) {
+    containerModal.scrollTop += event.deltaY; // 纵向滚动
+  }
+}
+
 function handleRelationTypeChange() {
   if(formData.value.relationType === 'SOFT') {
     formData.value.cascadeUpdate = ''
@@ -392,10 +433,11 @@ function handleSave() {
     fromFieldId: formData.value.fromFieldId,
     toFieldId: formData.value.toFieldId,
     type: formData.value.relationType as RelationshipType,
+    cascadeUpdate: formData.value.cascadeUpdate as CascadeOperation,
+    cascadeDelete: formData.value.cascadeDelete as CascadeOperation,
+    cascadeCreate: formData.value.cascadeCreate as boolean,
     category: formData.value.relationCategory as RelationshipCategory,
-    datasourceId: fromEntity.value.datasourceId,
-    x: 0,
-    y: 0
+    datasourceId: fromEntity.value.datasourceId
   }
   emit('save', relationship)
 }
@@ -408,6 +450,11 @@ function setFieldRef(entityId: string, fieldId: string, el: HTMLElement | null) 
     }
     fieldRefs.value[entityId][fieldId] = el
   }
+}
+
+// 立即隐藏RelationLine组件
+function hideRelationLines() {
+  showRelationLines.value = false
 }
 
 </script>

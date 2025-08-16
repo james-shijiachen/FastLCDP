@@ -1,7 +1,7 @@
 <template>
   <div :class="['radio-inputs', { disabled: props.disabled }]" ref="radioInputs">
     <template v-for="(option, index) in options" :key="option.value">
-      <label :class="['radio', { disabled: props.disabled }]" :ref="el => { if (option.value === modelValue) checkedRadio = el as HTMLElement }">
+      <label :class="['radio', { disabled: props.disabled }]" :data-value="option.value">
         <input
         :name="field"
         :value="option.value"
@@ -54,18 +54,31 @@ const emit = defineEmits(['update:modelValue'])
 const { getFieldError} = useFieldError(props.component)
 
 const radioInputs = ref<HTMLElement | null>(null)
-const checkedRadio = ref<HTMLElement | null>(null)
 const errorMessage = computed(() => getFieldError(props.field))
 
 // 滚动到选中项
 const scrollToChecked = () => {
   nextTick(() => {
-    if (checkedRadio.value && radioInputs.value) {
-      checkedRadio.value.scrollIntoView({
-        behavior: 'auto', // 或 'smooth'
-        block: 'nearest',
-        inline: 'center'
-      })
+    if (radioInputs.value && props.modelValue) {
+      const checkedRadio = radioInputs.value.querySelector(`label[data-value="${props.modelValue}"]`) as HTMLElement
+      if (checkedRadio) {
+        // 尝试多种滚动方式确保滚动生效
+        checkedRadio.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+          inline: 'center'
+        })
+        // 备用方案：直接操作父容器的scrollLeft
+        setTimeout(() => {
+          const container = radioInputs.value
+          if (container) {
+            const containerRect = container.getBoundingClientRect()
+            const elementRect = checkedRadio.getBoundingClientRect()
+            const scrollLeft = elementRect.left - containerRect.left + container.scrollLeft - (containerRect.width / 2) + (elementRect.width / 2)
+            container.scrollLeft = scrollLeft
+          }
+        }, 100)
+      }
     }
   })
 }

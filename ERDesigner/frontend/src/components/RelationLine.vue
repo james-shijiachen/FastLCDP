@@ -244,7 +244,6 @@ function calculateRightToLeftPath(fromX: number, fromY: number, toX: number, toY
 // 计算并调整矩形坐标偏差的方法
 function calculateDragOffset(dragEntity: { x: number, y: number } | null, entityId:string, fieldId: string): { x: number, y: number, width: number, height: number } {
   
-  console.log('calculateDragOffset   dragEntity', dragEntity)
   let adjustedY = dragEntity?.y || 0
   // 如果提供了fieldId，需要根据字段索引计算正确的y坐标
   // 获取对应的实体信息
@@ -255,12 +254,11 @@ function calculateDragOffset(dragEntity: { x: number, y: number } | null, entity
     
     // 找到字段索引
     const fieldIndex = allFields.findIndex((f: any) => f.id === fieldId)
-    console.log('calculateDragOffset    fieldIndex', fieldIndex)
     if (fieldIndex !== -1) {
       // 计算字段的y坐标：实体y + 头部高度(30) + 字段索引 * 字段高度(25)
       adjustedY = (dragEntity?.y || 0) + props.ENTITY_HEADER_HEIGHT + fieldIndex * props.FIELD_HEIGHT
     }
-    console.log('calculateDragOffset     adjustedY', adjustedY)
+    
     return {
       x: dragEntity?.x || 0,
       y: adjustedY,
@@ -278,7 +276,6 @@ function calculateDragOffset(dragEntity: { x: number, y: number } | null, entity
 
 // 主要的路径计算函数
 function calculateRelationPath(): void {
-  console.log('calculateRelationPath', fromFieldRef.value, toFieldRef.value)
   if (!fromFieldRef.value || !toFieldRef.value) {
     relationPath.value = ''
     return
@@ -290,20 +287,16 @@ function calculateRelationPath(): void {
 
 
   if(props.relationLineType === 'canvas') {
-    console.log('canvas')
     // canvas模式下使用画布坐标，因为RelationLine现在直接在主SVG内渲染
     //fromRect = rectToCanvasCoords(fromFieldRef.value.getBoundingClientRect())
     //toRect = rectToCanvasCoords(toFieldRef.value.getBoundingClientRect())
     fromRect = calculateDragOffset(fromDragEntity.value, props.relationship?.fromEntityId || '', props.relationship?.fromFieldId || '')
     toRect = calculateDragOffset(toDragEntity.value, props.relationship?.toEntityId || '', props.relationship?.toFieldId || '')
   }else if(props.relationLineType === 'editor') {
-    console.log('editor')
     // 编辑器坐标(视口坐标)
     fromRect = fromFieldRef.value.getBoundingClientRect()
     toRect = toFieldRef.value.getBoundingClientRect()
   }
-  console.log('dragEntity', props.dragEntity)
-  console.log('calculateRelationPath - canvas coords:', fromRect, toRect, fromDragEntity.value?.x, fromDragEntity.value?.y, toDragEntity.value?.x, toDragEntity.value?.y)
 
   if(!fromRect || !toRect) {
     relationPath.value = ''
@@ -314,20 +307,24 @@ function calculateRelationPath(): void {
   //fromRect = adjustRectWithDragOffset(fromRect, fromDragEntity.value, props.relationship?.fromEntityId, props.relationship?.fromFieldId)
   //toRect = adjustRectWithDragOffset(toRect, toDragEntity.value, props.relationship?.toEntityId, props.relationship?.toFieldId)
 
+  const fromCenterX = fromRect.x + fromRect.width / 2
   const fromCenterY = fromRect.y + fromRect.height / 2
+  const toCenterX = toRect.x + toRect.width / 2
   const toCenterY = toRect.y + toRect.height / 2
   const isHorizontalLine = Math.abs(fromCenterY - toCenterY) <= 36 // radius + 20
+  const isVerticalLine = Math.abs(fromCenterX - toCenterX) - (fromRect.width / 2 + toRect.width / 2) <= 36 // radius + 20
   
   relationPath.value = isHorizontalLine 
     ? calculateHorizontalPathCanvas(fromRect, toRect)
     : calculateVerticalPathCanvas(fromRect, toRect)
 
-  console.log('calculateRelationPath - path:', relationPath.value)
+  console.log('calculateRelationPath - path:', relationPath.value, isVerticalLine)
 }
 
 // 计算关联线路径 - 监听字段引用、相关实体位置变化和拖拽状态
 watch([fromDragEntity, toDragEntity, () => props.relationship, () => props.visibleEntities], async () => {
   await nextTick()
+  console.log('watch relationship id:', props.relationship?.id)
   calculateRelationPath()
 }, { immediate: true })
 </script>

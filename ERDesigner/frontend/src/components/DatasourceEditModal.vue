@@ -35,12 +35,6 @@
           :label="$t('datasource.category')"
           :options="categoryOptions" 
           component="DatasourceEditModal" />
-        <RadioButton 
-          field="datasource.version" 
-          v-model="formData.version" 
-          :label="$t('datasource.version')"
-          :options="versionOptions" 
-          component="DatasourceEditModal" />
         <ValidateField 
           v-model="formData.description"
           field="datasource.description"
@@ -63,7 +57,7 @@
 import { ref, computed} from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { Datasource } from '../types/entity'
-import { DatasourceType, DatasourceCategory, DatasourceVersion } from '../types/entity'
+import { DatasourceType, DatasourceCategory } from '../types/entity'
 import { useDraggableModal } from '@/utils/useDraggableModal'
 import { ValidateField, RadioButton } from '@/components'
 import { useFieldError } from '@/utils/useFieldError'
@@ -89,7 +83,6 @@ const formData = ref({
   type: props.datasource?.type || 'DATABASE',
   viewId: props.datasource?.viewId || 'default',
   category: props.datasource?.category || 'MYSQL',
-  version: props.datasource?.version || 'MYSQL_5_X',
   description: props.datasource?.description || ''
 })
 
@@ -133,10 +126,20 @@ const categoryOptions = computed(() => {
   if(type === 'DATABASE' || type === ''){
     options = [
     { value: 'SQLITE', label: $t('datasource.sqlite'), icon: 'sqlite' },
+    { value: 'MARIADB', label: $t('datasource.mariadb'), icon: 'mariadb' },
     { value: 'MYSQL', label: $t('datasource.mysql'), icon: 'mysql' },
     { value: 'ORACLE', label: $t('datasource.oracle'), icon: 'oracle' },
     { value: 'POSTGRESQL', label: $t('datasource.postgresql'), icon: 'postgresql' },
-    { value: 'SQLSERVER', label: $t('datasource.sqlserver'), icon: 'sqlserver' }
+    { value: 'SQLSERVER', label: $t('datasource.sqlserver'), icon: 'sqlserver' },
+    { value: 'DB2', label: $t('datasource.db2'), icon: 'db2' },
+    { value: 'CUBRID', label: $t('datasource.cubrid'), icon: 'cubrid' },
+    { value: 'FIREBIRD', label: $t('datasource.firebird'), icon: 'firebird' },
+    { value: 'COCKROACHDB', label: $t('datasource.cockroachdb'), icon: 'cockroachdb' },
+    { value: 'YUGABYTE', label: $t('datasource.yugabyte'), icon: 'yugabyte' },
+    { value: 'DUCKDB', label: $t('datasource.duckdb'), icon: 'duckdb' },
+    { value: 'POLARDB', label: $t('datasource.polardb'), icon: 'polardb' },
+    { value: 'OCEANBASE', label: $t('datasource.oceanbase'), icon: 'oceanbase' },
+    { value: 'TIDB', label: $t('datasource.tidb'), icon: 'tidb' }
     ];
   }else if(type === 'NOSQL'){
     options = [
@@ -150,44 +153,6 @@ const categoryOptions = computed(() => {
       { value: 'XML', label: $t('datasource.xml'), icon: 'xml' }
     ];
   }
-  return options;
-})
-
-const versionOptions = computed(() => {
-  const type = formData.value.type;
-  const category = formData.value.category;
-  let options;
-  if(type === 'DATABASE' && category === 'MYSQL'){
-    options = [
-      { value: 'MYSQL_5_X', label: $t('datasource.mysql5'), icon: 'mysql' },
-      { value: 'MYSQL_8_X', label: $t('datasource.mysql8'), icon: 'mysql' },
-  ]}else if(type === 'DATABASE' && category === 'ORACLE'){
-    options = [
-      { value: 'ORACLE_11_X', label: $t('datasource.oracle11'), icon: 'oracle' },
-      { value: 'ORACLE_12_X', label: $t('datasource.oracle12'), icon: 'oracle' },
-      { value: 'ORACLE_19_X', label: $t('datasource.oracle19'), icon: 'oracle' },
-      { value: 'ORACLE_21_X', label: $t('datasource.oracle21'), icon: 'oracle' },
-      { value: 'ORACLE_23_X', label: $t('datasource.oracle23'), icon: 'oracle' },
-      { value: 'ORACLE_25_X', label: $t('datasource.oracle25'), icon: 'oracle' },
-  ]}else if(type === 'DATABASE' && category === 'POSTGRESQL'){
-    options = [
-      { value: 'POSTGRESQL_10_X', label: $t('datasource.postgresql10'), icon: 'postgresql' },
-      { value: 'POSTGRESQL_11_X', label: $t('datasource.postgresql11'), icon: 'postgresql' },
-      { value: 'POSTGRESQL_12_X', label: $t('datasource.postgresql12'), icon: 'postgresql' },
-      { value: 'POSTGRESQL_13_X', label: $t('datasource.postgresql13'), icon: 'postgresql' },
-      { value: 'POSTGRESQL_14_X', label: $t('datasource.postgresql14'), icon: 'postgresql' },
-      { value: 'POSTGRESQL_15_X', label: $t('datasource.postgresql15'), icon: 'postgresql' },
-      { value: 'POSTGRESQL_16_X', label: $t('datasource.postgresql16'), icon: 'postgresql' },
-  ]}else if(type === 'DATABASE' && category === 'SQLSERVER'){
-    options = [
-      { value: 'SQLSERVER_2008_X', label: $t('datasource.sqlserver2008'), icon: 'sqlserver' },
-      { value: 'SQLSERVER_2012_X', label: $t('datasource.sqlserver2012'), icon: 'sqlserver' },
-      { value: 'SQLSERVER_2014_X', label: $t('datasource.sqlserver2014'), icon: 'sqlserver' },
-      { value: 'SQLSERVER_2016_X', label: $t('datasource.sqlserver2016'), icon: 'sqlserver' },
-      { value: 'SQLSERVER_2017_X', label: $t('datasource.sqlserver2017'), icon: 'sqlserver' },
-      { value: 'SQLSERVER_2019_X', label: $t('datasource.sqlserver2019'), icon: 'sqlserver' },
-      { value: 'SQLSERVER_2022_X', label: $t('datasource.sqlserver2022'), icon: 'sqlserver' }
-  ]}
   return options;
 })
 
@@ -220,7 +185,6 @@ function handleSave() {
     name: formData.value.name.trim(),
     viewId: formData.value.viewId,
     type: formData.value.type as DatasourceType,
-    version: formData.value.version as DatasourceVersion,
     category: formData.value.category as DatasourceCategory,
     description: formData.value.description.trim()
   }

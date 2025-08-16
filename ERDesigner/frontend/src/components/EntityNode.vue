@@ -13,8 +13,8 @@
       :class="{ selected }"
       :width="viewedEntity.width"
       :height="viewedEntity.height"
-      :fill="entity.backgroundColor || '#ffffff'"
-      :stroke="selected ? '#0366d6' : (entity.borderColor || '#24292e')"
+      :fill="entity.backgroundColor || (props.isDarkTheme ? '#141313' : '#ffffff')"
+      :stroke="selected ? (props.isDarkTheme ? '#bb86fc' : '#0366d6') : entity.borderColor || (props.isDarkTheme ? '#676767' : '#24292e')"
       :stroke-width="selected ? 3 : 1"
       rx="4"/>
     <!-- 实体名称 -->
@@ -24,7 +24,7 @@
       text-anchor="middle"
       font-weight="bold"
       font-size="14"
-      fill="#24292e">
+      :fill="entity.fontColor || (props.isDarkTheme ? '#ffffff' : '#24292e')">
       {{ entity.name }}
     </text>
     <!-- 表名和字段之间的分隔线 -->
@@ -33,7 +33,7 @@
       y1="30"
       :x2="viewedEntity.width"
       y2="30"
-      :stroke="entity.borderColor || '#24292e'"/>
+      :stroke="entity.borderColor || (props.isDarkTheme ? '#676767' : '#24292e')"/>
     <!-- 字段列表 -->
     <g class="fields">
       <g class="field"
@@ -48,7 +48,7 @@
           y1="0"
           :x2="viewedEntity.width"
           y2="0"
-          stroke="#d7d7d7"
+          :stroke="entity.borderColor || (props.isDarkTheme ? '#2f2e2e' : '#24292e')"
           stroke-width="1"/>
         <!-- 字段背景 -->
         <rect class="field-bg"
@@ -58,7 +58,7 @@
         <!-- 主键图标 & 唯一键图标 -->
         <foreignObject x="5.5" y="1" width="20" height="20">
           <div>
-            <Icon :name="field.isPrimaryKey ? 'key' : (field.isUnique ? 'unique' : '')" style="width: 14px; height: 14px;" />
+            <Icon :name="field.isPrimaryKey ? 'key' : (field.isUnique ? 'unique' : '')" style="width: 14px; height: 14px;" :color="entity.fontColor || (props.isDarkTheme ? '#ffffff' : '#24292e')" />
           </div>
         </foreignObject>
         <!-- 字段名 -->
@@ -66,7 +66,7 @@
           :x="field.isPrimaryKey || field.isUnique ? 25 : 8"
           y="18"
           font-size="12"
-          fill="#24292e">
+          :fill="entity.fontColor || (props.isDarkTheme ? '#ffffff' : '#24292e')">
           {{ field.name }}
         </text>
         <!-- 字段类型 -->
@@ -75,7 +75,7 @@
           y="18"
           text-anchor="end"
           font-size="10"
-          fill="#586069">
+          :fill="entity.fontColor || (props.isDarkTheme ? '#ffffff' : '#586069')">
           {{ field.type }}({{ field.length }},{{ field.scale }})
         </text>
         <text class="field-type" v-else-if="field.length"
@@ -83,7 +83,7 @@
           y="18"
           text-anchor="end"
           font-size="10"
-          fill="#586069">
+          :fill="entity.fontColor || (props.isDarkTheme ? '#ffffff' : '#586069')">
           {{ field.type }}({{ field.length }})
         </text>
         <text class="field-type" v-else
@@ -91,7 +91,7 @@
           y="18"
           text-anchor="end"
           font-size="10"
-          fill="#586069">
+          :fill="entity.fontColor || (props.isDarkTheme ? '#ffffff' : '#586069')">
           {{ field.type }}
         </text>
       </g>
@@ -101,13 +101,14 @@
 
 <script setup lang="ts">
 import type { Entity, Field } from '../types/entity'
-import { defineProps, defineEmits, computed } from 'vue'
+import { defineProps, defineEmits, computed, watch } from 'vue'
 import Icon from '@/components/Icon.vue'
 import { getAllParentFields, updateEntitySize } from '@/utils/datasourceUtil'
 
 const props = defineProps<{
   entity: Entity
   selected: boolean
+  isDarkTheme: boolean
   dragTransform?: string
   visibleEntities: Entity[]
   virtualEntities: Entity[]
@@ -115,6 +116,8 @@ const props = defineProps<{
   ENTITY_HEADER_HEIGHT: number
   FIELD_HEIGHT: number
 }>()
+
+const allEntities = computed(() => [...props.visibleEntities, ...props.virtualEntities])
 
 // 设置字段引用
 function setFieldRef(entityId: string, fieldId: string, el: HTMLElement | null) {
@@ -124,24 +127,27 @@ function setFieldRef(entityId: string, fieldId: string, el: HTMLElement | null) 
 }
 
 const viewedEntity = computed(() => {
+  console.log('viewedEntity - props.entity:', props.entity.id)
   const entity = { ...props.entity }
-  const allEntities = [...props.visibleEntities, ...props.virtualEntities]
-  // 判断是否有父实体并且缓存中存在父实体的字段
-  let allFields = props.allFieldsCache[props.entity.id]
-  if (!allFields || allFields.length === 0) {
-    if (props.entity.parentEntityId) {
-      allFields = [...getAllParentFields(allEntities, props.entity.parentEntityId), ...entity.fields]
-    } else {
-      allFields = entity.fields
-    }
-    props.allFieldsCache[props.entity.id] = allFields
-  }
-  entity.fields = allFields
+  entity.fields = cacheAllFields(entity) as Field[]
   updateEntitySize(entity)
   emit('updateEntitySize', entity)
   return entity
 })
 
+// 判断是否有父实体并且缓存中存在父实体的字段
+function cacheAllFields(entity: Entity) {
+  let allFields = props.allFieldsCache[entity.id]
+  if(!allFields || allFields.length === 0) {
+    if (entity.parentEntityId) {
+      allFields = [...getAllParentFields(allEntities.value, entity.parentEntityId), ...entity.fields]
+    } else {
+      allFields = entity.fields
+    }
+    props.allFieldsCache[entity.id] = allFields
+  }
+  return allFields
+}
 
 const emit = defineEmits([
   'dblclick',
@@ -157,28 +163,11 @@ const emit = defineEmits([
 
 <style scoped>
 .entity {
-  border: 2px solid #010101;
   cursor: pointer;
   transition: all 0.1s ease;
 }
 .entity.selected {
   cursor: move;
-}
-.dark-theme .entity-rect {
-  fill: #141313;
-  stroke: #676767;
-}
-.dark-theme .entity-rect.selected {
-  stroke: #bb86fc;
-}
-.dark-theme .header-separator{
-  stroke: #676767;
-}
-.dark-theme .field-separator{
-  stroke: #2f2e2e;
-}
-.dark-theme .field-name, .dark-theme .field-type, .dark-theme .entity-name {
-  fill: #ffffff;
 }
 .entity, .entity * {
   user-select: none;
@@ -191,23 +180,15 @@ const emit = defineEmits([
 }
 .field-type {
   font-size: 11px;
-  color: #586069;
   pointer-events: none;
 }
 .field-name {
   font-size: 13px;
   font-weight: 500;
-  color: #24292e;
   display: flex;
   align-items: center;
   gap: 4px;
   pointer-events: none;
-}
-.key-icon {
-  color: #2a2a29;
-}
-.dark-theme .key-icon {
-  color: #ffffff;
 }
 
 @media (max-width: var(--mobile-breakpoint)) {
@@ -228,9 +209,6 @@ const emit = defineEmits([
   .field {
     transition: all 0.1s ease;
     min-height: 24px;
-  }
-  .field:hover .field-bg {
-    fill: rgba(3, 102, 214, 0.05);
   }
   .field-name,
   .field-type {

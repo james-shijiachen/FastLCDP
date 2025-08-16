@@ -1,5 +1,5 @@
 <template>
-  <div class="chatbox-root" @wheel.prevent="handleModalWheel">
+  <div class="chatbox-root" @wheel="handleModalWheel">
     <div class="chatbox-messages" ref="messagesRef">
       <div v-for="(msg, idx) in messages" :key="idx" :class="['chat-msg', msg.role]">
         <div class="msg-bubble">
@@ -7,58 +7,60 @@
         </div>
       </div>
     </div>
-    <!-- 上方工具栏 -->
-    <div class="chatbox-top-toolbar">
-      <button 
-        class="toolbar-btn" 
-        @click="insertImage">
-        <Icon name="picture" style="width: 20px; height: 20px;"/>
-        <span>图片</span>
-      </button>
-      <button 
-        class="toolbar-btn" 
-        @click="triggerMention">
-        <Icon name="at" style="width: 20px; height: 20px;"/>
-        <span>@提及</span>
-      </button>
-    </div>
-
-    <!-- 输入框容器 -->
-    <div class="chatbox-input-container">
-      <div class="chatbox-input-wrapper">
-        <editor-content 
-          :editor="editor" 
-          class="chatbox-editor"
-          @keydown.enter.exact.prevent="send"
-          @keydown.shift.enter.exact="insertLineBreak"
-        />
-        <button class="chatbox-send-btn" @click="send" :disabled="!canSend">
-          <Icon name="send-prompt" style="width: 20px; height: 20px;"/>
-        </button>
+    <!-- 聊天框外框容器 -->
+    <div class="chatbox-outer-container">
+      <!-- 输入区域容器 -->
+      <div class="chatbox-input-container">
+        <div class="chatbox-input-wrapper">
+          <editor-content 
+            :editor="editor" 
+            class="chatbox-editor"
+            @keydown.enter.exact.prevent="send"
+            @keydown.shift.enter.exact="insertLineBreak"
+          />
+        </div>
+        <!-- 工具栏容器 -->
+        <div class="chatbox-toolbar-wrapper">
+          <!-- 左侧工具按钮 -->
+          <div class="left-tools">
+            <button class="toolbar-btn" @click="triggerMention" title="@提及">
+              <Icon name="at" style="width: 18px; height: 18px;"/>
+            </button>
+            <button class="toolbar-btn" @click="insertImage" title="图片">
+              <Icon name="picture" style="width: 18px; height: 18px;"/>
+            </button>
+          </div>
+          
+          <!-- 右侧控件 -->
+          <div class="right-controls">
+            <!-- 模型选择器 -->
+            <div class="model-selector">
+              <select v-model="selectedModel" class="model-dropdown">
+                <option value="gpt-4">GPT-4</option>
+                <option value="gpt-3.5-turbo">GPT-3.5</option>
+                <option value="claude-3">Claude-3</option>
+                <option value="gemini-pro">Gemini</option>
+              </select>
+            </div>
+            
+            <!-- 语音按钮 -->
+            <button 
+              class="voice-btn" 
+              @mousedown="startVoiceInput"
+              @mouseup="stopVoiceInput"
+              @mouseleave="stopVoiceInput"
+              :class="{ recording: isRecording }"
+              title="按住说话">
+              <Icon name="microphone" style="width: 18px; height: 18px;"/>
+            </button>
+            
+            <!-- 发送按钮 -->
+            <button class="chatbox-send-btn" @click="send" :disabled="!canSend">
+              <Icon name="send-prompt" style="width: 18px; height: 18px;"/>
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
-
-    <!-- 下方工具栏 -->
-    <div class="chatbox-bottom-toolbar">
-      <div class="model-selector">
-        <label>模型:</label>
-        <select v-model="selectedModel" class="model-dropdown">
-          <option value="gpt-4">GPT-4</option>
-          <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-          <option value="claude-3">Claude-3</option>
-          <option value="gemini-pro">Gemini Pro</option>
-        </select>
-      </div>
-      <button 
-        class="voice-btn" 
-        @mousedown="startVoiceInput"
-        @mouseup="stopVoiceInput"
-        @mouseleave="stopVoiceInput"
-        :class="{ recording: isRecording }"
-        title="按住说话">
-        <Icon name="microphone" style="width: 20px; height: 20px;"/>
-        <span>{{ isRecording ? '松开结束' : '按住说话' }}</span>
-      </button>
     </div>
     
     <!-- Mention 建议列表 -->
@@ -71,7 +73,13 @@
         :key="suggestion.id"
         :class="['mention-item', { active: index === selectedMentionIndex }]"
         @click="selectMention(suggestion)">
-        <div class="mention-avatar">{{ suggestion.name.charAt(0) }}</div>
+        <div class="mention-avatar" :class="`mention-${suggestion.category}`">
+          <Icon v-if="suggestion.category === 'datasource'" name="database" />
+          <Icon v-else-if="suggestion.category === 'entity'" name="view" />
+          <Icon v-else-if="suggestion.category === 'relationship'" name="hard-relation" />
+          <Icon v-else-if="suggestion.category === 'index'" name="key" />
+          <span v-else>{{ suggestion.avatar }}</span>
+        </div>
         <div class="mention-info">
           <div class="mention-name">{{ suggestion.name }}</div>
           <div class="mention-type">{{ suggestion.type }}</div>
@@ -90,11 +98,16 @@ import Image from '@tiptap/extension-image'
 import Mention from '@tiptap/extension-mention'
 import Placeholder from '@tiptap/extension-placeholder'
 import Icon from '@/components/Icon.vue'
+import { useDSDiagramStore } from '@/stores/dsDiagram'
+
+interface Message {
+  role: 'user' | 'agent'
+  content: string
+}
 
 const { t: $t } = useI18n()
-const messages = ref([
-  { role: 'agent', content: 'Hi! How can I help you?' }
-])
+const store = useDSDiagramStore()
+const messages = ref<Message[]>([])
 const messagesRef = ref<HTMLElement | null>(null)
 const editor = ref<Editor>()
 const mentionSuggestions = ref<any[]>([])
@@ -109,15 +122,61 @@ const canSend = computed(() => {
   return editor.value && !editor.value.isEmpty
 })
 
-// 模拟的用户和文件数据
-const mockData = [
-  { id: 1, name: 'Alice Johnson', type: '用户', avatar: 'A' },
-  { id: 2, name: 'Bob Smith', type: '用户', avatar: 'B' },
-  { id: 3, name: 'Charlie Brown', type: '用户', avatar: 'C' },
-  { id: 4, name: 'project.json', type: '文件', avatar: 'P' },
-  { id: 5, name: 'config.ts', type: '文件', avatar: 'C' },
-  { id: 6, name: 'README.md', type: '文件', avatar: 'R' },
-]
+// 获取提及建议数据
+const mentionData = computed(() => {
+  const suggestions: any[] = []
+  
+  // 添加数据源
+  store.datasources.forEach(datasource => {
+    suggestions.push({
+      id: `datasource_${datasource.id}`,
+      name: datasource.name,
+      type: '数据源',
+      category: 'datasource',
+      avatar: datasource.name.charAt(0).toUpperCase(),
+      originalId: datasource.id
+    })
+  })
+  
+  // 添加实体
+  store.entities.forEach(entity => {
+    suggestions.push({
+      id: `entity_${entity.id}`,
+      name: entity.name,
+      type: '实体',
+      category: 'entity',
+      avatar: entity.name.charAt(0).toUpperCase(),
+      originalId: entity.id
+    })
+  })
+  
+  // 添加关系
+  store.relationships.forEach(relationship => {
+    const name = relationship.name || `关系_${relationship.id.slice(0, 8)}`
+    suggestions.push({
+      id: `relationship_${relationship.id}`,
+      name: name,
+      type: '关系',
+      category: 'relationship',
+      avatar: name.charAt(0).toUpperCase(),
+      originalId: relationship.id
+    })
+  })
+  
+  // 添加索引
+  store.indexes.forEach(index => {
+    suggestions.push({
+      id: `index_${index.id}`,
+      name: index.name,
+      type: '索引',
+      category: 'index',
+      avatar: index.name.charAt(0).toUpperCase(),
+      originalId: index.id
+    })
+  })
+  
+  return suggestions
+})
 
 // 初始化编辑器
 onMounted(() => {
@@ -142,9 +201,9 @@ onMounted(() => {
         },
         suggestion: {
           items: ({ query }: { query: string }) => {
-            return mockData.filter(item => 
+            return mentionData.value.filter(item => 
               item.name.toLowerCase().includes(query.toLowerCase())
-            ).slice(0, 5)
+            ).slice(0, 10)
           },
           render: () => {
             let component: any
@@ -160,9 +219,32 @@ onMounted(() => {
                  const editorElement = document.querySelector('.chatbox-editor')
                  if (editorElement) {
                    const rect = editorElement.getBoundingClientRect()
+                   const viewportHeight = window.innerHeight
+                   const viewportWidth = window.innerWidth
+                   const suggestionHeight = 200 // 预估建议列表高度
+                   const suggestionWidth = 300 // 预估建议列表宽度
+                   
+                   let top = rect.top - suggestionHeight - 8
+                   let left = rect.left
+                   
+                   // 如果上方空间不够，显示在下方
+                   if (top < 0) {
+                     top = rect.bottom + 5
+                   }
+                   
+                   // 如果右侧空间不够，向左调整
+                   if (left + suggestionWidth > viewportWidth) {
+                     left = viewportWidth - suggestionWidth - 10
+                   }
+                   
+                   // 确保不超出左边界
+                   if (left < 10) {
+                     left = 10
+                   }
+                   
                    mentionPosition.value = {
-                     top: `${rect.bottom + 5}px`,
-                     left: `${rect.left}px`
+                     top: `${top}px`,
+                     left: `${left}px`
                    }
                  }
               },
@@ -217,10 +299,28 @@ onBeforeUnmount(() => {
 // 监听滚轮事件（屏蔽浏览器默认滚动）
 function handleModalWheel(event: WheelEvent) {
   event.stopPropagation();
-  const container = messagesRef.value;
-  if (container) {
-    container.scrollLeft += event.deltaX; // 横向滚动
-    container.scrollTop += event.deltaY; // 纵向滚动
+  
+  // 获取事件目标元素
+  const target = event.target as HTMLElement;
+  
+  // 检查是否在输入框区域内
+  const isInInputArea = target.closest('.chatbox-editor') || target.closest('.chatbox-input-wrapper');
+  
+  if (isInInputArea) {
+    // 在输入框区域，阻止浏览器滚动并手动控制输入框滚动
+    event.preventDefault();
+    const editorContainer = target.closest('.chatbox-editor') as HTMLElement;
+    if (editorContainer) {
+      editorContainer.scrollTop += event.deltaY;
+    }
+    return;
+  } else {
+    // 在聊天框区域，阻止默认行为并滚动聊天内容
+    event.preventDefault();
+    const container = messagesRef.value;
+    if (container) {
+      container.scrollTop += event.deltaY;
+    }
   }
 }
 
@@ -358,6 +458,12 @@ function scrollToBottom() {
   padding: 10px 10px 0 10px;
   display: flex;
   flex-direction: column;
+  /* 隐藏滚动条但保持滚动功能 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+.chatbox-messages::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
 }
 .chat-msg {
   display: flex;
@@ -399,74 +505,101 @@ function scrollToBottom() {
   color: #ffffff;
 }
 
-/* 上方工具栏 */
-  .chatbox-top-toolbar {
-    display: flex;
-    gap: 8px;
-    padding: 8px 12px;
-    background: #F8F9FA;
-    border-bottom: 1px solid #E5E5EA;
-  }
-  .dark-theme .chatbox-top-toolbar {
-    background: #1C1C1E;
-    border-bottom: 1px solid #38383A;
-  }
+/* 聊天框外框容器 */
+.chatbox-outer-container {
+  border: 1px solid #3A3A3C;
+  border-radius: 4px;
+  background: #2C2C2E;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  margin: 8px;
+}
+.dark-theme .chatbox-outer-container {
+  background: #2C2C2E;
+  border-color: #3A3A3C;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
 
-  /* 输入容器 */
-  .chatbox-input-container {
-    padding: 12px;
-    background: #fff;
-  }
-  .dark-theme .chatbox-input-container {
-    background: #030303;
-  }
-  
-  /* 输入框包装器 */
-  .chatbox-input-wrapper {
-    display: flex;
-    align-items: flex-end;
-    position: relative;
-    background: #F2F2F7;
-    border-radius: 20px;
-    border: 1px solid #E5E5EA;
-    overflow: hidden;
-  }
-  .dark-theme .chatbox-input-wrapper {
-    background: #2C2C2E;
-    border-color: #38383A;
-  }
+/* 输入区域容器 */
+.chatbox-input-container {
+  padding: 8px 8px 4px 8px;
+  background: #1C1C1E;
+}
+.dark-theme .chatbox-input-container {
+  background: #1C1C1E;
+}
 
-  /* 下方工具栏 */
-  .chatbox-bottom-toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 12px;
-    background: #F8F9FA;
-    border-top: 1px solid #E5E5EA;
-  }
-  .dark-theme .chatbox-bottom-toolbar {
-    background: #1C1C1E;
-    border-top: 1px solid #38383A;
-  }
+/* 工具栏容器 */
+.chatbox-toolbar-container {
+  padding: 8px 12px 12px 12px;
+  background: #1C1C1E;
+  border-top: 1px solid #3A3A3C;
+}
+.dark-theme .chatbox-toolbar-container {
+  background: #1C1C1E;
+  border-top-color: #3A3A3C;
+}
+
+/* 输入区域包装器 */
+.chatbox-input-wrapper {
+  min-height: 48px;
+  transition: all 0.2s ease;
+  background: #3A3A3C;
+  border: 1px solid #4A4A4C;
+  border-radius: 8px;
+  overflow: hidden;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+.dark-theme .chatbox-input-wrapper {
+  background: #3A3A3C;
+  border-color: #4A4A4C;
+}
+
+/* 工具栏包装器 */
+.chatbox-toolbar-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* 左侧工具按钮 */
+.left-tools {
+  display: flex;
+  align-items: center;
+}
+
+/* 右侧控件 */
+.right-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
 
 /* Tiptap 编辑器样式 */
- :deep(.chatbox-editor) {
-   flex: 1;
-   min-height: 20px;
-   max-height: 120px;
-   overflow-y: auto;
- }
+:deep(.chatbox-editor) {
+  width: 100%;
+  min-height: 32px;
+  max-height: 150px;
+  padding: 8px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
 
 :deep(.tiptap-editor) {
-  padding: 12px 16px;
+  padding: 0;
   outline: none;
   font-size: 14px;
   line-height: 1.4;
-  color: #000000;
   user-select: text;
   -webkit-user-select: text;
   -ms-user-select: text;
+  background: transparent;
+  border: none;
+  width: 100%;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 :deep(.dark-theme .tiptap-editor) {
@@ -498,127 +631,119 @@ function scrollToBottom() {
 }
 
 /* 工具栏按钮通用样式 */
-  .toolbar-btn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 12px;
-    border: none;
-    background: #ffffff;
-    border-radius: 8px;
-    color: #007AFF;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-size: 13px;
-    border: 1px solid #E5E5EA;
-  }
-  .toolbar-btn:hover {
-    background: #F0F0F0;
-    transform: translateY(-1px);
-  }
-  .dark-theme .toolbar-btn {
-    background: #2C2C2E;
-    color: #0A84FF;
-    border-color: #38383A;
-  }
-  .dark-theme .toolbar-btn:hover {
-    background: #38383A;
-  }
+.toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.toolbar-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+.dark-theme .toolbar-btn {
+  color: #8E8E93;
+}
+.dark-theme .toolbar-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
   
-  /* 发送按钮 */
-  .chatbox-send-btn {
-    background: #007AFF;
-    border: none;
-    border-radius: 50%;
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    color: #ffffff;
-    margin: 8px;
-    flex-shrink: 0;
-  }
-  .chatbox-send-btn:hover:not(:disabled) {
-    background: #0056CC;
-    transform: scale(1.05);
-  }
-  .chatbox-send-btn:disabled {
-    background: #C7C7CC;
-    cursor: not-allowed;
-    transform: none;
-  }
-  .dark-theme .chatbox-send-btn:disabled {
-    background: #48484A;
-  }
+/* 发送按钮 */
+.chatbox-send-btn {
+  background: #007AFF;
+  border: none;
+  border-radius: 4px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #ffffff;
+  flex-shrink: 0;
+  font-size: 14px;
+}
+.chatbox-send-btn:hover:not(:disabled) {
+  background: #0056CC;
+  transform: scale(1.05);
+}
+.chatbox-send-btn:disabled {
+  background: #C7C7CC;
+  cursor: not-allowed;
+  transform: none;
+}
+.dark-theme .chatbox-send-btn:disabled {
+  background: #48484A;
+}
 
-  /* 模型选择器 */
-  .model-selector {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .model-selector label {
-    font-size: 13px;
-    color: #666;
-    font-weight: 500;
-  }
-  .dark-theme .model-selector label {
-    color: #999;
-  }
-  .model-dropdown {
-    padding: 6px 10px;
-    border: 1px solid #E5E5EA;
-    border-radius: 6px;
-    background: #ffffff;
-    color: #333;
-    font-size: 13px;
-    cursor: pointer;
-  }
-  .dark-theme .model-dropdown {
-    background: #2C2C2E;
-    border-color: #38383A;
-    color: #ffffff;
-  }
+/* 模型选择器 */
+.model-selector {
+  display: flex;
+  align-items: center;
+}
+.model-dropdown {
+  padding: 4px 8px;
+  border: none;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.05);
+  color: #666;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  outline: none;
+}
+.model-dropdown:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+.dark-theme .model-dropdown {
+  background: rgba(255, 255, 255, 0.1);
+  color: #8E8E93;
+}
+.dark-theme .model-dropdown:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
 
-  /* 语音按钮 */
-  .voice-btn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 12px;
-    border: 1px solid #E5E5EA;
-    background: #ffffff;
-    border-radius: 8px;
-    color: #666;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-size: 13px;
-    user-select: none;
-  }
-  .voice-btn:hover {
-    background: #F0F0F0;
-  }
-  .voice-btn.recording {
-    background: #FF3B30;
-    color: #ffffff;
-    border-color: #FF3B30;
-    animation: pulse 1.5s infinite;
-  }
-  .dark-theme .voice-btn {
-    background: #2C2C2E;
-    border-color: #38383A;
-    color: #999;
-  }
-  .dark-theme .voice-btn:hover {
-    background: #38383A;
-  }
-  .dark-theme .voice-btn.recording {
-    background: #FF453A;
-    border-color: #FF453A;
-  }
+/* 语音按钮 */
+.voice-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 16px;
+  user-select: none;
+}
+.voice-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+.voice-btn.recording {
+  background: #FF3B30;
+  color: #ffffff;
+  animation: pulse 1.5s infinite;
+}
+.dark-theme .voice-btn {
+  color: #8E8E93;
+}
+.dark-theme .voice-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+.dark-theme .voice-btn.recording {
+  background: #FF453A;
+}
 
   @keyframes pulse {
     0% { transform: scale(1); }
@@ -635,6 +760,7 @@ function scrollToBottom() {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   z-index: 1000;
   max-height: 200px;
+  max-width: 300px;
   overflow-y: auto;
   min-width: 200px;
 }
@@ -647,8 +773,7 @@ function scrollToBottom() {
 .mention-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
+  padding: 8px 12px;
   cursor: pointer;
   transition: background-color 0.2s;
 }
@@ -662,37 +787,58 @@ function scrollToBottom() {
 }
 
 .mention-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: #007AFF;
-  color: #ffffff;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
-  font-size: 14px;
+  margin-right: 8px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* 不同类型的mention图标样式 */
+.mention-datasource {
+  background: #007AFF;
+  color: #ffffff;
+}
+.mention-entity {
+  background: #34C759;
+  color: #ffffff;
+}
+.mention-relationship {
+  background: #FF9500;
+  color: #ffffff;
+}
+.mention-index {
+  background: #AF52DE;
+  color: #ffffff;
 }
 
 .mention-info {
   flex: 1;
+  min-width: 0;
 }
-
 .mention-name {
-  font-weight: 500;
   font-size: 14px;
+  font-weight: 500;
   color: #000000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.dark-theme .mention-name {
-  color: #ffffff;
-}
-
 .mention-type {
   font-size: 12px;
   color: #8E8E93;
   margin-top: 2px;
 }
+.dark-theme .mention-name {
+  color: #ffffff;
+}
 .dark-theme .mention-type {
   color: #8E8E93;
 }
+
+
 </style>

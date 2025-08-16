@@ -13,10 +13,20 @@
       <!-- 数据库图标 -->
       <span v-if="node.type === TreeNodeType.DATASOURCE" class="node-icon">
         <Icon :name="node.datasourceCategory === DatasourceCategory.MYSQL ? 'mysql' 
+        : node.datasourceCategory === DatasourceCategory.MARIADB ? 'mariadb'
         : node.datasourceCategory === DatasourceCategory.SQLITE ? 'sqlite' 
         : node.datasourceCategory === DatasourceCategory.ORACLE ? 'oracle' 
         : node.datasourceCategory === DatasourceCategory.POSTGRESQL ? 'postgresql' 
         : node.datasourceCategory === DatasourceCategory.SQLSERVER ? 'sqlserver' 
+        : node.datasourceCategory === DatasourceCategory.DB2 ? 'db2' 
+        : node.datasourceCategory === DatasourceCategory.CUBRID ? 'cubrid' 
+        : node.datasourceCategory === DatasourceCategory.FIREBIRD ? 'firebird' 
+        : node.datasourceCategory === DatasourceCategory.COCKROACHDB ? 'cockroachdb' 
+        : node.datasourceCategory === DatasourceCategory.YUGABYTE ? 'yugabyte'
+        : node.datasourceCategory === DatasourceCategory.DUCKDB ? 'duckdb'
+        : node.datasourceCategory === DatasourceCategory.POLARDB ? 'polardb'
+        : node.datasourceCategory === DatasourceCategory.OCEANBASE ? 'oceanbase'
+        : node.datasourceCategory === DatasourceCategory.TIDB ? 'tidb'
         : node.datasourceCategory === DatasourceCategory.REDIS ? 'redis' 
         : node.datasourceCategory === DatasourceCategory.MONGODB ? 'mongodb' 
         : node.datasourceCategory === DatasourceCategory.ELASTICSEARCH ? 'elasticsearch' 
@@ -58,7 +68,7 @@
 import { ref, computed, watch } from 'vue'
 import type { TreeNode, Entity } from '../types/entity'
 import { TreeNodeType, EntityType, DatasourceCategory } from '../types/entity'
-import { useDragStore } from '../stores/dragState'
+import { useDragStore } from '../utils/dragTreeNodeState'
 import Icon from '@/components/Icon.vue'
 
 const dragStore = useDragStore()
@@ -155,7 +165,7 @@ function onDrop() {
 }
 /* 图标 */
 .entity-icon {
-  color: #5c5e5d;
+  color: #66bb6a;
 }
 .node-icon {
   width: 20px;
@@ -236,6 +246,10 @@ function onDrop() {
 }
 .tree-node.selected > .node-content {
   background: #0366d6;
+  color: #fff;
+}
+.dark-theme .tree-node.selected > .node-content {
+  background: #7c21ea;
   color: #fff;
 }
 .datasource-icon.selected {

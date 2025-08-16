@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container" :class="{ 'dark-theme': isDarkTheme }" :data-locale="currentLocale">
+  <div class="app-container" :class="{ 'dark-theme': isDarkTheme }" :data-locale="currentLocale" tabindex="0" @keydown="handleKeyDown">
     <!-- 顶部导航栏 -->
     <AppHeader
       :isMobile="isMobile"
@@ -19,6 +19,7 @@
       :isSelectedEntity="isSelectedEntity"
       :isSplitScreen="isSplitScreen"
       :sidebarVisible="sidebarVisible"
+      :canvasState="currentCanvasState"
       :currentFocusPane="currentFocusPane"
       :activeViewId="activeViewId"
       @saveDiagram="saveDiagram"
@@ -38,10 +39,13 @@
       @deleteEntity="deleteSelectedEntities"
       @importDiagram="importDiagram"
       @colorEntityBorder="colorEntityBorder"
+      @colorEntityFont="colorEntityFont"
+      @colorEntity="colorEntity"
       @toggleSidebar="toggleSidebar"
       @toggleSplitScreen="toggleSplitScreen"
       @formatCode="formatCode"
-      @dragCanvas="isDragMode = $event"/>
+      @hideColorPalette="hideColorPalette"
+      @dragCanvas="currentCanvasState.isDragMode = $event"/>
 
     <!-- 主布局 -->
     <div class="main-layout">
@@ -69,8 +73,9 @@
         <template v-if="isSplitScreen">
            <!-- 上半部分：其他视图 -->
            <div class="split-top" :style="{ height: splitTopHeight + '%' }">
-            <DSCanvas 
+            <X6DSCanvas 
               ref="canvasRef"
+              :isDarkTheme="isDarkTheme"
               :fieldUniqueCache="store.fieldUniqueCache"
               :canvasState="currentCanvasState"
               :entities="visibleEntities"
@@ -78,10 +83,12 @@
               :relationships="visibleRelationships"
               :selectedEntities="store.selectedEntities"
               :isSplitScreen="isSplitScreen"
-              :isDragMode="isDragMode"
+              :currentFocusPane="currentFocusPane"
               :allFieldsCache="store.allFieldsCache"
               :ENTITY_HEADER_HEIGHT="store.ENTITY_HEADER_HEIGHT"
               :FIELD_HEIGHT="store.FIELD_HEIGHT"
+              :viewId="activeViewId"
+              @editRelation="editRelation"
               @setFocusPane="(pane: string) => { if(pane === 'canvas' || pane === 'code') setFocusPane(pane) }"
               @entityDoubleClick="handleEntityDoubleClick"
               @entityRightClick="handleEntityRightClick"
@@ -89,11 +96,11 @@
               @canvasRightClick="handleCanvasRightClick"
               @selectionChange="handleSelectionChange"
               @updateEntitySize="handleUpdateEntitySize"
+              @updateEntityPosition="handleUpdateEntityPosition"
+              @zoomChange="handleZoomChange"
+              @panChange="handlePanChange"
               @copyEntity="copyEntity"
-              @pasteEntity="pasteEntity"
-              @hideContextMenu="hideContextMenus"
-              @undo="undo"
-              @redo="redo"/>
+              @pasteEntity="pasteEntity"/>
           </div>
            <!-- 分屏调节手柄 -->
            <div class="split-resize-handle" :class="{ resizing: isResizingSplit }" @mousedown="startSplitResize"></div>
@@ -125,9 +132,10 @@
             @save="handleCodeSave"
           />
           <!-- 默认画布视图 -->
-          <DSCanvas 
+          <X6DSCanvas 
             v-else
             ref="canvasRef"
+            :isDarkTheme="isDarkTheme"
             :fieldUniqueCache="store.fieldUniqueCache"
             :canvasState="currentCanvasState"
             :entities="visibleEntities"
@@ -135,21 +143,23 @@
             :relationships="visibleRelationships"
             :selectedEntities="store.selectedEntities"
             :isSplitScreen="isSplitScreen"
-            :isDragMode="isDragMode"
+            :currentFocusPane="currentFocusPane"
             :allFieldsCache="store.allFieldsCache"
             :ENTITY_HEADER_HEIGHT="store.ENTITY_HEADER_HEIGHT"
             :FIELD_HEIGHT="store.FIELD_HEIGHT"
+            :viewId="activeViewId"
+            @editRelation="editRelation"
             @entityDoubleClick="handleEntityDoubleClick"
             @entityRightClick="handleEntityRightClick"
             @canvasClick="handleCanvasClick"
             @canvasRightClick="handleCanvasRightClick"
             @selectionChange="handleSelectionChange"
             @updateEntitySize="handleUpdateEntitySize"
+            @updateEntityPosition="handleUpdateEntityPosition"
+            @zoomChange="handleZoomChange"
+            @panChange="handlePanChange"
             @copyEntity="copyEntity"
-            @pasteEntity="pasteEntity"
-            @hideContextMenu="hideContextMenus"
-            @undo="undo"
-            @redo="redo"/>
+            @pasteEntity="pasteEntity"/>
         </template>
         <!-- 右键菜单 -->
         <ContextMenu
@@ -223,40 +233,46 @@
       :currentDatasourceId="currentDatasourceId || store.datasources[0]?.id" 
       @save="handleEntitySave"
       @deleteRelation="handleDeleteRelation"
-      @close="closeEntityModal"
-    />
+      @close="closeEntityModal" />
     <!-- 关系编辑模态框 -->
-    <RelationEditModal 
+    <RelationEditModal
       v-if="showRelationModal"
       :ENTITY_HEADER_HEIGHT="store.ENTITY_HEADER_HEIGHT"
       :FIELD_HEIGHT="store.FIELD_HEIGHT"
+      :relationship="editingRelationship as Relationship"
       :entities="store.entities"
       :fieldUniqueCache="store.fieldUniqueCache"
       :selectedEntities="store.selectedEntities"
       :relationships="visibleRelationships"
       @save="handleRelationSave"
-      @close="closeRelationModal"
-    />
+      @close="closeRelationModal" />
     <!-- 数据库编辑模态框 -->
     <DatasourceEditModal 
       v-if="showDatasourceModal"
       :datasource="editingDatasource"
       @save="handleDatasourceSave"
-      @close="closeDatasourceModal"
-    />
+      @close="closeDatasourceModal" />
+    <!-- 调色板容器 -->
+    <ColorPalette 
+      v-if="showColorPalette"
+      :visible="showColorPalette"
+      :currentColor="currentColor"
+      @close="showColorPalette = false"
+      @colorSelected="handleColorSelected"
+      @reset="handleColorReset" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted} from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useDSDiagramStore } from './stores/dsDiagram'
-import { DSCanvas, EntityEditModal, RelationEditModal, DatasourceTree, DatasourceEditModal, 
-  Toolbar, AppHeader, ContextMenu, ViewTabs, CodeDesignView} from './components'
+import { X6DSCanvas, DSCanvas, EntityEditModal, RelationEditModal, DatasourceTree, DatasourceEditModal, 
+  Toolbar, AppHeader, ContextMenu, ViewTabs, CodeDesignView, ColorPalette } from '@/components'
 import ChatBox from './components/ChatBox.vue'
-import type { Entity, Datasource, View, TreeNode } from './types/entity'
+import type { Entity, Datasource, View, TreeNode, CanvasState, Relationship } from '@/types/entity'
 import { EntityType, TreeNodeType } from './types/entity'
-import { errorHandler } from './utils/errorHandler'
+import { errorHandler } from '@/utils/errorHandler'
 
 const store = useDSDiagramStore()  // 数据源存储
 const { locale, t: $t } = useI18n()  // 国际化
@@ -268,7 +284,6 @@ const isMobile = computed(() => windowWidth.value <= 768) // 是否是移动端
 const isTablet = computed(() => windowWidth.value <= 1024 && windowWidth.value > 768) // 是否是平板
 const sidebarVisible = ref(!isMobile.value)  // 是否显示右侧数据库树面板
 const isDarkTheme = ref(false)  // 是否暗色主题
-const isDragMode = ref(false)  // 是否拖拽画布
 const isSplitScreen = ref(false) // 是否分屏模式
 const splitTopHeight = ref(50) // 上半部分高度百分比
 
@@ -277,13 +292,19 @@ const isResizingSidebar = ref(false)  // 是否正在调整(侧屏左右调节)
 const isResizingChatBox = ref(false)  // 是否正在调整(侧屏上下调节)
 const currentFocusPane = ref<'canvas' | 'code'>('canvas')  // 当前焦点面板
 
+// 调色板相关状态
+const showColorPalette = ref(false)
+const currentColor = ref<string>('')
+const colorPaletteType = ref<'background' | 'border' | 'font'>('background')
+
 const codeCanvasState = ref({
   MAX_ZOOM: store.MAX_ZOOM,
   MIN_ZOOM: store.MIN_ZOOM,
   zoom: 1,
   panX: 0,
   panY: 0,
-  showGrid: true
+  showGrid: false,
+  isDragMode: false
 })
 
 // 响应式数据
@@ -293,8 +314,8 @@ const currentView = computed(() =>
 ) // 当前视图
 
 // 代码设计视图相关状态
-const codeContent = ref('')
-const codeLanguage = ref('json')
+const codeContent = ref(store.generateDatasourceCode())
+const codeLanguage = ref('datasource')
 // 可见实体（只显示entity类型，不显示abstract类型）
 const visibleEntities = computed(() =>
   store.entities.filter(e => currentView.value?.datasourceIds.some(ds => ds === e.datasourceId) && e.entityType === EntityType.ENTITY)
@@ -309,12 +330,13 @@ const virtualEntities = computed(() =>
 )
 const currentCanvasState = computed(() => currentView.value?.canvasState || codeCanvasState)  // 当前视图的画布状态,如果视图未定义则返回默认状态
 
-const canvasRef = ref<InstanceType<typeof DSCanvas> | null>(null)  // 画布实例
+const canvasRef = ref<InstanceType<typeof X6DSCanvas> | null>(null)  // 画布实例
 const codeViewRef = ref<InstanceType<typeof CodeDesignView> | null>(null)  // 代码视图实例
 const showEntityModal = ref(false)  // 是否显示实体编辑模态框
 const showRelationModal = ref(false)  // 是否显示关系编辑模态框
 const showDatasourceModal = ref(false)  // 是否显示数据源编辑模态框
 const editingEntity = ref<Entity | null>(null)  // 当前编辑的实体
+const editingRelationship = ref<Relationship | null>(null)  // 当前编辑的关系
 const parentEntity = ref<Entity | null>(null)   // 父实体(用于点击树+号新增实体时，显示父实体信息)
 const editingDatasource = ref<Datasource | null>(null)  // 当前编辑的数据源
 const canPaste = ref(false)  // 是否可以粘贴
@@ -327,14 +349,7 @@ const codeDesignView = ref<View>({
   id: 'code',
   name: 'Code',
   datasourceIds: [],
-  canvasState: {
-    MAX_ZOOM: store.MAX_ZOOM as number,
-    MIN_ZOOM: store.MIN_ZOOM as number,
-    zoom: 1,
-    panX: 0,
-    panY: 0,
-    showGrid: false
-  }
+  canvasState: codeCanvasState.value
 })
 
 // 右键菜单
@@ -349,6 +364,11 @@ const contextMenu = ref({
 // 计算属性
 const isMultiSelect = computed(() => store.selectedEntities.length > 1)
 const isSelectedEntity = computed(() => store.selectedEntities.length > 0)
+
+watch([() => store.views, () => store.datasources, () => store.entities, () => store.relationships, () => store.indexes], async () => {
+  await nextTick()
+  codeContent.value = store.generateDatasourceCode()
+}, { immediate: true, deep: true })
 
 // ------------------------------ 视图方法 start------------------------------
 function handleDeleteView(viewId: string) {
@@ -370,7 +390,8 @@ function handleAddView(datasource: Datasource) {
       zoom: 1,
       panX: 0,
       panY: 0,
-      showGrid: true
+      showGrid: false,
+      isDragMode: false
     }
   }
   store.views.push(newView)
@@ -421,7 +442,6 @@ function handleCanvasRightClick(event: MouseEvent) {
 // 实体右键菜单
 function handleEntityRightClick(entity: Entity, event: MouseEvent) {
   event.preventDefault()
-  event.stopPropagation()
 
   store.selectedEntities = store.selectedEntities.filter(e => e.id !== entity.id)
   store.selectedEntities.push(entity)
@@ -539,11 +559,22 @@ function resetZoom() {
 }
 // 缩放变化
 function handleZoomChange(level: number) {
+  console.log('handleZoomChange', level)
   if(isSplitScreen.value && currentFocusPane.value === 'code') {
-    codeCanvasState.value.zoom = level
+    codeCanvasState.value.zoom = Math.round(level * 100) / 100
     codeViewRef.value?.focus()
   }else{
-    currentCanvasState.value.zoom = level
+    currentCanvasState.value.zoom = Math.round(level * 100) / 100
+  }
+}
+// 平移变化
+function handlePanChange(panX: number, panY: number) {
+  if(isSplitScreen.value && currentFocusPane.value === 'code') {
+    codeCanvasState.value.panX = panX
+    codeCanvasState.value.panY = panY
+  }else{
+    currentCanvasState.value.panX = panX
+    currentCanvasState.value.panY = panY
   }
 }
 function formatCode() {
@@ -551,7 +582,11 @@ function formatCode() {
 }
 // 切换网格
 function toggleGrid() {
-  canvasRef.value?.toggleGrid()
+  if(isSplitScreen.value && currentFocusPane.value === 'code') {
+    codeCanvasState.value.showGrid = !codeCanvasState.value.showGrid
+  }else{
+    currentCanvasState.value.showGrid = !currentCanvasState.value.showGrid
+  }
 }
 // 切换全屏
 function toggleFullscreen() {
@@ -561,11 +596,119 @@ function toggleFullscreen() {
     document.exitFullscreen()
   }
 }
+
+// 染色实体背景
+function colorEntity() {
+  if (store.selectedEntities.length > 0) {
+    colorPaletteType.value = 'background'
+    currentColor.value = store.selectedEntities[0].backgroundColor || ''
+    showColorPalette.value = true
+    positionColorPalette()
+  }
+}
+
 // 染色实体外框
 function colorEntityBorder() {
-  console.log('Color entity border')
+  if (store.selectedEntities.length > 0) {
+    colorPaletteType.value = 'border'
+    currentColor.value = store.selectedEntities[0].borderColor || ''
+    showColorPalette.value = true
+    positionColorPalette()
+  }
+}
+
+// 修改实体字体颜色
+function colorEntityFont() {
+  if (store.selectedEntities.length > 0) {
+    colorPaletteType.value = 'font'
+    currentColor.value = store.selectedEntities[0].fontColor || ''
+    showColorPalette.value = true
+    positionColorPalette()
+  }
 }
 // ------------------------------ 工具栏方法 end------------------------------
+
+// ------------------------------ 调色板方法 start------------------------------
+// 隐藏调色板
+function hideColorPalette(){
+  showColorPalette.value = false
+}
+
+// 动态定位调色板
+function positionColorPalette() {
+  nextTick(() => {
+    let toolbar: HTMLElement | null = null
+    switch (colorPaletteType.value) {
+      case 'background':
+        toolbar = document.querySelector('.toolbar .color-entity') as HTMLElement
+        break
+      case 'border':
+        toolbar = document.querySelector('.toolbar .color-entity-border') as HTMLElement
+        break
+      case 'font':
+        toolbar = document.querySelector('.toolbar .color-entity-font') as HTMLElement
+        break
+    }
+    if (toolbar) {
+      const rect = toolbar.getBoundingClientRect()
+      const container = document.querySelector('.color-palette') as HTMLElement
+      if (container) {
+        container.style.top = rect.bottom + 4 + 'px'
+        container.style.left = rect.left + 'px'
+      }
+    }
+  })
+}
+
+// 处理调色板颜色选择
+function handleColorSelected(color: string) {
+  if (store.selectedEntities.length > 0) {
+    store.selectedEntities.forEach((entity, index) => {
+      let updatedEntity = { ...entity }
+      switch (colorPaletteType.value) {
+        case 'background':
+          updatedEntity.backgroundColor = color || undefined
+          break
+        case 'border':
+          updatedEntity.borderColor = color || undefined
+          break
+        case 'font':
+          updatedEntity.fontColor = color || undefined
+          break
+      }
+      store.updateEntity(updatedEntity)
+      // 直接更新selectedEntities中的对应实体
+      store.selectedEntities[index] = updatedEntity
+    })
+  }
+  showColorPalette.value = false
+}
+
+// 处理调色板重置
+function handleColorReset() {
+  if (store.selectedEntities.length > 0) {
+    store.selectedEntities.forEach((entity, index) => {
+      let updatedEntity = { ...entity }
+      
+      switch (colorPaletteType.value) {
+        case 'background':
+          updatedEntity.backgroundColor = undefined
+          break
+        case 'border':
+          updatedEntity.borderColor = undefined
+          break
+        case 'font':
+          updatedEntity.fontColor = undefined
+          break
+      }
+      
+      store.updateEntity(updatedEntity)
+      store.selectedEntities[index] = updatedEntity
+    })
+  }
+  showColorPalette.value = false
+}
+// ------------------------------ 调色板方法 end------------------------------
 
 // ------------------------------ 复制粘贴方法 start------------------------------
 // 复制实体(工具栏按钮和右键菜单)
@@ -782,6 +925,15 @@ function handleMoveEntity(source: TreeNode, target: TreeNode) {
 function handleUpdateEntitySize(entity: Entity) {
   store.updateEntitySize(entity)
 }
+// 实体位置更新
+function handleUpdateEntityPosition(entity: Entity) {
+  const selectedEntity = store.selectedEntities.find(e => e.id === entity.id)
+  if(selectedEntity){
+    selectedEntity.x = entity.x
+    selectedEntity.y = entity.y
+  }
+  store.updateEntityForDrag(entity)
+}
 // ------------------------------ 实体方法 end------------------------------
 
 // ------------------------------ 数据源方法 start------------------------------
@@ -806,7 +958,7 @@ function handleDatasourceSave(datasource: Datasource) {
       datasource.viewId = newView.id
     }else if (datasource.viewId === 'default') {
       const view = store.views.find(v => v.id === datasource.viewId)
-      if (view) {
+      if (view && !view.datasourceIds.includes(datasource.id)) {
         addDatasourceToView(datasource, view)
       }
     }
@@ -832,6 +984,7 @@ function handleDeleteDatasource(datasourceId: string) {
   if (confirm($t('messages.deleteDatasourceConfirm'))) {
     store.deleteDatasource(datasourceId)
   }
+  hideContextMenus()
 }
 // ------------------------------ 数据源方法 end------------------------------
 
@@ -842,10 +995,20 @@ function createRelation() {
     showRelationModal.value = true
   }
 }
+// 编辑关系
+function editRelation(relation: Relationship){
+  editingRelationship.value = relation
+  showRelationModal.value = true
+}
 // 保存关系（关系编辑弹窗）
-function handleRelationSave(relation: any) {
+function handleRelationSave(relation: Relationship) {
   try {
-    store.addRelationship(relation)
+    if (editingRelationship.value && editingRelationship.value.id) {
+      store.updateRelationship(relation)
+    } else {
+      store.addRelationship(relation)
+    }
+    hideContextMenus()
     closeRelationModal()
   } catch (error) {
     errorHandler.handleBusinessError(error instanceof Error ? error.message : String(error))
@@ -858,6 +1021,7 @@ function handleDeleteRelation(relationId: string) {
 // 关闭关系编辑模态框
 function closeRelationModal() {
   showRelationModal.value = false
+  editingRelationship.value = null
 }
 // ------------------------------ 关系方法 end------------------------------
 
@@ -1007,18 +1171,20 @@ onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
 })
 
-// 全局键盘事件（保留 未使用）
+// 全局键盘事件
 function handleKeyDown(event: KeyboardEvent) {
-  // if ((event.key === 'Delete' || event.key === 'Backspace') && selectedEntities.value.length > 0) {
-  //   event.preventDefault()
-  //   deleteSelectedEntities()
-  // } else if (event.key === 'Escape') {
-  //   selectedEntities.value = []
-  //   hideContextMenus()
-  // } else if (event.ctrlKey && event.key === 'a') {
-  //   event.preventDefault()
-  //   selectAll()
-  // }
+  // 检查事件目标是否为可编辑元素
+  const target = event.target as HTMLElement
+  const isEditableElement = target.tagName === 'INPUT' || 
+                           target.tagName === 'TEXTAREA' || 
+                           target.contentEditable === 'true' ||
+                           target.closest('.tiptap-editor') !== null
+  
+  // 如果是可编辑元素，不处理全局快捷键
+  if (isEditableElement) {
+    return
+  }
+  event.preventDefault()
 }
 </script>
 
@@ -1074,6 +1240,7 @@ function handleKeyDown(event: KeyboardEvent) {
 .sidebar-divider {
   width: 100%;
   height: 2px;
+  min-height: 2px;
   background: #e1e4e8;
   cursor: row-resize;
   position: relative;
@@ -1089,7 +1256,7 @@ function handleKeyDown(event: KeyboardEvent) {
 .sidebar-divider:hover,
 .sidebar-divider.resizing {
   background: #007acc;
-  height: 6px;
+  height: 4px;
 }
 .dark-theme .sidebar-divider:hover,
 .dark-theme .sidebar-divider.resizing {
@@ -1139,7 +1306,7 @@ function handleKeyDown(event: KeyboardEvent) {
 .split-resize-handle:hover,
 .split-resize-handle.resizing {
   background: #007acc;
-  height: 6px;
+  height: 4px;
 }
 
 .dark-theme .split-resize-handle {
@@ -1168,7 +1335,7 @@ function handleKeyDown(event: KeyboardEvent) {
 .resize-handle:hover,
 .resize-handle.resizing {
   background: #007acc;
-  width: 6px;
+  width: 4px;
 }
 .dark-theme .resize-handle:hover,
 .dark-theme .resize-handle.resizing {

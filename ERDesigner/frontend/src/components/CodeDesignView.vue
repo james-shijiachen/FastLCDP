@@ -29,21 +29,84 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
+import { ref, watch, nextTick, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type {CanvasState } from '../types/entity'
 import * as monaco from 'monaco-editor'
+
+// 注册 datasource 语言，使其使用 JSON 语法高亮
+monaco.languages.register({ id: 'datasource' });
+
+// 设置 datasource 语言使用 JSON 的语法高亮规则
+// 在 JSON 语法基础上添加 datasource 特定关键字高亮
+monaco.languages.setMonarchTokensProvider('datasource', {
+  tokenizer: {
+    root: [
+      [/\{/, { token: 'delimiter.bracket', next: '@object' }],
+      [/\[/, { token: 'delimiter.array', next: '@array' }],
+      // datasource 特定关键字高亮
+      [/"(Views|Datasources|Entities|Relationships|Indexes)"/, 'keyword.datasource'],
+      [/"(?:[^"\\]|\\.)*"/, 'string'],
+      [/\d+(?:\.\d*)?(?:[eE][+-]?\d+)?/, 'number'],
+      [/true|false/, 'keyword'],
+      [/null/, 'keyword'],
+      [/,/, 'delimiter'],
+      [/:/, 'delimiter']
+    ],
+    object: [
+      [/\}/, { token: 'delimiter.bracket', next: '@pop' }],
+      // datasource 特定关键字高亮（作为对象键）
+      [/"(Views|Datasources|Entities|Relationships|Indexes)"/, 'keyword.datasource'],
+      [/"(?:[^"\\]|\\.)*"/, 'key'],
+      [/:/, 'delimiter'],
+      [/,/, 'delimiter'],
+      { include: 'root' }
+    ],
+    array: [
+      [/\]/, { token: 'delimiter.array', next: '@pop' }],
+      [/,/, 'delimiter'],
+      { include: 'root' }
+    ]
+  }
+});
+
+// 设置 datasource 语言的配置，使其与 JSON 相同
+monaco.languages.setLanguageConfiguration('datasource', {
+  comments: {
+    lineComment: '//',
+    blockComment: ['/*', '*/']
+  },
+  brackets: [
+    ['{', '}'],
+    ['[', ']'],
+    ['(', ')']
+  ],
+  autoClosingPairs: [
+    { open: '{', close: '}' },
+    { open: '[', close: ']' },
+    { open: '(', close: ')' },
+    { open: '"', close: '"', notIn: ['string'] },
+    { open: "'", close: "'", notIn: ['string', 'comment'] }
+  ],
+  surroundingPairs: [
+    { open: '{', close: '}' },
+    { open: '[', close: ']' },
+    { open: '(', close: ')' },
+    { open: '"', close: '"' },
+    { open: "'", close: "'" }
+  ]
+});
 
 // 配置Monaco Editor的worker环境
 ;(self as any).MonacoEnvironment = {
   getWorker: function (workerId: string, label: string) {
     switch (label) {
+      case 'datasource':
       case 'json':
         return new Worker(
           new URL('monaco-editor/esm/vs/language/json/json.worker.js', import.meta.url),
           { type: 'module' }
         );
-      case 'datasource':
       case 'java':
       case 'python':
       case 'go':
@@ -71,14 +134,12 @@ interface Props {
   code?: string
   language?: string
   theme: 'vs' | 'custom-dark'
-  readOnly?: boolean
   codeDesignStatus: CanvasState
 }
 
 const props = withDefaults(defineProps<Props>(), {
   code: '',
-  language: 'json',
-  readOnly: false
+  language: 'datasource',
 })
 
 const emit = defineEmits<{
@@ -100,20 +161,21 @@ const cursorPosition = ref({ line: 1, column: 1 })
 const lineCount = ref(1)
 const characterCount = ref(0)
 const showLanguageDropdown = ref(false)
+const readOnly = computed(() => selectedLanguage.value === 'datasource')
 
 // Monaco Editor 实例
 let editor: monaco.editor.IStandaloneCodeEditor | null = null
 
 // 支持的语言列表
 const supportedLanguages = [
+  { value: 'datasource', label: 'DataSource' },
   { value: 'json', label: 'JSON' },
   { value: 'sql', label: 'SQL' },
   { value: 'java', label: 'Java' },
   { value: 'python', label: 'Python' },
   { value: 'go', label: 'Go' },
   { value: 'cpp', label: 'C++' },
-  { value: 'csharp', label: 'C#' },
-  { value: 'datasource', label: 'DataSource' }
+  { value: 'csharp', label: 'C#' }
 ]
 
 // 计算属性
@@ -131,7 +193,7 @@ const initEditor = async () => {
     editor = monaco.editor.create(editorContainer.value, {
       value: props.code,
       language: selectedLanguage.value,
-      readOnly: props.readOnly,
+      readOnly: readOnly.value,
       theme: props.theme,
       automaticLayout: true,
       fontSize: Math.round(14 * (props.codeDesignStatus.zoom || 1)),
@@ -147,7 +209,7 @@ const initEditor = async () => {
       showFoldingControls: 'always',
       unfoldOnClickAfterEndOfLine: false,
       contextmenu: true,
-      mouseWheelZoom: true,
+      mouseWheelZoom: false,
       cursorBlinking: 'blink',
       cursorSmoothCaretAnimation: 'on',
       renderWhitespace: 'selection',
@@ -156,6 +218,7 @@ const initEditor = async () => {
       hideCursorInOverviewRuler: true,
       overviewRulerBorder: false,
       overviewRulerLanes: 0,
+      renderLineHighlight: 'none',
       suggest: {
         showKeywords: true,
         showSnippets: true,
@@ -182,6 +245,13 @@ const initEditor = async () => {
         showTypeParameters: true,
         showUsers: true,
         showIssues: true
+      },
+      scrollbar: {
+        verticalScrollbarSize: 6,
+        horizontalScrollbarSize: 6,
+        useShadows: false,
+        verticalHasArrows: false,
+        horizontalHasArrows: false
       }
     })
 
@@ -229,7 +299,9 @@ monaco.editor.defineTheme('custom-dark', {
   inherit: true,
   rules: [
     { token: 'comment', foreground: '#9CDCFE', fontStyle: 'italic' },
-    { token: 'string', foreground: '#CE9178' }
+    { token: 'string', foreground: '#CE9178' }, // 字符串值颜色
+    { token: 'key', foreground: '#9CDCFE' }, // JSON key 颜色（浅蓝色）
+    { token: 'keyword.datasource', foreground: '#997ebc', fontStyle: 'bold' } // datasource 关键字高亮（红色）
   ],
   colors: {
     'editor.background': '#101010',
@@ -237,6 +309,17 @@ monaco.editor.defineTheme('custom-dark', {
     'editorLineNumber.foreground': '#313131',  // 行号颜色
     'editorLineNumber.activeForeground': '#C6C6C6', // 当前行号颜色
   }
+});
+
+// 定义浅色主题的 datasource 关键字样式
+monaco.editor.defineTheme('vs', {
+  base: 'vs',
+  inherit: true,
+  rules: [
+    { token: 'key', foreground: '#0451A5' }, // JSON key 颜色（深蓝色）
+    { token: 'keyword.datasource', foreground: '#D73A49', fontStyle: 'bold' } // datasource 关键字高亮（红色）
+  ],
+  colors: {}
 });
 
 /* 监听滚轮事件（屏蔽浏览器默认滚动） */
@@ -265,6 +348,7 @@ const formatCode = async () => {
     let formatted = value
     
     switch (language) {
+      case 'datasource':
       case 'json':
         try {
           const parsed = JSON.parse(value)
@@ -397,7 +481,7 @@ watch(() => props.theme, (newTheme) => {
   }
 })
 
-watch(() => props.readOnly, (readOnly) => {
+watch(() => readOnly.value, (readOnly) => {
   if (editor) {
     editor.updateOptions({ readOnly })
   }

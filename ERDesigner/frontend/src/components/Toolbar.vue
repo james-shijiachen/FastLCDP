@@ -73,7 +73,7 @@
       </button>
       <!-- 拖拽画布 -->
       <button @click="dragCanvas" :disabled="!isSplitScreen ? isCodeDesign : currentFocusPane !== 'canvas'" :title="$t('toolbar.dragCanvas')" :aria-label="$t('toolbar.dragCanvas')">
-        <Icon :name="isDragMode ? 'drag-canvas' : 'selection-box'" />
+        <Icon :name="props.canvasState.isDragMode ? 'drag-canvas' : 'selection-box'" />
       </button>
       <div class="toolbar-separator"></div>
       <!-- 格式化代码 -->
@@ -111,12 +111,13 @@
         <Icon name="color-entity-border" />
       </button>
       <!-- 字体颜色调整 -->
-      <button @click="changeEntityFontColor" :disabled="!isSplitScreen ? isCodeDesign || !isSelectedEntity : currentFocusPane !== 'canvas' || !isSelectedEntity" :title="$t('toolbar.changeFontColor')" :aria-label="$t('toolbar.changeFontColor')">
+      <button @click="colorEntityFont" :disabled="!isSplitScreen ? isCodeDesign || !isSelectedEntity : currentFocusPane !== 'canvas' || !isSelectedEntity" :title="$t('toolbar.changeFontColor')" :aria-label="$t('toolbar.changeFontColor')">
         <Icon name="color-entity-font" />
       </button>
+      <div class="toolbar-separator"></div>
       <!-- 网格显示/隐藏 -->
       <button @click="toggleGrid" :disabled="!isSplitScreen ? isCodeDesign : currentFocusPane !== 'canvas'" :title="$t('toolbar.toggleGrid')" :aria-label="$t('toolbar.toggleGrid')">
-        <Icon name="grid" />
+        <Icon :name="props.canvasState.showGrid ? 'grid' : 'hide-grid'" />
       </button>
       <!-- 全屏 -->
       <button @click="toggleFullscreen" :title="$t('toolbar.fullscreen')" :aria-label="$t('toolbar.fullscreen')">
@@ -144,6 +145,8 @@
 
 <script setup lang="ts">
 import { ref, defineProps, defineEmits, onMounted, nextTick, onBeforeUnmount, watch, computed } from 'vue'
+import type { CanvasState } from '../types/entity'
+
 import { useI18n } from 'vue-i18n'
 import Icon from '@/components/Icon.vue'
 
@@ -165,24 +168,30 @@ const emit = defineEmits([
   'deleteEntity',
   'importDiagram',
   'colorEntityBorder',
-  'changeEntityFontColor',
+  'colorEntityFont',
   'colorEntity',
   'colorRelation',
   'pasteEntity',
   'dragCanvas',
   'formatCode',
   'toggleSplitScreen',
-  'toggleSidebar'
+  'toggleSidebar',
+  'hideColorPalette'
 ])
-const props = defineProps({
-  zoomLevel: Number,
-  canPaste: Boolean,
-  isSelectedEntity: Boolean,
-  activeViewId: String,
-  isSplitScreen: Boolean,
-  sidebarVisible: Boolean,
-  currentFocusPane: String
-})
+
+interface Props {
+  zoomLevel: number,
+  canPaste: boolean,
+  isSelectedEntity: boolean,
+  activeViewId: string,
+  isSplitScreen: boolean,
+  sidebarVisible: boolean,
+  currentFocusPane: string,
+  canvasState: CanvasState
+}
+
+const props = defineProps<Props>()
+
 const { t: $t } = useI18n()
 function saveDiagram() { emit('saveDiagram') }
 function exportDiagram() { emit('exportDiagram') }
@@ -197,17 +206,16 @@ function setZoom(level: number) { emit('setZoom', level) }
 function addDatasource() { emit('addDatasource') }
 function addEntity() { emit('addEntity') }
 function colorEntity() { emit('colorEntity') }
+function colorEntityBorder() { emit('colorEntityBorder') }
+function colorEntityFont() { emit('colorEntityFont') }
 function copyEntity() { emit('copyEntity') }
 function pasteEntity() { emit('pasteEntity') }
 function deleteEntity() { emit('deleteEntity') }
 function importDiagram() { emit('importDiagram') }
-function colorEntityBorder() { emit('colorEntityBorder') }
-function changeEntityFontColor() { emit('changeEntityFontColor') }
 function formatCode() { emit('formatCode') }
 
 function dragCanvas() { 
-  isDragMode.value = !isDragMode.value
-  emit('dragCanvas', isDragMode.value)
+  emit('dragCanvas', !props.canvasState.isDragMode)
 }
 
 const toolbarRef = ref<HTMLElement | null>(null)
@@ -220,7 +228,6 @@ const zoomInputRef = ref<HTMLInputElement | null>(null)
 const zoomOptions = [50, 75, 100, 150, 200]
 const zoomButtonRef = ref<HTMLElement | null>(null)
 const dropdownStyle = ref({})
-const isDragMode = ref(false)
 
 const isCodeDesign = computed(() => props.activeViewId === 'code')
 
@@ -308,6 +315,7 @@ function handleClickOutside(event: MouseEvent) {
   if (toolbarRef.value && !toolbarRef.value.contains(event.target as Node)) {
     dropdownVisible.value = false
     inputMode.value = false
+    emit('hideColorPalette')
   }
 }
 
@@ -447,10 +455,13 @@ watch(toolbarRef, updateScrollBtns)
   box-shadow: 0 2px 8px rgba(0,0,0,0.12);
   z-index: 100;
   min-width: 70px;
-  margin-top: 2px;
+  margin-top: 12px;
+  font-size: 14px;
 }
 .dark-theme .zoom-dropdown {
-  color: #2f2f2f;
+  color: #ffffff;
+  background: #2a2a2a;
+  border: 1px solid #404040;
 }
 .zoom-option {
   padding: 6px 16px;
@@ -458,6 +469,9 @@ watch(toolbarRef, updateScrollBtns)
 }
 .zoom-option:hover {
   background: #f5f7fa;
+}
+.dark-theme .zoom-option:hover {
+  background: #333333;
 }
 
 /* 暗色主题 */

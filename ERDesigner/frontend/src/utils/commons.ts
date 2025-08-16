@@ -17,6 +17,74 @@ export function generateUUID(): string {
   })
 }
 
+// 支持的语言列表
+export const SUPPORTED_LANGUAGES = [
+  'en',    // 英语
+  'zh-CN', // 中文简体
+  'zh-TW', // 中文繁体
+  'ja',    // 日语
+  'ko',    // 韩语
+  'ru',    // 俄语
+  'ar',    // 阿拉伯语
+  'es',    // 西班牙语
+  'pt',    // 葡萄牙语
+  'de',    // 德语
+  'fr',    // 法语
+  'it'     // 意大利语
+]
+
+// 根据浏览器语言自动识别默认语言
+export function getBrowserLanguage(): string {
+  const browserLang = navigator.language || navigator.languages?.[0] || 'en'
+  const langCode = browserLang.toLowerCase()
+  
+  // 精确匹配语言代码
+  if (SUPPORTED_LANGUAGES.includes(langCode)) {
+    return langCode
+  }
+  
+  // 语言前缀匹配
+  if (langCode.startsWith('zh-cn') || langCode.startsWith('zh-hans')) {
+    return 'zh-CN'
+  }
+  if (langCode.startsWith('zh-tw') || langCode.startsWith('zh-hant') || langCode.startsWith('zh-hk') || langCode.startsWith('zh-mo')) {
+    return 'zh-TW'
+  }
+  if (langCode.startsWith('zh')) {
+    return 'zh-CN' // 默认简体中文
+  }
+  if (langCode.startsWith('ja')) {
+    return 'ja'
+  }
+  if (langCode.startsWith('ko')) {
+    return 'ko'
+  }
+  if (langCode.startsWith('ru')) {
+    return 'ru'
+  }
+  if (langCode.startsWith('ar')) {
+    return 'ar'
+  }
+  if (langCode.startsWith('es')) {
+    return 'es'
+  }
+  if (langCode.startsWith('pt')) {
+    return 'pt'
+  }
+  if (langCode.startsWith('de')) {
+    return 'de'
+  }
+  if (langCode.startsWith('fr')) {
+    return 'fr'
+  }
+  if (langCode.startsWith('it')) {
+    return 'it'
+  }
+  
+  // 默认返回英语
+  return 'en'
+}
+
 /**
  * 防抖函数
  */

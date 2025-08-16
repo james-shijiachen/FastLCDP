@@ -8,10 +8,20 @@ export enum DatasourceType {
 // 数据库类型枚举
 export enum DatasourceCategory {
   SQLITE = 'SQLITE',
+  MARIADB = 'MARIADB',
   MYSQL = 'MYSQL',
   ORACLE = 'ORACLE',
   POSTGRESQL = 'POSTGRESQL',
   SQLSERVER = 'SQLSERVER',
+  DB2 = 'DB2',
+  CUBRID = 'CUBRID',
+  FIREBIRD = 'FIREBIRD',
+  COCKROACHDB = 'COCKROACHDB',
+  YUGABYTE = 'YUGABYTE',
+  DUCKDB = 'DUCKDB',
+  POLARDB = 'POLARDB',
+  OCEANBASE = 'OCEANBASE',
+  TIDB = 'TIDB',
   REDIS = 'REDIS',
   MONGODB = 'MONGODB',
   ELASTICSEARCH = 'ELASTICSEARCH',
@@ -74,30 +84,14 @@ export enum IndexType {
   FULLTEXT = 'FULLTEXT'
 }
 
-// 数据源版本枚举
-export enum DatasourceVersion {
-  MYSQL_5_X = 'MYSQL_5_X',
-  MYSQL_8_X = 'MYSQL_8_X  ',
-  ORACLE_11_X = 'ORACLE_11_X',
-  ORACLE_12_X = 'ORACLE_12_X',
-  ORACLE_19_X = 'ORACLE_19_X',
-  ORACLE_21_X = 'ORACLE_21_X',
-  ORACLE_23_X = 'ORACLE_23_X',
-  ORACLE_25_X = 'ORACLE_25_X',
-  POSTGRESQL_10_X = 'POSTGRESQL_10_X',
-  POSTGRESQL_11_X = 'POSTGRESQL_11_X',
-  POSTGRESQL_12_X = 'POSTGRESQL_12_X',
-  POSTGRESQL_13_X = 'POSTGRESQL_13_X',
-  POSTGRESQL_14_X = 'POSTGRESQL_14_X',
-  POSTGRESQL_15_X = 'POSTGRESQL_15_X',
-  POSTGRESQL_16_X = 'POSTGRESQL_16_X',
-  SQLSERVER_2008_X = 'SQLSERVER_2008_X',
-  SQLSERVER_2012_X = 'SQLSERVER_2012_X',
-  SQLSERVER_2014_X = 'SQLSERVER_2014_X',
-  SQLSERVER_2016_X = 'SQLSERVER_2016_X',
-  SQLSERVER_2017_X = 'SQLSERVER_2017_X',
-  SQLSERVER_2019_X = 'SQLSERVER_2019_X',
-  SQLSERVER_2022_X = 'SQLSERVER_2022_X',
+// 数据类型
+export interface ColumnTypeOption {
+  label: string
+  value: string
+  type: string
+  maxLength?: number
+  maxScale?: number
+  commonly: boolean
 }
 
 // 视图接口
@@ -117,7 +111,6 @@ export interface Datasource {
   description?: string
   type?: DatasourceType
   category?: DatasourceCategory
-  version?: DatasourceVersion
 
   // 数据库高级配置
   connectionString?: string
@@ -143,7 +136,6 @@ export interface Field {
   isRequired: boolean
   isUnique: boolean
   isAutoIncrement?: boolean
-  isUnsigned?: boolean
   extended?: {
     entityId: string // 来源的实体ID
     fieldId: string  // 来源的实体字段ID
@@ -170,6 +162,7 @@ export interface Entity {
   height: number
   backgroundColor?: string
   borderColor?: string
+  fontColor?: string
 }
 
 // 关系接口
@@ -183,8 +176,6 @@ export interface Relationship {
   category?: RelationshipCategory  
   fromFieldId?: string
   toFieldId?: string
-  x: number
-  y: number
   // 级联操作
   cascadeCreate?: boolean   // 针对JSON/XML，父实体创建时，子实体是否必须创建，默认false
   cascadeDelete?: CascadeOperation  // 被关联实体删除时，是否级联删除，默认NO_ACTION
@@ -229,6 +220,7 @@ export interface CanvasState {
   panX: number
   panY: number
   showGrid: boolean
+  isDragMode: boolean
 }
 
 // 操作类型枚举

@@ -31,12 +31,14 @@ const iconMap: Record<string, any> = {
   'format-code': defineAsyncComponent(() => import('@/icons/FormatCodeIcon.vue')),
   'fullscreen': defineAsyncComponent(() => import('@/icons/FullscreenIcon.vue')),
   'grid': defineAsyncComponent(() => import('@/icons/GridIcon.vue')),
+  'hide-grid': defineAsyncComponent(() => import('@/icons/HideGridIcon.vue')),
   'hard-relation': defineAsyncComponent(() => import('@/icons/HardRelationIcon.vue')),
   'import': defineAsyncComponent(() => import('@/icons/ImportDiagramIcon.vue')),
   'json': defineAsyncComponent(() => import('@/icons/JsonIcon.vue')),
   'key': defineAsyncComponent(() => import('@/icons/KeyIcon.vue')),
   'mongodb': defineAsyncComponent(() => import('@/icons/MongoDBIcon.vue')),
   'mysql': defineAsyncComponent(() => import('@/icons/MySQLIcon.vue')),
+  'mariadb': defineAsyncComponent(() => import('@/icons/MariaDBIcon.vue')),
   'new-view': defineAsyncComponent(() => import('@/icons/NewViewIcon.vue')),
   'nosql': defineAsyncComponent(() => import('@/icons/NoSQLIcon.vue')),
   'oracle': defineAsyncComponent(() => import('@/icons/OracleIcon.vue')),
@@ -51,8 +53,18 @@ const iconMap: Record<string, any> = {
   'soft-relation': defineAsyncComponent(() => import('@/icons/SoftRelationIcon.vue')),
   'sqlite': defineAsyncComponent(() => import('@/icons/SQLiteIcon.vue')),
   'sqlserver': defineAsyncComponent(() => import('@/icons/SQLServerIcon.vue')),
+  'db2': defineAsyncComponent(() => import('@/icons/DB2Icon.vue')),
+  'cubrid': defineAsyncComponent(() => import('@/icons/CubridIcon.vue')),
+  'firebird': defineAsyncComponent(() => import('@/icons/FirebirdIcon.vue')),
+  'cockroachdb': defineAsyncComponent(() => import('@/icons/CockroachdbIcon.vue')),
+  'yugabyte': defineAsyncComponent(() => import('@/icons/YugabyteIcon.vue')),
+  'duckdb': defineAsyncComponent(() => import('@/icons/DuckdbIcon.vue')),
+  'polardb': defineAsyncComponent(() => import('@/icons/PolardbIcon.vue')),
+  'oceanbase': defineAsyncComponent(() => import('@/icons/OceanbaseIcon.vue')),
+  'tidb': defineAsyncComponent(() => import('@/icons/TidbIcon.vue')),
   'undo': defineAsyncComponent(() => import('@/icons/UndoIcon.vue')),
   'unique': defineAsyncComponent(() => import('@/icons/UniqueIcon.vue')),
+  'required': defineAsyncComponent(() => import('@/icons/RequiredIcon.vue')),
   'view': defineAsyncComponent(() => import('@/icons/ViewIcon.vue')),
   'xml': defineAsyncComponent(() => import('@/icons/XMLIcon.vue')),
   'zoom-in': defineAsyncComponent(() => import('@/icons/ZoomInIcon.vue')),
@@ -99,5 +111,13 @@ const iconComponent = computed(() => {
   font-size: 15px;
   user-select: none;
   pointer-events: none;
+}
+
+.github {
+  font-size: 16px;
+  color: #24292e;
+}
+.dark-theme .github {
+  color: #fff;
 }
 </style>

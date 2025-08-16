@@ -24,6 +24,10 @@
     "record:studio": "cypress open --config experimentalStudio=true --config-file cypress.studio.config.ts"
   },
   "dependencies": {
+    "@antv/x6": "^2.18.1",
+    "@antv/x6-plugin-keyboard": "^2.2.3",
+    "@antv/x6-plugin-selection": "^2.2.2",
+    "@antv/x6-plugin-snapline": "^2.1.7",
     "@monaco-editor/loader": "^1.5.0",
     "@tiptap/extension-image": "^3.0.7",
     "@tiptap/extension-link": "^3.0.7",
@@ -38,7 +42,8 @@
     "monaco-editor": "^0.52.2",
     "pinia": "^2.1.7",
     "vue": "^3.4.0",
-    "vue-i18n": "^9.14.4"
+    "vue-i18n": "^9.14.4",
+    "vue-select": "^4.0.0-beta.6"
   },
   "devDependencies": {
     "@cypress/vite-dev-server": "^6.0.3",

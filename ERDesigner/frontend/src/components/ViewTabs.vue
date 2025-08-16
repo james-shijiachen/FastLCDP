@@ -100,8 +100,8 @@ watch(tabsContainer, checkScroll)
   align-items: center;
   background: #f5f7fa;
   position: relative;
-  height: 40px;
-  min-height: 40px;
+  height: var(--view-tabs-height); 
+  min-height: var(--view-tabs-height);
   overflow: hidden;
   border:none
 }
@@ -126,7 +126,6 @@ watch(tabsContainer, checkScroll)
   cursor: pointer;
   margin-right: 2px;
   margin-left: 2px;
-  margin-top: 6px;
   white-space: nowrap;
   flex-shrink: 0;
   font-size: var(--font-size-md);

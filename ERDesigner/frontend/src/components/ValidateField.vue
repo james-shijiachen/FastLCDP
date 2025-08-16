@@ -93,15 +93,23 @@ const handleEnter = (event: KeyboardEvent) => {
   emit('enter', event)
 }
 
-// 暴露focus方法给父组件
+// 暴露focus方法和getBoundingClientRect方法给父组件
 const focus = () => {
   if (inputRef.value) {
     inputRef.value.focus()
   }
 }
 
+const getBoundingClientRect = () => {
+  if (inputRef.value) {
+    return inputRef.value.getBoundingClientRect()
+  }
+  return null
+}
+
 defineExpose({
-  focus
+  focus,
+  getBoundingClientRect
 })
 </script>
 

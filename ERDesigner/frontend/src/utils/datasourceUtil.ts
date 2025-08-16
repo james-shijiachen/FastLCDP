@@ -40,7 +40,7 @@ export function getChildEntityIds(datasourceEntities: Entity[], parentId: string
 
 // 计算实体的最小高度
 export function calculateEntityHeight(entity: Entity): number {
-  // 头部高度30px + 每个字段20px，最小高度60px
+  // 头部高度30px + 每个字段30px，最小高度60px
   const headerHeight = 30
   const fieldHeight = 25
   const minHeight = 60
@@ -69,7 +69,15 @@ export function calculateEntityWidth(entity: Entity): number {
     } else if(field.length) {
       fieldLengthWidth = field.length.toString().length * 6
     }
-    const iconWidth = field.isPrimaryKey || field.isUnique ? 25 : 8
+    // 计算图标宽度
+    let iconWidth = 8; // 默认宽度
+    if (field.isPrimaryKey) {
+      iconWidth = 25;
+    } else if (field.isUnique) {
+      iconWidth = field.isRequired ? 45 : 25;
+    } else if (field.isRequired) {
+      iconWidth = 25;
+    }
     const fieldWidth = iconWidth + fieldNameWidth + fieldTypeWidth + fieldLengthWidth + fieldScaleWidth + 50
     maxFieldWidth = Math.max(maxFieldWidth, fieldWidth)
   })

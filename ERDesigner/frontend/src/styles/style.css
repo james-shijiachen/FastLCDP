@@ -9,7 +9,8 @@
   --property-panel-width: 280px;
   --toolbar-height: 36px;
   --toolbar-icon-size: 18px;
-  --topbar-height: 53px;
+  --topbar-height: 40px;
+  --view-tabs-height: 32px;
 }
 
 /* 全局样式 */
@@ -369,3 +370,128 @@ input:focus, textarea:focus {
     min-height: 44px;
   }
 }
+
+/* Vue Select 全局样式优化 */
+.vs__dropdown-menu {
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-size: 13px;
+  max-height: 240px;
+  overflow: auto;
+}
+.v-select{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  width: 100%;
+}
+.vs__dropdown-toggle{
+  height: 30px;
+  width: 100%;
+}
+/* 强制隐藏所有 vue-select 搜索输入框 */
+.vs__search {
+  display: none;
+  width: 0;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  position: absolute;
+  visibility: hidden;
+  opacity: 0;
+}
+/* 数据类型选项样式 */
+.commonly-used {
+  color: #333;
+  font-weight: 600;
+}
+.vs__dropdown-option--selected .commonly-used {
+  color: #ffffff;
+  font-weight: 600;
+}
+.rarely-used {
+  color: #999;
+  font-weight: 400;
+}
+/* 暗色主题下的数据类型选项样式 - 支持 append-to-body */
+.dark-theme .commonly-used,
+body:has(.dark-theme) .commonly-used {
+  color: #ffffff;
+  font-weight: 600;
+}
+.dark-theme .rarely-used,
+body:has(.dark-theme) .rarely-used {
+  color: #666;
+  font-weight: 400;
+}
+.dark-theme .vs__selected{
+  color: #ffffff
+}
+.dark-theme .vs__dropdown-toggle{
+  background: #2c2c2c;
+  border: 1px solid #555555;
+  border-radius: 4px;
+}
+.dark-theme .vs__open-indicator{
+  fill: #ffffff
+}
+.vs__dropdown-option {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 28px;
+  min-height: 28px;
+  padding: 0 12px;
+}
+.vs__dropdown-option--highlight {
+  background: #e6f3ff;
+  color: #0066cc;
+}
+.vs__dropdown-option--selected{
+  background: #2357d5;
+  color: #ffffff;
+}
+/* 暗色主题下的 vue-select 样式 - 支持 append-to-body */
+.dark-theme .vs__dropdown-menu,
+body:has(.dark-theme) .vs__dropdown-menu {
+  background: #1f1f1f;
+  color: #e1e4e8;
+  border: 1px solid #383838;
+}
+.dark-theme .vs__dropdown-option,
+body:has(.dark-theme) .vs__dropdown-option {
+  color: #e1e4e8;
+}
+.dark-theme .vs__dropdown-option--highlight,
+body:has(.dark-theme) .vs__dropdown-option--highlight {
+  background: #2a2a2a;
+}
+.dark-theme .vs__dropdown-option--selected,
+body:has(.dark-theme) .vs__dropdown-option--selected {
+  background: #5b2b86;
+  color: #ffffff;
+}
+
+/* 暗色主题滚动条样式 - 支持 append-to-body */
+.dark-theme .vs__dropdown-menu::-webkit-scrollbar,
+body:has(.dark-theme) .vs__dropdown-menu::-webkit-scrollbar {
+  width: 6px;
+}
+.dark-theme .vs__dropdown-menu::-webkit-scrollbar-thumb,
+body:has(.dark-theme) .vs__dropdown-menu::-webkit-scrollbar-thumb {
+  background: #555555;
+  border-radius: 3px;
+}
+.dark-theme .vs__dropdown-menu::-webkit-scrollbar-thumb:hover,
+body:has(.dark-theme) .vs__dropdown-menu::-webkit-scrollbar-thumb:hover {
+  background: #666666;
+}
+
+.vs--single.vs--open .vs__selected, .vs--single.vs--loading .vs__selected {
+    position: relative;
+    opacity: .4;
+}
+
+/* .vs__dropdown-menu { min-width: 200px; } */

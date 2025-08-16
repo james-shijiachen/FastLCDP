@@ -2,6 +2,7 @@
   <div 
     ref="canvasContainer" 
     class="canvas-container"
+    tabindex="0"
     @contextmenu.prevent="handleCanvasRightClick"
     @wheel.prevent="handleWheel"
     @keydown.prevent="handleKeyDown"
@@ -67,6 +68,7 @@
         v-for="entity in props.entities"
         :key="entity.id"
         :entity="entity"
+        :isDarkTheme="props.isDarkTheme"
         :ENTITY_HEADER_HEIGHT="props.ENTITY_HEADER_HEIGHT"
         :FIELD_HEIGHT="props.FIELD_HEIGHT"
         :selected="isEntitySelected(entity)"
@@ -104,6 +106,7 @@ import { useI18n } from 'vue-i18n'
 import { screenToCanvasCoords } from '@/utils/datasourceUtil'
 
 interface Props {
+  isDarkTheme: boolean
   isDragMode?: boolean
   entities?: Entity[]
   relationships?: Relationship[]
@@ -151,7 +154,7 @@ const fieldRefs = reactive<Record<string, Record<string, HTMLElement>>>({})
 // 画布选择框拖拽状态
 const draggingEntityIds = ref<string[]>([])
 const dragStartPos = ref<Record<string, { x: number, y: number }>>({})
-const dragEntity = reactive<Record<string, { x: number, y: number }>>({})
+const dragEntity = reactive<Record<string, { x: number, y: number, relationRefresh?: boolean }>>({})
 
 // 触摸状态
 const isTouching = ref(false)
@@ -196,6 +199,7 @@ function handleSetFieldRef(entityId: string, fieldId: string, el: HTMLElement | 
   }
 }
 
+//
 function handleUpdateEntitySize(entity: Entity) {
   emit('updateEntitySize', entity)
 }
@@ -363,7 +367,7 @@ function handleEntityMouseDown(entity: Entity, event: MouseEvent) {
   draggingEntityIds.value = [entity.id]
   if(isEntitySelected(entity) || props.selectedEntities.length === 0) {  //如果当前实体没选中，但其他实体有选中，则不产生拖拽效果（必须选中当前节点），否则容易误操作
 
-    const canvasCoords = screenToCanvasCoords(event.clientX, event.clientY)
+    const canvasCoords = screenToCanvasCoords(event.clientX, event.clientY) // 屏幕坐标转换为画布坐标
     dragEntity[entity.id] = { x: entity.x, y: entity.y }
     dragStartPos.value[entity.id] = { 
       x: canvasCoords.x - entity.x, 
@@ -406,8 +410,8 @@ function onDragMove(event: MouseEvent) {
       if (startPos) {
         // 更新拖拽时的临时位置
         dragEntity[id] = {
-          x: canvasCoords.x - startPos.x,
-          y: canvasCoords.y - startPos.y
+          x: Math.round(canvasCoords.x - startPos.x),
+          y: Math.round(canvasCoords.y - startPos.y)
         }
       }
     })
@@ -442,7 +446,7 @@ function onDragEnd(_event: MouseEvent){
 
           console.log('dragEntity[id].x', dragEntity[id].x, 'dragEntity[id].y', dragEntity[id].y, entity.width, entity.height)
 
-          store.updateEntity(entity)
+          store.updateEntityForDrag(entity)
 
           // 同步更新 selectedEntities 中的实体
           const selectedEntity = props.selectedEntities.find(e => e.id === id)
@@ -531,16 +535,19 @@ function handleKeyDown(event: KeyboardEvent) {
   
   // ESC键取消选择
   if (event.key === 'Escape') {
+    event.preventDefault()
     emit('selectionChange', [])
   }
   
   // Delete键删除选中实体
-  if ((event.key === 'Delete' || event.key === 'Backspace') && props.selectedEntities.length > 0 && confirm($t('messages.deleteEntitiesConfirm'))) {
-    event.preventDefault()
-    props.selectedEntities.forEach(entity => {
-      store.deleteEntity(entity.id)
-    })
-    emit('selectionChange', [])
+  if (event.key === 'Delete' || event.key === 'Backspace') {
+    event.preventDefault() // 立即阻止浏览器默认行为
+    if (props.selectedEntities.length > 0 && confirm($t('messages.deleteEntitiesConfirm'))) {
+      props.selectedEntities.forEach(entity => {
+        store.deleteEntity(entity.id)
+      })
+      emit('selectionChange', [])
+    }
   }
 }
 //快捷键
@@ -767,6 +774,9 @@ defineExpose({
 const containerSize = ref({ width: 0, height: 0 })
 onMounted(() => {
   if (canvasContainer.value) {
+    // 让canvas容器获得焦点，以便接收键盘事件
+    canvasContainer.value.focus()
+    
     const resizeObserver = new ResizeObserver(() => {
       containerSize.value = {
         width: canvasContainer.value!.clientWidth,
@@ -790,6 +800,7 @@ containerSize.value.height / props.canvasState.zoom
   position: relative;
   width: 100%;
   height: 100%;
+  outline: none; /* 移除获得焦点时的蓝色外框 */
 }
 .dark-theme .canvas-container {
   background: #101010;

@@ -118,7 +118,9 @@ onBeforeUnmount(() => {
   box-sizing: border-box;
   display: flex;
   align-items: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  /*background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
+  background: #f5f7fa;
+  border-bottom: 0.5px solid #d9dce1; 
   color: #fff;
 }
 .dark-theme .top-toolbar {
