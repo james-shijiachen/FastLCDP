@@ -35,12 +35,15 @@
           <div class="right-controls">
             <!-- 模型选择器 -->
             <div class="model-selector">
-              <select v-model="selectedModel" class="model-dropdown">
-                <option value="gpt-4">GPT-4</option>
-                <option value="gpt-3.5-turbo">GPT-3.5</option>
-                <option value="claude-3">Claude-3</option>
-                <option value="gemini-pro">Gemini</option>
-              </select>
+              <VueSelect
+              v-model="selectedModel"
+              :options="modelOptions"
+              :clearable="false"
+              :searchable="false"
+              :append-to-body="true"
+              :calculate-position="calculateDropdownPosition"
+              class="model-dropdown"
+              placeholder="选择模型"/>
             </div>
             
             <!-- 语音按钮 -->
@@ -92,6 +95,8 @@
 <script setup lang="ts">
 import { ref, nextTick, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import VueSelect from 'vue-select'
+import 'vue-select/dist/vue-select.css'
 import { Editor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
@@ -116,6 +121,36 @@ const mentionPosition = ref({ top: '0px', left: '0px' })
 const selectedModel = ref('gpt-4')
 const isRecording = ref(false)
 const recognition = ref<any>(null)
+
+// 模型选项数据
+const modelOptions = ref([
+  { label: 'GPT-4', value: 'gpt-4' },
+  { label: 'GPT-3.5', value: 'gpt-3.5-turbo' },
+  { label: 'Claude-3', value: 'claude-3' },
+  { label: 'Gemini', value: 'gemini-pro' }
+])
+
+// 计算下拉框位置，确保在上方显示
+const calculateDropdownPosition = (dropdownList: HTMLElement, component: any, { width }: { width: number }) => {
+  const toggle = component.$refs.toggle
+  if (!toggle) return
+  
+  const rect = toggle.getBoundingClientRect()
+  const dropdownHeight = dropdownList.offsetHeight || 200
+  const spaceBelow = window.innerHeight - rect.bottom
+  const spaceAbove = rect.top
+  
+  // 如果下方空间不足或者上方空间更充足，则在上方显示
+  if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
+    dropdownList.style.top = `${rect.top - dropdownHeight}px`
+  } else {
+    dropdownList.style.top = `${rect.bottom}px`
+  }
+  
+  dropdownList.style.left = `${rect.left}px`
+  dropdownList.style.width = `${width}px`
+  dropdownList.style.zIndex = '9999'
+}
 
 // 计算是否可以发送
 const canSend = computed(() => {
@@ -309,9 +344,9 @@ function handleModalWheel(event: WheelEvent) {
   if (isInInputArea) {
     // 在输入框区域，阻止浏览器滚动并手动控制输入框滚动
     event.preventDefault();
-    const editorContainer = target.closest('.chatbox-editor') as HTMLElement;
-    if (editorContainer) {
-      editorContainer.scrollTop += event.deltaY;
+    const inputWrapper = target.closest('.chatbox-input-wrapper') as HTMLElement;
+    if (inputWrapper) {
+      inputWrapper.scrollTop += event.deltaY;
     }
     return;
   } else {
@@ -509,24 +544,24 @@ function scrollToBottom() {
 .chatbox-outer-container {
   border: 1px solid #3A3A3C;
   border-radius: 4px;
-  background: #2C2C2E;
+  background: #030303;
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   margin: 8px;
 }
 .dark-theme .chatbox-outer-container {
-  background: #2C2C2E;
+  background: #030303;
   border-color: #3A3A3C;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 /* 输入区域容器 */
 .chatbox-input-container {
-  padding: 8px 8px 4px 8px;
-  background: #1C1C1E;
-}
-.dark-theme .chatbox-input-container {
-  background: #1C1C1E;
+  display: flex;
+  flex-direction: column;
+  max-height: 200px;
+  background: #0d0d0d;
+  overflow: hidden;
 }
 
 /* 工具栏容器 */
@@ -542,18 +577,14 @@ function scrollToBottom() {
 
 /* 输入区域包装器 */
 .chatbox-input-wrapper {
+  flex: 1;
   min-height: 48px;
   transition: all 0.2s ease;
-  background: #3A3A3C;
-  border: 1px solid #4A4A4C;
-  border-radius: 8px;
-  overflow: hidden;
+  border-radius: 4px;
+  overflow-y: auto;
+  overflow-x: hidden;
   word-wrap: break-word;
   word-break: break-word;
-}
-.dark-theme .chatbox-input-wrapper {
-  background: #3A3A3C;
-  border-color: #4A4A4C;
 }
 
 /* 工具栏包装器 */
@@ -561,6 +592,8 @@ function scrollToBottom() {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0;
+  padding: 0 8px 8px 8px;
 }
 
 /* 左侧工具按钮 */
@@ -580,10 +613,8 @@ function scrollToBottom() {
 :deep(.chatbox-editor) {
   width: 100%;
   min-height: 32px;
-  max-height: 150px;
   padding: 8px;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: visible;
 }
 
 :deep(.tiptap-editor) {
@@ -689,26 +720,68 @@ function scrollToBottom() {
   display: flex;
   align-items: center;
 }
-.model-dropdown {
-  padding: 4px 8px;
+
+/* Vue Select 组件样式 */
+:deep(.model-dropdown) {
+  min-width: 100px;
+  font-size: 12px;
+}
+
+:deep(.model-dropdown .vs__dropdown-toggle) {
+  padding: 2px 4px;
   border: none;
   border-radius: 4px;
   background: rgba(0, 0, 0, 0.05);
-  color: #666;
-  font-size: 12px;
-  cursor: pointer;
+  min-height: 24px;
   transition: all 0.2s;
-  outline: none;
 }
-.model-dropdown:hover {
+
+:deep(.model-dropdown .vs__dropdown-toggle:hover) {
   background: rgba(0, 0, 0, 0.1);
 }
-.dark-theme .model-dropdown {
+
+:deep(.model-dropdown .vs__selected-options) {
+  padding: 0;
+  margin: 0;
+}
+
+:deep(.model-dropdown .vs__selected) {
+  color: #666;
+  font-size: 12px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+:deep(.model-dropdown .vs__actions) {
+  padding: 0 4px;
+}
+
+:deep(.model-dropdown .vs__clear) {
+  display: none;
+}
+
+:deep(.model-dropdown .vs__open-indicator) {
+  fill: #666;
+  transform: scale(0.8);
+}
+
+/* 暗色主题下的 Vue Select 样式 */
+:deep(.dark-theme .model-dropdown .vs__dropdown-toggle) {
   background: rgba(255, 255, 255, 0.1);
+}
+
+:deep(.dark-theme .model-dropdown .vs__dropdown-toggle:hover) {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+:deep(.dark-theme .model-dropdown .vs__selected) {
   color: #8E8E93;
 }
-.dark-theme .model-dropdown:hover {
-  background: rgba(255, 255, 255, 0.15);
+
+:deep(.dark-theme .model-dropdown .vs__open-indicator) {
+  fill: #8E8E93;
 }
 
 /* 语音按钮 */

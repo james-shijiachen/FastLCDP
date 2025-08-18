@@ -493,5 +493,4 @@ body:has(.dark-theme) .vs__dropdown-menu::-webkit-scrollbar-thumb:hover {
     position: relative;
     opacity: .4;
 }
-
 /* .vs__dropdown-menu { min-width: 200px; } */

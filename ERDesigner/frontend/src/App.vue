@@ -56,8 +56,6 @@
         @click="closeSidebar">
       </div>
 
-
-
       <!-- 中央画布区域 -->
       <main class="canvas-container" :class="{ 'split-screen': isSplitScreen }">
 
@@ -73,7 +71,7 @@
         <template v-if="isSplitScreen">
            <!-- 上半部分：其他视图 -->
            <div class="split-top" :style="{ height: splitTopHeight + '%' }">
-            <X6DSCanvas 
+            <DSCanvas 
               ref="canvasRef"
               :isDarkTheme="isDarkTheme"
               :fieldUniqueCache="store.fieldUniqueCache"
@@ -97,10 +95,12 @@
               @selectionChange="handleSelectionChange"
               @updateEntitySize="handleUpdateEntitySize"
               @updateEntityPosition="handleUpdateEntityPosition"
+              @relationshipRightClick="(relation, event) => handleRelationshipRightClick(event, relation)"
               @zoomChange="handleZoomChange"
               @panChange="handlePanChange"
               @copyEntity="copyEntity"
-              @pasteEntity="pasteEntity"/>
+              @pasteEntity="pasteEntity"
+              @createFieldRelation="createFieldRelation" />
           </div>
            <!-- 分屏调节手柄 -->
            <div class="split-resize-handle" :class="{ resizing: isResizingSplit }" @mousedown="startSplitResize"></div>
@@ -132,7 +132,7 @@
             @save="handleCodeSave"
           />
           <!-- 默认画布视图 -->
-          <X6DSCanvas 
+          <DSCanvas 
             v-else
             ref="canvasRef"
             :isDarkTheme="isDarkTheme"
@@ -156,10 +156,12 @@
             @selectionChange="handleSelectionChange"
             @updateEntitySize="handleUpdateEntitySize"
             @updateEntityPosition="handleUpdateEntityPosition"
+            @relationshipRightClick="(relation, event) => handleRelationshipRightClick(event, relation)"
             @zoomChange="handleZoomChange"
             @panChange="handlePanChange"
             @copyEntity="copyEntity"
-            @pasteEntity="pasteEntity"/>
+            @pasteEntity="pasteEntity"
+            @createFieldRelation="createFieldRelation" />
         </template>
         <!-- 右键菜单 -->
         <ContextMenu
@@ -182,6 +184,7 @@
           @editDatasource="handleEditDatasource"
           @deleteDatasource="handleDeleteDatasource"
           @createEntityFromTree="handleCreateEntity"
+          @deleteRelationship="handleDeleteRelationship"
           @deleteView="handleDeleteView"
           @zoomChange="handleZoomChange"
         />
@@ -190,6 +193,13 @@
           <div class="hint-content">
             <span>{{ $t('relation.hint') }} {{ store.selectedEntities.length }} {{ $t('panel.entities') }}</span>
             <button @click="createRelation" class="create-relation-btn">{{ $t('relation.createRelation') }}</button>
+          </div>
+        </div>
+        <!-- 关系创建错误提示 -->
+        <div v-if="showRelationError" class="relation-error">
+          <div class="error-content">
+            <span>{{ relationErrorMessage }}</span>
+            <button @click="showRelationError = false" class="close-error-btn">×</button>
           </div>
         </div>
       </main>
@@ -267,12 +277,14 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useDSDiagramStore } from './stores/dsDiagram'
-import { X6DSCanvas, DSCanvas, EntityEditModal, RelationEditModal, DatasourceTree, DatasourceEditModal, 
+import { DSCanvas, EntityEditModal, RelationEditModal, DatasourceTree, DatasourceEditModal, 
   Toolbar, AppHeader, ContextMenu, ViewTabs, CodeDesignView, ColorPalette } from '@/components'
 import ChatBox from './components/ChatBox.vue'
 import type { Entity, Datasource, View, TreeNode, CanvasState, Relationship } from '@/types/entity'
-import { EntityType, TreeNodeType } from './types/entity'
+import { EntityType, TreeNodeType, RelationshipType, RelationshipCategory, CascadeOperation } from './types/entity'
 import { errorHandler } from '@/utils/errorHandler'
+import { relationshipApi } from './api'
+import { getAllParentFields } from '@/utils/datasourceUtil'
 
 const store = useDSDiagramStore()  // 数据源存储
 const { locale, t: $t } = useI18n()  // 国际化
@@ -330,11 +342,13 @@ const virtualEntities = computed(() =>
 )
 const currentCanvasState = computed(() => currentView.value?.canvasState || codeCanvasState)  // 当前视图的画布状态,如果视图未定义则返回默认状态
 
-const canvasRef = ref<InstanceType<typeof X6DSCanvas> | null>(null)  // 画布实例
+const canvasRef = ref<InstanceType<typeof DSCanvas> | null>(null)  // 画布实例
 const codeViewRef = ref<InstanceType<typeof CodeDesignView> | null>(null)  // 代码视图实例
 const showEntityModal = ref(false)  // 是否显示实体编辑模态框
 const showRelationModal = ref(false)  // 是否显示关系编辑模态框
 const showDatasourceModal = ref(false)  // 是否显示数据源编辑模态框
+const showRelationError = ref(false)  // 是否显示关系创建错误提示
+const relationErrorMessage = ref('')  // 关系创建错误信息
 const editingEntity = ref<Entity | null>(null)  // 当前编辑的实体
 const editingRelationship = ref<Relationship | null>(null)  // 当前编辑的关系
 const parentEntity = ref<Entity | null>(null)   // 父实体(用于点击树+号新增实体时，显示父实体信息)
@@ -357,7 +371,7 @@ const contextMenu = ref({
   show: false,
   x: 0,
   y: 0,
-  type: '' as 'DATASOURCE' | 'ENTITY' | 'CANVAS' | 'VIEW',
+  type: '' as 'DATASOURCE' | 'ENTITY' | 'CANVAS' | 'VIEW' | 'RELATIONSHIP',
   targetId: null as string | null
 })
 
@@ -995,11 +1009,147 @@ function createRelation() {
     showRelationModal.value = true
   }
 }
+
+// 删除关系
+function handleDeleteRelationship(relationId: string) {
+  if (confirm($t('messages.deleteRelationConfirm'))) {
+    store.deleteRelationship(relationId)
+    hideContextMenus()
+  }
+}
+
+// 删除关系
+function handleRelationshipRightClick(event: MouseEvent, relation: Relationship) {
+  event.preventDefault()
+
+  contextMenu.value.x = event.clientX
+  contextMenu.value.y = event.clientY
+  contextMenu.value.targetId = relation.id
+  contextMenu.value.type = 'RELATIONSHIP'
+  contextMenu.value.show = true
+
+  if(isSplitScreen.value){
+    currentFocusPane.value = 'canvas'
+  }
+}
+
 // 编辑关系
 function editRelation(relation: Relationship){
   editingRelationship.value = relation
   showRelationModal.value = true
 }
+
+// 创建字段关系 
+function createFieldRelation(fromEntityId: string, fromFieldId: string, toEntityId: string, toFieldId: string) {
+  // 检查关系是否已存在
+  if (isRelationExists(fromEntityId, fromFieldId, toEntityId, toFieldId)) {
+    relationErrorMessage.value = $t('relation.errorRelationExists')
+    showRelationError.value = true
+    setTimeout(() => {
+      showRelationError.value = false
+    }, 3000)
+    return
+  }
+
+  // 获取实体和字段信息
+  const { fromEntity, fromField, toEntity, toField } = getEntityAndFieldInfo(fromEntityId, fromFieldId, toEntityId, toFieldId)
+  
+  // 验证字段兼容性
+  if (!areFieldsCompatible(fromField, toField)) {
+    relationErrorMessage.value = $t('relation.errorFieldTypeIncompatible')
+    showRelationError.value = true
+    setTimeout(() => {
+      showRelationError.value = false
+    }, 3000)
+    return
+  }
+
+  // 创建关系名称
+  const name = generateRelationName(fromEntity, toEntity)
+
+  // 确定关系类型
+  const category = determineRelationshipCategory(fromField, toField)
+
+  // 创建并添加关系
+  const relation = createRelationshipObject(fromEntity, fromField, toEntity, toField, name, category)
+  store.addRelationship(relation)
+}
+
+// 检查关系是否已存在
+function isRelationExists(fromEntityId: string, fromFieldId: string, toEntityId: string, toFieldId: string): boolean {
+  return !!visibleRelationships.value.find(relation => 
+    (fromEntityId === relation.fromEntityId && 
+    fromFieldId === relation.fromFieldId && 
+    toEntityId === relation.toEntityId && 
+    toFieldId === relation.toFieldId) || 
+    (fromEntityId === relation.toEntityId && 
+    fromFieldId === relation.toFieldId && 
+    toEntityId === relation.fromEntityId && 
+    toFieldId === relation.fromFieldId))
+}
+
+function getEntityAndFieldInfo(fromEntityId: string, fromFieldId: string, toEntityId: string, toFieldId: string) {
+  const fromEntity = visibleEntities.value.find(entity => entity.id === fromEntityId)
+  const toEntity = visibleEntities.value.find(entity => entity.id === toEntityId)
+  
+  // 使用getAllParentFields获取所有字段（包括继承的字段）
+  const fromAllFields = fromEntity ? getAllParentFields(store.entities, fromEntity.parentEntityId).concat(fromEntity.fields) : []
+  const toAllFields = toEntity ? getAllParentFields(store.entities, toEntity.parentEntityId).concat(toEntity.fields) : []
+  
+  const fromField = fromAllFields.find(field => field.id === fromFieldId)
+  const toField = toAllFields.find(field => field.id === toFieldId)
+  
+  return { fromEntity, fromField, toEntity, toField }
+}
+
+// 验证字段兼容性
+function areFieldsCompatible(fromField: any, toField: any): boolean {
+  console.log("FromField", fromField, fromField?.type, fromField?.length, fromField?.scale)
+  console.log("ToField", toField, toField?.type, toField?.length, toField?.scale)
+  return fromField && toField && 
+         fromField.type === toField.type && 
+         fromField?.length === toField?.length &&
+         fromField?.scale === toField?.scale
+}
+
+// 生成关系名称
+function generateRelationName(fromEntity: any, toEntity: any): string {
+  const baseName = `${fromEntity?.name}_${toEntity?.name}_relation`
+  const existingCount = visibleRelationships.value.filter(
+    relationship => relationship.name?.startsWith(baseName)
+  ).length
+  return existingCount > 0 ? `${baseName}_${existingCount}` : baseName
+}
+
+// 确定关系类型
+function determineRelationshipCategory(fromField: any, toField: any): RelationshipCategory {
+  const isFromUnique = fromField.isPrimaryKey || fromField.isUnique
+  const isToUnique = toField.isPrimaryKey || toField.isUnique
+
+  if (isFromUnique) {
+    return isToUnique ? RelationshipCategory.ONE_TO_ONE : RelationshipCategory.ONE_TO_MANY
+  }
+  return isToUnique ? RelationshipCategory.MANY_TO_ONE : RelationshipCategory.MANY_TO_MANY
+}
+
+// 创建关系对象
+function createRelationshipObject(fromEntity: any, fromField: any, toEntity: any, toField: any, name: string, category: RelationshipCategory): Relationship {
+  return {
+    id: Date.now().toString(),
+    name,
+    datasourceId: fromEntity.datasourceId,
+    fromEntityId: fromEntity.id,
+    fromFieldId: fromField.id,
+    toEntityId: toEntity.id,
+    toFieldId: toField.id,
+    type: RelationshipType.SOFT,
+    category,
+    cascadeCreate: false,
+    cascadeDelete: CascadeOperation.NO_ACTION,
+    cascadeUpdate: CascadeOperation.NO_ACTION
+  }
+}
+
 // 保存关系（关系编辑弹窗）
 function handleRelationSave(relation: Relationship) {
   try {
@@ -1371,6 +1521,46 @@ function handleKeyDown(event: KeyboardEvent) {
   border-radius: 4px;
   font-size: 12px;
   cursor: pointer;
+}
+/* 关系创建错误提示 */
+.relation-error {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #d73a49;
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+}
+.dark-theme .relation-error {
+  background: #8b2635;
+}
+.error-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+.close-error-btn {
+  background: transparent;
+  color: #fff;
+  border: none;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.close-error-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 .dark-theme .create-relation-btn {
   color: #341757;

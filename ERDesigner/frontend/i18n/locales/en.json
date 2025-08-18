@@ -192,6 +192,7 @@
     "createRelation": "Create Relation",
     "editRelation": "Edit Relation",
     "create": "Create",
+    "delete": "Delete",
     "name": "Relation Name",
     "namePlaceholder": "Enter relation name",
     "type": "Relation Type",
@@ -208,7 +209,9 @@
     "setDefault": "Set Default",
     "restrict": "Restrict",
     "soft": "Soft Relation",
-    "hard": "Hard Relation"
+    "hard": "Hard Relation",
+    "errorRelationExists": "Relation already exists, cannot create duplicate",
+    "errorFieldTypeIncompatible": "Field types are incompatible, cannot create relation"
   },
   "field": {
     "new": "New Field",
@@ -223,6 +226,7 @@
     "deleteViewConfirm": "Are you sure you want to delete this view?",
     "deleteFieldConfirm": "Are you sure you want to delete this field?",
     "deleteForeignKeyConfirm": "Are you sure you want to delete this foreign key?",
+    "deleteRelationConfirm": "Are you sure you want to delete this relation?",
     "importSuccess": "Import successful",
     "importInvalid": "Invalid file format"
   },

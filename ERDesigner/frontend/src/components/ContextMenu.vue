@@ -53,6 +53,12 @@
         {{ $t('view.deleteView') }}
       </div>
     </template>
+    <template v-else-if="type === 'RELATIONSHIP'">
+      <div class="context-menu-item" @click="onDeleteRelationship">
+        <span class="icon"><Icon name="delete"/></span>
+        {{ $t('relation.delete') }}
+      </div>
+    </template>
   </div>
 </template>
 
@@ -67,7 +73,7 @@ const props = defineProps<{
   x: number
   y: number
   canPaste?: boolean
-  type: 'CANVAS' | 'ENTITY' | 'DATASOURCE' | 'VIEW'
+  type: 'CANVAS' | 'ENTITY' | 'DATASOURCE' | 'VIEW' | 'RELATIONSHIP'
   targetId?: string
   entities?: Entity[]
   isMultiSelect?: boolean
@@ -77,7 +83,7 @@ const emit = defineEmits([
   'createEntity', 'paste', 'selectAll',
   'editEntity', 'copyEntity', 'deleteEntity',
   'editDatasource', 'deleteDatasource', 'createEntityFromTree',
-  'deleteView'
+  'deleteView', 'deleteRelationship'
 ])
 
 const { t: $t } = useI18n()
@@ -91,6 +97,7 @@ function onEditDatasource() { emit('editDatasource', props.targetId) }
 function onDeleteDatasource() { emit('deleteDatasource', props.targetId) }
 function onCreateEntityFromTree() { emit('createEntityFromTree', props.targetId) }
 function onDeleteView() { emit('deleteView', props.targetId) }
+function onDeleteRelationship() { emit('deleteRelationship', props.targetId) }
 </script>
 
 <style scoped>

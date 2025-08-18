@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed, markRaw } from 'vue'
 import type { Entity, Relationship, Datasource, TreeNode, Index, View, HistoryState, Field } from '../types/entity'
-import { EntityType, TreeNodeType, OperationType, DatasourceType } from '../types/entity'
+import { EntityType, TreeNodeType, OperationType, DatasourceType, RelationshipCategory } from '../types/entity'
 import { getAllParentFields } from '@/utils/datasourceUtil'
 // import api from '@/api'
 
@@ -277,6 +277,49 @@ export const useDSDiagramStore = defineStore('dsDiagram', () => {
         }
       })
     }
+
+    updatedEntity.fields.forEach(field => {
+      const oldField = oldEntity.fields.filter(oldField => oldField.id === field.id)[0]
+      console.log('更新字段', field, oldField)
+      if(field.isPrimaryKey !== oldField.isPrimaryKey || field.isUnique !== oldField.isUnique){
+        const rels = relationships.value.filter(rel => rel.fromFieldId === field.id || rel.toFieldId === field.id)
+        console.log('关联关系', rels)
+        rels.forEach(rel => {
+          console.log("old", rel.category)
+          if(rel.fromFieldId === field.id){
+            if(field.isPrimaryKey || field.isUnique){
+              if(rel.category === RelationshipCategory.MANY_TO_ONE){
+                rel.category = RelationshipCategory.ONE_TO_ONE
+              }else if(rel.category === RelationshipCategory.MANY_TO_MANY){
+                rel.category = RelationshipCategory.ONE_TO_MANY
+              }
+            }else{
+              if(rel.category === RelationshipCategory.ONE_TO_ONE){
+                rel.category = RelationshipCategory.MANY_TO_ONE
+              }else if(rel.category === RelationshipCategory.ONE_TO_MANY){
+                rel.category = RelationshipCategory.MANY_TO_MANY
+              }
+            }
+          }else if(rel.toFieldId === field.id){
+            if(field && (field.isPrimaryKey || field.isUnique)){
+              if(rel.category === RelationshipCategory.ONE_TO_MANY){
+                rel.category = RelationshipCategory.ONE_TO_ONE
+              }else if(rel.category === RelationshipCategory.MANY_TO_MANY){
+                rel.category = RelationshipCategory.MANY_TO_ONE
+              }
+            }else{
+              if(rel.category === RelationshipCategory.ONE_TO_ONE){
+                rel.category = RelationshipCategory.ONE_TO_MANY
+              }else if(rel.category === RelationshipCategory.MANY_TO_ONE){
+                rel.category = RelationshipCategory.MANY_TO_MANY
+              }
+            }
+          }
+          console.log("new", rel.category)
+          updateRelationship(rel)
+        })
+      }
+    })
 
     entities.value[index] = updatedEntity
     saveToHistory(OperationType.UPDATE_ENTITY, '更新实体', { entity: oldEntity }, { entity: updatedEntity })

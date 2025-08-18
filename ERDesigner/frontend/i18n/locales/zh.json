@@ -194,6 +194,7 @@
     "createRelation": "创建关系",
     "editRelation": "编辑关系",
     "create": "创建",
+    "delete": "删除",
     "name": "关系名称",
     "namePlaceholder": "请输入关系名称",
     "type": "关系类型",
@@ -210,7 +211,9 @@
     "setDefault": "置默认",
     "restrict": "限制",
     "soft": "软关联",
-    "hard": "硬关联"
+    "hard": "硬关联",
+    "errorRelationExists": "关系已存在，无法重复创建",
+    "errorFieldTypeIncompatible": "字段类型不兼容，无法创建关系"
   },
   "field": {
     "new": "新字段",
@@ -225,6 +228,7 @@
     "deleteViewConfirm": "确定要删除这个视图吗？",
     "deleteFieldConfirm": "确定要删除这个字段吗？",
     "deleteForeignKeyConfirm": "确定要删除这个外键吗？",
+    "deleteRelationConfirm": "确定要删除这个关系吗？",
     "importSuccess": "导入成功",
     "importInvalid": "文件格式无效"
   },
